@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+data/*.db
+data/*.db.bak
+data/*.db-journal
+data/test_*.db
+data/toss_credentials.json
+.env
+*.egg-info/
+dist/
+build/
+node_modules/
