@@ -136,12 +136,23 @@ class LedgerSummaryComparison(BaseModel):
     expense_change_rate: Decimal
 
 
+class LedgerSummaryCard(BaseModel):
+    card_id: int
+    card_name: str
+    card_type: str
+    institution: str | None = None
+    last_four: str | None = None
+    amount: Decimal
+    ratio: Decimal
+
+
 class LedgerSummaryResponse(BaseModel):
     period: dict[str, int]
     total_income: Decimal
     total_expense: Decimal
     net_cashflow: Decimal
     by_category: list[LedgerSummaryCategory]
+    by_card: list[LedgerSummaryCard] = Field(default_factory=list)
     comparison: LedgerSummaryComparison | None = None
 
 
@@ -155,12 +166,17 @@ class TagCreate(BaseModel):
     name: str
 
 
-class RecurringItemResponse(ORMModel):
+class RecurringItemResponse(BaseModel):
     id: int
     type: str
     amount: Decimal
-    category_id: int
-    payment_method_id: int | None
+    category: CategoryBrief
+    payment_method: PaymentMethodBrief | None = None
+    account_id: int | None = None
+    to_account_id: int | None = None
+    account_name: str | None = None
+    to_account_name: str | None = None
+    card: CardBrief | None = None
     merchant: str | None
     memo: str | None
     frequency: str
@@ -173,6 +189,9 @@ class RecurringItemCreate(BaseModel):
     amount: Decimal
     category_id: int
     payment_method_id: int | None = None
+    account_id: int | None = None
+    to_account_id: int | None = None
+    card_id: int | None = None
     merchant: str | None = None
     memo: str | None = None
     frequency: str = "monthly"
@@ -184,6 +203,9 @@ class RecurringItemUpdate(BaseModel):
     amount: Decimal | None = None
     category_id: int | None = None
     payment_method_id: int | None = None
+    account_id: int | None = None
+    to_account_id: int | None = None
+    card_id: int | None = None
     merchant: str | None = None
     memo: str | None = None
     frequency: str | None = None

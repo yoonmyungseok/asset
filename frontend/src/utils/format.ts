@@ -3,6 +3,31 @@ export function formatMoney(value: string | number | null | undefined): string {
   return new Intl.NumberFormat('ko-KR').format(Math.round(num)) + '원';
 }
 
+export function toWholeMoney(value: string | number | null | undefined): number {
+  return Math.round(Number(value ?? 0));
+}
+
+export function toWholeMoneyString(value: string | number | null | undefined): string {
+  if (value === '' || value === null || value === undefined) return '';
+  const num = Math.round(Number(value));
+  return Number.isFinite(num) ? String(num) : '';
+}
+
+export function formatMoneyCompact(value: string | number | null | undefined): string {
+  const num = Math.round(Number(value ?? 0));
+  if (num === 0) return '0';
+  const abs = Math.abs(num);
+  if (abs >= 100000000) {
+    const scaled = num / 100000000;
+    return `${scaled % 1 === 0 ? scaled.toFixed(0) : scaled.toFixed(1)}억`;
+  }
+  if (abs >= 10000) {
+    const scaled = num / 10000;
+    return `${scaled % 1 === 0 ? scaled.toFixed(0) : scaled.toFixed(1)}만`;
+  }
+  return new Intl.NumberFormat('ko-KR').format(num);
+}
+
 export function formatQuantity(value: string | number | null | undefined): string {
   const num = Math.round(Number(value ?? 0));
   return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(num);
@@ -53,11 +78,29 @@ export function currentYearMonth() {
   return { year: now.getFullYear(), month: now.getMonth() + 1 };
 }
 
+export function monthDateRange(year: number, month: number) {
+  const mm = String(month).padStart(2, '0');
+  const lastDay = new Date(year, month, 0).getDate();
+  const dd = String(lastDay).padStart(2, '0');
+  return {
+    from_date: `${year}-${mm}-01`,
+    to_date: `${year}-${mm}-${dd}`,
+  };
+}
+
+export function toDateISO(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export const LEDGER_TX_TYPES: Record<string, string> = {
   income: '수입',
   expense: '지출',
   transfer: '이체',
+  reimbursement_out: '반환예정',
+  reimbursement_in: '반환입금',
 };
+
+export type LedgerFormType = 'income' | 'expense' | 'reimbursement_out' | 'reimbursement_in';
 
 export const INVESTMENT_TX_TYPES: Record<string, string> = {
   buy: '매수',

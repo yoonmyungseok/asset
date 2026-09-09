@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { api } from '../api/client';
 import { PageHeader } from '../components/layout/AppLayout';
-import type { Account, Card, CategoryTree, Liability, MarketProviderStatus, RecurringItem } from '../types/api';
+import type { Account, Card, CategoryTree, Liability, MarketProviderStatus, PaymentMethod, RecurringItem } from '../types/api';
 import { formatMoney, CARD_TYPES, LIABILITY_TYPES } from '../utils/format';
+import { formatRecurringItemLabel, formatRecurringPayment, sumRecurringTotals } from '../utils/ledger';
 import Modal from '../components/common/Modal';
 import InstitutionSelect from '../components/common/InstitutionSelect';
 
@@ -178,43 +179,167 @@ function CategoriesPanel() {
 function RecurringPanel() {
   const [items, setItems] = useState<RecurringItem[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [categories, setCategories] = useState<CategoryTree[]>([]);
-  const [form, setForm] = useState({ type: 'expense', amount: '', category_id: '', day_of_month: '1', merchant: '', memo: '' });
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [form, setForm] = useState({
+    type: 'expense',
+    amount: '',
+    category_id: '',
+    payment_method_id: '',
+    card_id: '',
+    account_id: '',
+    day_of_month: '1',
+    merchant: '',
+    memo: '',
+  });
 
   const load = () => api.getRecurringItems().then(setItems);
-  useEffect(() => { load(); api.getCategories().then(setCategories); }, []);
+
+  useEffect(() => {
+    load();
+    Promise.all([
+      api.getCategories(),
+      api.getPaymentMethods(),
+      api.getCards(),
+      api.getAccounts({ is_active: true }),
+    ]).then(([cats, methods, cardList, accountList]) => {
+      setCategories(cats);
+      setPaymentMethods(methods);
+      setCards(cardList);
+      setAccounts(accountList);
+    });
+  }, []);
+
+  const selectedPaymentMethod = paymentMethods.find((m) => m.id === Number(form.payment_method_id));
+  const isCardPayment = form.type === 'expense' && selectedPaymentMethod?.name === '카드';
+  const isBankTransfer = form.type === 'expense' && selectedPaymentMethod?.name === '계좌이체';
+  const needsAccount = isBankTransfer || form.type === 'income';
+  const filteredCategories = categories.filter((c) => c.type === form.type);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({
+      type: 'expense',
+      amount: '',
+      category_id: '',
+      payment_method_id: '',
+      card_id: '',
+      account_id: '',
+      day_of_month: '1',
+      merchant: '',
+      memo: '',
+    });
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const openEdit = (item: RecurringItem) => {
+    setEditingId(item.id);
+    setForm({
+      type: item.type,
+      amount: String(Number(item.amount)),
+      category_id: String(item.category.id),
+      payment_method_id: item.type === 'income' ? '' : (item.payment_method ? String(item.payment_method.id) : ''),
+      card_id: item.card ? String(item.card.id) : '',
+      account_id: item.account_id ? String(item.account_id) : '',
+      day_of_month: String(item.day_of_month),
+      merchant: item.merchant ?? '',
+      memo: item.memo ?? '',
+    });
+    setShowForm(true);
+  };
+
+  const buildPayload = () => ({
+    type: form.type,
+    amount: Number(form.amount),
+    category_id: Number(form.category_id),
+    payment_method_id: form.type === 'income' ? null : (form.payment_method_id ? Number(form.payment_method_id) : null),
+    card_id: isCardPayment && form.card_id ? Number(form.card_id) : null,
+    account_id: needsAccount && form.account_id ? Number(form.account_id) : null,
+    day_of_month: Number(form.day_of_month),
+    merchant: form.merchant || null,
+    memo: form.memo || null,
+  });
 
   const handleSave = async () => {
-    await api.createRecurringItem({
-      type: form.type,
-      amount: Number(form.amount),
-      category_id: Number(form.category_id),
-      day_of_month: Number(form.day_of_month),
-      merchant: form.merchant || null,
-      memo: form.memo || null,
-    });
+    if (!form.amount || !form.category_id) {
+      alert('금액과 카테고리를 입력해 주세요.');
+      return;
+    }
+    if (isCardPayment && !form.card_id) {
+      alert('카드를 선택해 주세요.');
+      return;
+    }
+    if (needsAccount && !form.account_id) {
+      alert(form.type === 'income' ? '입금 계좌를 선택해 주세요.' : '출금 계좌를 선택해 주세요.');
+      return;
+    }
+    const payload = buildPayload();
+    if (editingId) {
+      await api.updateRecurringItem(editingId, payload);
+    } else {
+      await api.createRecurringItem(payload);
+    }
     setShowForm(false);
+    resetForm();
     load();
   };
 
+  const closeForm = () => {
+    setShowForm(false);
+    resetForm();
+  };
+
+  const totals = sumRecurringTotals(items);
+
   return (
     <div>
+      {items.length > 0 && (
+        <div className="card-grid card-grid-2" style={{ marginBottom: 16 }}>
+          <div className="card stat-card">
+            <div className="stat-label">월 정기 수입</div>
+            <div className="stat-value text-success">{formatMoney(totals.income)}</div>
+          </div>
+          <div className="card stat-card">
+            <div className="stat-label">월 정기 지출</div>
+            <div className="stat-value text-danger">{formatMoney(totals.expense)}</div>
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ 정기 항목 추가</button>
+        <button className="btn btn-primary" onClick={openCreate}>+ 정기 항목 추가</button>
       </div>
       {items.length === 0 ? (
         <p className="text-muted">등록된 정기 항목이 없습니다.</p>
       ) : (
         <table className="table">
-          <thead><tr><th>항목</th><th>유형</th><th>금액</th><th>일자</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th>항목</th>
+              <th>유형</th>
+              <th>결제</th>
+              <th>금액</th>
+              <th>일자</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                <td>{item.merchant || item.memo || '—'}</td>
+                <td>{formatRecurringItemLabel(item)}</td>
                 <td>{item.type === 'income' ? '수입' : '지출'}</td>
+                <td>{formatRecurringPayment(item)}</td>
                 <td>{formatMoney(item.amount)}</td>
                 <td>매월 {item.day_of_month}일</td>
-                <td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn btn-sm btn-secondary" onClick={() => openEdit(item)}>수정</button>
+                  {' '}
                   <button className="btn btn-sm btn-danger" onClick={async () => { await api.deleteRecurringItem(item.id); load(); }}>
                     삭제
                   </button>
@@ -224,35 +349,122 @@ function RecurringPanel() {
           </tbody>
         </table>
       )}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="정기 항목 추가"
-        footer={<><button className="btn btn-secondary" onClick={() => setShowForm(false)}>취소</button><button className="btn btn-primary" onClick={handleSave}>저장</button></>}>
+      <Modal
+        open={showForm}
+        onClose={closeForm}
+        title={editingId ? '정기 항목 수정' : '정기 항목 추가'}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={closeForm}>취소</button>
+            <button className="btn btn-primary" onClick={handleSave}>저장</button>
+          </>
+        }
+      >
         <div className="form-group">
           <label>유형</label>
-          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-            <option value="income">수입</option>
-            <option value="expense">지출</option>
-          </select>
+          <div className="type-toggle type-toggle--compact">
+            <button
+              type="button"
+              className={form.type === 'income' ? 'active-income' : ''}
+              onClick={() => setForm({ ...form, type: 'income', category_id: '', card_id: '', account_id: '', payment_method_id: '' })}
+            >
+              수입
+            </button>
+            <button
+              type="button"
+              className={form.type === 'expense' ? 'active-expense' : ''}
+              onClick={() => setForm({ ...form, type: 'expense', category_id: '' })}
+            >
+              지출
+            </button>
+          </div>
         </div>
         <div className="form-group">
           <label>금액</label>
-          <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0" />
         </div>
         <div className="form-group">
           <label>카테고리</label>
           <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
             <option value="">선택</option>
-            {categories.filter((c) => c.type === form.type).map((p) =>
-              p.children.map((c) => <option key={c.id} value={c.id}>{p.name} &gt; {c.name}</option>)
-            )}
+            {filteredCategories.map((parent) => (
+              <optgroup key={parent.id} label={`[대분류] ${parent.name}`}>
+                {parent.children.map((child) => (
+                  <option key={child.id} value={child.id}>{parent.name} › {child.name}</option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
+        {form.type === 'expense' && (
+          <div className="form-group">
+            <label>결제 수단</label>
+            <select
+              value={form.payment_method_id}
+              onChange={(e) => setForm({
+                ...form,
+                payment_method_id: e.target.value,
+                card_id: '',
+                account_id: '',
+              })}
+            >
+              <option value="">선택</option>
+              {paymentMethods.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {isCardPayment && (
+          <div className="form-group">
+            <label>카드 선택</label>
+            {cards.length === 0 ? (
+              <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
+                등록된 카드가 없습니다. 설정 → 내 카드에서 추가해 주세요.
+              </p>
+            ) : (
+              <select value={form.card_id} onChange={(e) => setForm({ ...form, card_id: e.target.value })}>
+                <option value="">선택</option>
+                {cards.map((card) => (
+                  <option key={card.id} value={card.id}>
+                    {card.name} — {CARD_TYPES[card.card_type]}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+        {needsAccount && (
+          <div className="form-group">
+            <label>{form.type === 'income' ? '입금 계좌' : '출금 계좌'}</label>
+            {accounts.length === 0 ? (
+              <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
+                등록된 계좌가 없습니다. 자산 화면에서 계좌를 추가해 주세요.
+              </p>
+            ) : (
+              <select value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })}>
+                <option value="">선택</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                    {account.institution ? ` · ${account.institution}` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
         <div className="form-group">
           <label>매월 며칠</label>
           <input type="number" min={1} max={28} value={form.day_of_month} onChange={(e) => setForm({ ...form, day_of_month: e.target.value })} />
         </div>
         <div className="form-group">
-          <label>가맹점/메모</label>
-          <input value={form.merchant} onChange={(e) => setForm({ ...form, merchant: e.target.value })} />
+          <label>가맹점/적요</label>
+          <input value={form.merchant} onChange={(e) => setForm({ ...form, merchant: e.target.value })} placeholder="예: 넷플릭스, 월세" />
+        </div>
+        <div className="form-group">
+          <label>메모</label>
+          <input value={form.memo} onChange={(e) => setForm({ ...form, memo: e.target.value })} />
         </div>
       </Modal>
     </div>

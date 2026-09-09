@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { PageHeader } from '../components/layout/AppLayout';
+import MonthNavigator from '../components/ledger/MonthNavigator';
+import { useLedgerMonth } from '../hooks/useLedgerMonth';
 import type { Budget, CategoryTree } from '../types/api';
-import { currentYearMonth, formatMoney } from '../utils/format';
+import { formatMoney } from '../utils/format';
 import Modal from '../components/common/Modal';
 
 export default function LedgerBudgetPage() {
-  const { year, month } = currentYearMonth();
+  const { year, month, monthQuery } = useLedgerMonth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -42,13 +44,15 @@ export default function LedgerBudgetPage() {
         title="예산 관리"
         actions={
           <>
-            <Link to="/ledger" className="btn btn-secondary">← 거래목록</Link>
+            <Link to={`/ledger${monthQuery}`} className="btn btn-secondary">← 거래목록</Link>
             <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ 예산 설정</button>
           </>
         }
       />
 
-      <p className="text-muted" style={{ marginBottom: 16 }}>{year}년 {month}월</p>
+      <div className="filters">
+        <MonthNavigator />
+      </div>
 
       {budgets.length === 0 ? (
         <div className="empty-state card">

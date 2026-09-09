@@ -8,7 +8,7 @@ import HoldingFormModal, { emptyHoldingFormValues } from '../components/investme
 import type { HoldingFormValues } from '../components/investment/HoldingFormModal';
 import InstitutionSelect from '../components/common/InstitutionSelect';
 import type { Account, AccountLimit, AccountType, Holding, InvestmentTransaction } from '../types/api';
-import { formatMoney, formatPercent, formatQuantity, INVESTMENT_TX_TYPES, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel } from '../utils/format';
+import { formatMoney, formatPercent, formatQuantity, INVESTMENT_TX_TYPES, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, toWholeMoney, toWholeMoneyString } from '../utils/format';
 import Modal from '../components/common/Modal';
 
 export default function AccountDetailPage() {
@@ -159,7 +159,7 @@ export default function AccountDetailPage() {
       account_type_id: String(account.account_type_id),
       name: account.name,
       institution: account.institution ?? '',
-      cash_balance: String(account.cash_balance),
+      cash_balance: toWholeMoneyString(account.cash_balance),
       interest_rate: account.metadata?.interest_rate != null ? String(account.metadata.interest_rate) : '',
       maturity_date: account.metadata?.maturity_date ? String(account.metadata.maturity_date).slice(0, 10) : '',
     });
@@ -172,7 +172,7 @@ export default function AccountDetailPage() {
       account_type_id: Number(editForm.account_type_id),
       name: editForm.name,
       institution: editForm.institution || null,
-      cash_balance: Number(editForm.cash_balance),
+      cash_balance: toWholeMoney(editForm.cash_balance),
     };
     if (selectedType?.category === 'deposit') {
       payload.metadata = {
@@ -230,7 +230,7 @@ export default function AccountDetailPage() {
         title={account.name}
         actions={
           <>
-            <Link to="/investment" className="btn btn-secondary">← 투자</Link>
+            <Link to="/investment" className="btn btn-secondary">← 자산</Link>
             <button className="btn btn-secondary" onClick={openEditForm}>계좌 수정</button>
             <button className="btn btn-danger" onClick={handleRemoveAccount}>삭제</button>
             <button className="btn btn-primary" onClick={() => setShowTxForm(true)}>거래 추가</button>
@@ -505,6 +505,8 @@ export default function AccountDetailPage() {
           <label>현재 잔고/예수금</label>
           <input
             type="number"
+            step="1"
+            min="0"
             value={editForm.cash_balance}
             onChange={(e) => setEditForm({ ...editForm, cash_balance: e.target.value })}
           />

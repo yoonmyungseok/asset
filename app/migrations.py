@@ -16,6 +16,15 @@ def run_migrations() -> None:
             if "to_account_id" not in columns:
                 conn.execute(text("ALTER TABLE ledger_transactions ADD COLUMN to_account_id INTEGER"))
 
+        if "recurring_items" in table_names:
+            columns = {col["name"] for col in inspector.get_columns("recurring_items")}
+            if "account_id" not in columns:
+                conn.execute(text("ALTER TABLE recurring_items ADD COLUMN account_id INTEGER"))
+            if "to_account_id" not in columns:
+                conn.execute(text("ALTER TABLE recurring_items ADD COLUMN to_account_id INTEGER"))
+            if "card_id" not in columns:
+                conn.execute(text("ALTER TABLE recurring_items ADD COLUMN card_id INTEGER"))
+
         if "holdings" in table_names:
             columns = {col["name"] for col in inspector.get_columns("holdings")}
             if "asset_class" not in columns:

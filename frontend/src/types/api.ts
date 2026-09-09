@@ -154,7 +154,7 @@ export interface Card {
 export interface LedgerTransaction {
   id: number;
   transaction_date: string;
-  type: 'income' | 'expense' | 'transfer';
+  type: 'income' | 'expense' | 'transfer' | 'reimbursement_out' | 'reimbursement_in';
   amount: string;
   category: { id: number; name: string; parent_name: string | null };
   payment_method: { id: number; name: string } | null;
@@ -183,6 +183,15 @@ export interface LedgerSummary {
     budget: string | null;
     over_budget: boolean;
   }[];
+  by_card: {
+    card_id: number;
+    card_name: string;
+    card_type: string;
+    institution: string | null;
+    last_four: string | null;
+    amount: string;
+    ratio: string;
+  }[];
   comparison: {
     prev_month_expense: string;
     expense_change_rate: string;
@@ -206,8 +215,13 @@ export interface RecurringItem {
   id: number;
   type: string;
   amount: string;
-  category_id: number;
-  payment_method_id: number | null;
+  category: { id: number; name: string; parent_name: string | null };
+  payment_method: { id: number; name: string } | null;
+  account_id: number | null;
+  to_account_id: number | null;
+  account_name: string | null;
+  to_account_name: string | null;
+  card: { id: number; name: string; card_type: string; institution: string | null; last_four: string | null } | null;
   merchant: string | null;
   memo: string | null;
   frequency: string;

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { PageHeader } from '../components/layout/AppLayout';
 import type { Account, AccountPerformance } from '../types/api';
-import { CATEGORY_LABELS, formatMoney, formatPercent } from '../utils/format';
+import { CATEGORY_LABELS, formatMoney, formatPercent, toWholeMoney } from '../utils/format';
 import Modal from '../components/common/Modal';
 import InstitutionSelect from '../components/common/InstitutionSelect';
 
@@ -67,7 +67,7 @@ export default function InvestmentPage() {
       account_type_id: Number(form.account_type_id),
       name: form.name,
       institution: form.institution || null,
-      cash_balance: Number(form.cash_balance),
+      cash_balance: toWholeMoney(form.cash_balance),
     };
     if (selectedType?.category === 'deposit') {
       payload.metadata = {
@@ -96,7 +96,7 @@ export default function InvestmentPage() {
   return (
     <>
       <PageHeader
-        title="투자"
+        title="자산"
         actions={
           <>
             <button className="btn btn-secondary" onClick={handleRefreshPrices}>시세 갱신</button>
@@ -204,7 +204,13 @@ export default function InvestmentPage() {
         </div>
         <div className="form-group">
           <label>현재 잔고/예수금</label>
-          <input type="number" value={form.cash_balance} onChange={(e) => setForm({ ...form, cash_balance: e.target.value })} />
+          <input
+            type="number"
+            step="1"
+            min="0"
+            value={form.cash_balance}
+            onChange={(e) => setForm({ ...form, cash_balance: e.target.value })}
+          />
         </div>
         {accountTypes.find((t) => t.id === Number(form.account_type_id))?.category === 'deposit' && (
           <div className="form-row">

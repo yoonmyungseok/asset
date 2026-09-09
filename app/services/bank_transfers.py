@@ -7,6 +7,8 @@ from app.models import Account, Category
 from app.utils import to_decimal
 
 INTERNAL_TRANSFER_CATEGORY_NAME = "내부이체"
+REIMBURSEMENT_OUT_CATEGORY_NAME = "반환예정"
+REIMBURSEMENT_IN_CATEGORY_NAME = "반환입금"
 
 
 def get_internal_transfer_category(db: Session) -> Category:
@@ -26,6 +28,52 @@ def get_internal_transfer_category(db: Session) -> Category:
             parent_id=None,
             is_system=True,
             sort_order=999,
+        )
+        db.add(category)
+        db.flush()
+    return category
+
+
+def get_reimbursement_out_category(db: Session) -> Category:
+    category = (
+        db.query(Category)
+        .filter(
+            Category.name == REIMBURSEMENT_OUT_CATEGORY_NAME,
+            Category.parent_id.is_(None),
+            Category.is_active.is_(True),
+        )
+        .first()
+    )
+    if not category:
+        category = Category(
+            name=REIMBURSEMENT_OUT_CATEGORY_NAME,
+            type="expense",
+            parent_id=None,
+            is_system=True,
+            sort_order=998,
+        )
+        db.add(category)
+        db.flush()
+    return category
+
+
+def get_reimbursement_in_category(db: Session) -> Category:
+    category = (
+        db.query(Category)
+        .filter(
+            Category.name == REIMBURSEMENT_IN_CATEGORY_NAME,
+            Category.parent_id.is_(None),
+            Category.is_active.is_(True),
+        )
+        .first()
+    )
+    if not category:
+        category = Category(
+            name=REIMBURSEMENT_IN_CATEGORY_NAME,
+            type="income",
+            parent_id=None,
+            is_system=True,
+            sort_order=998,
         )
         db.add(category)
         db.flush()
@@ -72,6 +120,19 @@ def reverse_external_transfer(db: Session, from_account_id: int, amount: Decimal
         account.cash_balance = to_decimal(account.cash_balance) + amount
 
 
+def apply_income_deposit(db: Session, account_id: int, amount: Decimal) -> None:
+    amount = to_decimal(amount)
+    account = validate_account_for_transfer(db, account_id)
+    account.cash_balance = to_decimal(account.cash_balance) + amount
+
+
+def reverse_income_deposit(db: Session, account_id: int, amount: Decimal) -> None:
+    amount = to_decimal(amount)
+    account = db.get(Account, account_id)
+    if account:
+        account.cash_balance = to_decimal(account.cash_balance) - amount
+
+
 def is_bank_transfer_method(method_name: str | None) -> bool:
     return method_name == "계좌이체"
 
@@ -91,6 +152,12 @@ def reverse_ledger_balance_effects(db: Session, tx) -> None:
         reverse_external_transfer(db, tx.account_id, tx.amount)
     elif tx.type == "expense" and tx.card:
         reverse_card_expense(db, tx.card, tx.amount)
+    elif tx.type == "income" and tx.account_id:
+        reverse_income_deposit(db, tx.account_id, tx.amount)
+    elif tx.type == "reimbursement_out" and tx.account_id:
+        reverse_external_transfer(db, tx.account_id, tx.amount)
+    elif tx.type == "reimbursement_in" and tx.account_id:
+        reverse_income_deposit(db, tx.account_id, tx.amount)
 
 
 def apply_ledger_balance_effects(db: Session, tx) -> None:
@@ -108,3 +175,9 @@ def apply_ledger_balance_effects(db: Session, tx) -> None:
         apply_external_transfer(db, tx.account_id, tx.amount)
     elif tx.type == "expense" and tx.card:
         apply_card_expense(db, tx.card, tx.amount)
+    elif tx.type == "income" and tx.account_id:
+        apply_income_deposit(db, tx.account_id, tx.amount)
+    elif tx.type == "reimbursement_out" and tx.account_id:
+        apply_external_transfer(db, tx.account_id, tx.amount)
+    elif tx.type == "reimbursement_in" and tx.account_id:
+        apply_income_deposit(db, tx.account_id, tx.amount)

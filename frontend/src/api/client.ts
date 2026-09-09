@@ -126,6 +126,8 @@ export const api = {
     request<import('../types/api').RecurringItem[]>('/recurring-items'),
   createRecurringItem: (data: object) =>
     request('/recurring-items', { method: 'POST', body: JSON.stringify(data) }),
+  updateRecurringItem: (id: number, data: object) =>
+    request(`/recurring-items/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteRecurringItem: (id: number) =>
     request(`/recurring-items/${id}`, { method: 'DELETE' }),
 

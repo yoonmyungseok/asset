@@ -10,6 +10,7 @@ from app.schemas.account import PaginatedResponse
 from app.schemas.card import CardBrief
 from app.schemas.ledger import (
     CategoryBrief,
+    LedgerSummaryCard,
     LedgerSummaryCategory,
     LedgerSummaryComparison,
     LedgerSummaryResponse,
@@ -21,8 +22,11 @@ from app.schemas.ledger import (
 from app.services.bank_transfers import (
     apply_ledger_balance_effects,
     get_internal_transfer_category,
+    get_reimbursement_in_category,
+    get_reimbursement_out_category,
     is_bank_transfer_method,
     reverse_ledger_balance_effects,
+    validate_account_for_transfer,
 )
 from app.services.card_payments import (
     resolve_account_id_for_card,
@@ -94,6 +98,49 @@ def _resolve_create_payload(db: Session, payload: LedgerTransactionCreate) -> di
 
     if method and method.name == "카드" and not card:
         raise HTTPException(status_code=400, detail="카드 결제 시 카드를 선택해 주세요.")
+
+    if payload.type == "income":
+        if not payload.category_id:
+            raise HTTPException(status_code=400, detail="카테고리를 선택해 주세요.")
+        category = db.get(Category, payload.category_id)
+        if not category:
+            raise HTTPException(status_code=404, detail="카테고리를 찾을 수 없습니다.")
+        if not payload.account_id:
+            raise HTTPException(status_code=400, detail="입금 계좌를 선택해 주세요.")
+        validate_account_for_transfer(db, payload.account_id)
+        return {
+            "type": "income",
+            "category_id": category.id,
+            "account_id": payload.account_id,
+            "to_account_id": None,
+            "card_id": None,
+        }
+
+    if payload.type == "reimbursement_out":
+        if not payload.account_id:
+            raise HTTPException(status_code=400, detail="출금 계좌를 선택해 주세요.")
+        validate_account_for_transfer(db, payload.account_id)
+        category = get_reimbursement_out_category(db)
+        return {
+            "type": "reimbursement_out",
+            "category_id": category.id,
+            "account_id": payload.account_id,
+            "to_account_id": None,
+            "card_id": None,
+        }
+
+    if payload.type == "reimbursement_in":
+        if not payload.account_id:
+            raise HTTPException(status_code=400, detail="입금 계좌를 선택해 주세요.")
+        validate_account_for_transfer(db, payload.account_id)
+        category = get_reimbursement_in_category(db)
+        return {
+            "type": "reimbursement_in",
+            "category_id": category.id,
+            "account_id": payload.account_id,
+            "to_account_id": None,
+            "card_id": None,
+        }
 
     if is_bank_transfer_method(method_name):
         if not payload.account_id:
@@ -214,7 +261,11 @@ def create_ledger_transaction(payload: LedgerTransactionCreate, db: Session = De
         type=resolved["type"],
         amount=payload.amount,
         category_id=resolved["category_id"],
-        payment_method_id=payload.payment_method_id,
+        payment_method_id=(
+            None
+            if resolved["type"] in ("income", "reimbursement_out", "reimbursement_in")
+            else payload.payment_method_id
+        ),
         account_id=resolved["account_id"],
         to_account_id=resolved["to_account_id"],
         card_id=resolved["card_id"],
@@ -279,6 +330,29 @@ def update_ledger_transaction(
 
     if tx.type == "transfer":
         tx.category_id = get_internal_transfer_category(db).id
+    elif tx.type == "income":
+        tx.payment_method_id = None
+        tx.card_id = None
+        tx.to_account_id = None
+        if not tx.account_id:
+            raise HTTPException(status_code=400, detail="입금 계좌를 선택해 주세요.")
+        validate_account_for_transfer(db, tx.account_id)
+    elif tx.type == "reimbursement_out":
+        tx.payment_method_id = None
+        tx.card_id = None
+        tx.to_account_id = None
+        tx.category_id = get_reimbursement_out_category(db).id
+        if not tx.account_id:
+            raise HTTPException(status_code=400, detail="출금 계좌를 선택해 주세요.")
+        validate_account_for_transfer(db, tx.account_id)
+    elif tx.type == "reimbursement_in":
+        tx.payment_method_id = None
+        tx.card_id = None
+        tx.to_account_id = None
+        tx.category_id = get_reimbursement_in_category(db).id
+        if not tx.account_id:
+            raise HTTPException(status_code=400, detail="입금 계좌를 선택해 주세요.")
+        validate_account_for_transfer(db, tx.account_id)
 
     db.flush()
     tx = _ledger_tx_query(db).filter(LedgerTransaction.id == tx.id).first()
@@ -375,6 +449,47 @@ def ledger_summary(
                 )
             )
 
+    card_rows = (
+        db.query(
+            LedgerTransaction.card_id,
+            func.coalesce(func.sum(LedgerTransaction.amount), 0).label("amount"),
+        )
+        .filter(
+            LedgerTransaction.type == "expense",
+            LedgerTransaction.card_id.isnot(None),
+            func.strftime("%Y", LedgerTransaction.transaction_date) == str(year),
+            func.strftime("%m", LedgerTransaction.transaction_date) == f"{month:02d}",
+        )
+        .group_by(LedgerTransaction.card_id)
+        .all()
+    )
+    card_ids = [row.card_id for row in card_rows if row.card_id is not None]
+    cards_by_id = {}
+    if card_ids:
+        cards = db.query(Card).filter(Card.id.in_(card_ids)).all()
+        cards_by_id = {card.id: card for card in cards}
+    by_card: list[LedgerSummaryCard] = []
+    for row in card_rows:
+        if row.card_id is None:
+            continue
+        card = cards_by_id.get(row.card_id)
+        if not card:
+            continue
+        amount = Decimal(str(row.amount))
+        ratio = (amount / expense_total * 100) if expense_total > 0 else Decimal("0")
+        by_card.append(
+            LedgerSummaryCard(
+                card_id=card.id,
+                card_name=card.name,
+                card_type=card.card_type,
+                institution=card.institution,
+                last_four=card.last_four,
+                amount=amount,
+                ratio=ratio.quantize(Decimal("0.01")),
+            )
+        )
+    by_card.sort(key=lambda item: item.amount, reverse=True)
+
     prev_month = month - 1 if month > 1 else 12
     prev_year = year if month > 1 else year - 1
     prev_expense = (
@@ -397,6 +512,7 @@ def ledger_summary(
         total_expense=expense_total,
         net_cashflow=income_total - expense_total,
         by_category=by_category,
+        by_card=by_card,
         comparison=LedgerSummaryComparison(
             prev_month_expense=prev_expense,
             expense_change_rate=change_rate.quantize(Decimal("0.01")),

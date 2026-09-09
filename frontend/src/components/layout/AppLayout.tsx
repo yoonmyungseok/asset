@@ -52,7 +52,7 @@ export default function AppLayout() {
             가계부
           </NavLink>
           <NavLink to="/investment" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            투자
+            자산
           </NavLink>
           <NavLink to="/settings" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             설정

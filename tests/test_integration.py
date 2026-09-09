@@ -42,6 +42,12 @@ def test_account_crud(client):
 
 
 def test_ledger_transaction_and_summary(client):
+    r = client.post(
+        "/api/v1/accounts",
+        json={"account_type_id": 7, "name": "급여 계좌", "cash_balance": 0},
+    )
+    account_id = r.json()["id"]
+
     client.post(
         "/api/v1/ledger-transactions",
         json={
@@ -60,7 +66,7 @@ def test_ledger_transaction_and_summary(client):
             "type": "income",
             "amount": 3500000,
             "category_id": 20,
-            "payment_method_id": 3,
+            "account_id": account_id,
         },
     )
 
@@ -72,6 +78,52 @@ def test_ledger_transaction_and_summary(client):
     data = r.json()
     assert float(data["total_income"]) >= 3500000
     assert float(data["total_expense"]) >= 15000
+
+
+def test_reimbursement_transactions(client):
+    r = client.post(
+        "/api/v1/accounts",
+        json={"account_type_id": 7, "name": "회사비용 계좌", "cash_balance": 100000},
+    )
+    account_id = r.json()["id"]
+
+    r = client.post(
+        "/api/v1/ledger-transactions",
+        json={
+            "transaction_date": str(date.today()),
+            "type": "reimbursement_out",
+            "amount": 50000,
+            "account_id": account_id,
+            "merchant": "팀 회의비",
+        },
+    )
+    assert r.status_code == 201
+    assert r.json()["type"] == "reimbursement_out"
+
+    account = client.get(f"/api/v1/accounts/{account_id}").json()
+    assert float(account["cash_balance"]) == 50000
+
+    r = client.post(
+        "/api/v1/ledger-transactions",
+        json={
+            "transaction_date": str(date.today()),
+            "type": "reimbursement_in",
+            "amount": 50000,
+            "account_id": account_id,
+            "merchant": "팀 회의비 환급",
+        },
+    )
+    assert r.status_code == 201
+
+    account = client.get(f"/api/v1/accounts/{account_id}").json()
+    assert float(account["cash_balance"]) == 100000
+
+    today = date.today()
+    summary = client.get(
+        f"/api/v1/ledger-transactions/summary?year={today.year}&month={today.month}&group_by=category"
+    ).json()
+    assert float(summary["total_income"]) == 0
+    assert float(summary["total_expense"]) == 0
 
 
 def test_investment_holding_and_transaction(client):
@@ -419,6 +471,53 @@ def test_tags_on_ledger(client):
 
     r = client.get("/api/v1/tags")
     assert any(t["name"] == "테스트태그" for t in r.json())
+
+
+def test_ledger_summary_by_card(client):
+    account = client.post(
+        "/api/v1/accounts",
+        json={"account_type_id": 8, "name": "카드요약 계좌", "cash_balance": 500000},
+    ).json()
+    debit_card = client.post(
+        "/api/v1/cards",
+        json={
+            "name": "체크카드 A",
+            "card_type": "debit",
+            "linked_account_id": account["id"],
+        },
+    ).json()
+    credit_card = client.post(
+        "/api/v1/cards",
+        json={
+            "name": "신용카드 B",
+            "card_type": "credit",
+            "settlement_account_id": account["id"],
+            "due_day": 15,
+        },
+    ).json()
+    today = date.today()
+    for card_id, amount in [(debit_card["id"], 20000), (credit_card["id"], 30000)]:
+        client.post(
+            "/api/v1/ledger-transactions",
+            json={
+                "transaction_date": str(today),
+                "type": "expense",
+                "amount": amount,
+                "category_id": 2,
+                "payment_method_id": 2,
+                "card_id": card_id,
+            },
+        )
+    r = client.get(
+        f"/api/v1/ledger-transactions/summary?year={today.year}&month={today.month}&group_by=category"
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["by_card"]) == 2
+    assert data["by_card"][0]["card_name"] == "신용카드 B"
+    assert float(data["by_card"][0]["amount"]) == 30000
+    assert data["by_card"][1]["card_name"] == "체크카드 A"
+    assert float(data["by_card"][1]["amount"]) == 20000
 
 
 def test_debit_card_expense_deducts_account(client):

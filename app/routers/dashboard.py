@@ -82,6 +82,7 @@ def dashboard_overview(db: Session = Depends(get_db)):
                 ratio=ratio.quantize(Decimal("0.01")),
             )
         )
+    accounts_summary.sort(key=lambda item: item.ratio, reverse=True)
 
     from app.routers.budgets import budget_alerts
 
@@ -144,6 +145,7 @@ def net_worth_trend(
 ):
     to_date = to_date or date.today()
     from_date = from_date or (to_date - timedelta(days=30))
+    save_daily_snapshot(db, to_date)
     rows = (
         db.query(DailySnapshot)
         .filter(DailySnapshot.snapshot_date >= from_date, DailySnapshot.snapshot_date <= to_date)

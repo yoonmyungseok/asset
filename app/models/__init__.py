@@ -160,6 +160,7 @@ class Card(Base):
     settlement_account: Mapped["Account | None"] = relationship(foreign_keys=[settlement_account_id])
     linked_liability: Mapped["Liability | None"] = relationship(foreign_keys=[linked_liability_id])
     ledger_transactions: Mapped[list["LedgerTransaction"]] = relationship(back_populates="card")
+    recurring_items: Mapped[list["RecurringItem"]] = relationship(back_populates="card")
     settlements: Mapped[list["CardSettlement"]] = relationship(back_populates="card")
 
 
@@ -237,6 +238,9 @@ class RecurringItem(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
     payment_method_id: Mapped[int | None] = mapped_column(ForeignKey("payment_methods.id"))
+    account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id"))
+    to_account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id"))
+    card_id: Mapped[int | None] = mapped_column(ForeignKey("cards.id"))
     merchant: Mapped[str | None] = mapped_column(String(200))
     memo: Mapped[str | None] = mapped_column(Text)
     frequency: Mapped[str] = mapped_column(String(20), default="monthly")
@@ -245,6 +249,9 @@ class RecurringItem(Base):
 
     category: Mapped["Category"] = relationship(back_populates="recurring_items")
     payment_method: Mapped["PaymentMethod | None"] = relationship(back_populates="recurring_items")
+    account: Mapped["Account | None"] = relationship(foreign_keys=[account_id])
+    to_account: Mapped["Account | None"] = relationship(foreign_keys=[to_account_id])
+    card: Mapped["Card | None"] = relationship(back_populates="recurring_items")
 
 
 class Budget(Base):
