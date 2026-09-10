@@ -1,0 +1,111 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { api } from '@/lib/api/client';
+import { formatMoney } from '@/lib/utils/format';
+
+interface RefreshContextType {
+  refresh: () => Promise<void>;
+  refreshing: boolean;
+}
+
+export const RefreshContext = createContext<RefreshContextType>({
+  refresh: async () => {},
+  refreshing: false,
+});
+
+export function useRefresh() {
+  return useContext(RefreshContext);
+}
+
+const NAV_ITEMS = [
+  { href: '/', label: '대시보드', exact: true },
+  { href: '/ledger', label: '가계부' },
+  { href: '/ledger/analysis', label: '가계부 분석' },
+  { href: '/ledger/budget', label: '예산' },
+  { href: '/investment', label: '자산' },
+  { href: '/settings', label: '설정' },
+];
+
+function isActive(pathname: string, href: string, exact?: boolean) {
+  if (exact) return pathname === href;
+  if (href === '/settings') return pathname.startsWith('/settings');
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export default function AppLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const [netWorth, setNetWorth] = useState<string>('—');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadNetWorth = () => {
+    api.getDashboardOverview().then((d) => setNetWorth(d.net_worth.net_worth)).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadNetWorth();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await api.refreshDashboard();
+      loadNetWorth();
+      window.dispatchEvent(new Event('dashboard-refreshed'));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      <aside className="fixed bottom-0 left-0 top-0 flex w-sidebar flex-col border-r border-gray-200 bg-white px-4 py-6">
+        <div className="mb-8 px-2 text-lg font-bold">💰 내 자산 관리</div>
+        <nav className="flex flex-1 flex-col gap-1">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(pathname, item.href, item.exact);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-lg px-3 py-2.5 font-medium transition-colors ${
+                  active
+                    ? 'bg-blue-50 text-primary'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <div className="text-xs text-gray-500">순자산</div>
+          <div className="mt-1 text-lg font-bold">{formatMoney(netWorth)}</div>
+        </div>
+      </aside>
+      <main className="ml-sidebar min-h-screen flex-1 p-6">
+        <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
+          {children}
+        </RefreshContext.Provider>
+      </main>
+    </div>
+  );
+}
+
+export function PageHeader({ title, actions }: { title: string; actions?: ReactNode }) {
+  const { refresh, refreshing } = useRefresh();
+  return (
+    <div className="page-header">
+      <h1 className="page-title">{title}</h1>
+      <div className="page-actions">
+        {actions}
+        <button className="btn btn-secondary" onClick={refresh} disabled={refreshing}>
+          {refreshing ? '갱신 중...' : '새로고침 ↻'}
+        </button>
+      </div>
+    </div>
+  );
+}

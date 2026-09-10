@@ -1,0 +1,321 @@
+// SQLite stores Decimal as NUMERIC; amounts use Decimal (18,2), quantity (18,6), price (18,4) at app layer.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AccountType {
+  id                          Int     @id @default(autoincrement())
+  code                        String  @unique
+  name                        String
+  category                    String
+  supports_holdings           Boolean @default(false)
+  supports_contribution_limit Boolean @default(false)
+  sort_order                  Int     @default(0)
+  is_system                   Boolean @default(true)
+
+  accounts Account[]
+
+  @@map("account_types")
+}
+
+model Account {
+  id              Int      @id @default(autoincrement())
+  account_type_id Int
+  name            String
+  institution     String?
+  cash_balance    Decimal  @default(0)
+  metadata_json   Json?
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+
+  account_type           AccountType             @relation(fields: [account_type_id], references: [id])
+  holdings               Holding[]
+  investment_transactions InvestmentTransaction[]
+  yearly_limits          AccountYearlyLimit[]
+  ledger_transactions    LedgerTransaction[]     @relation("LedgerAccount")
+  ledger_to_transactions LedgerTransaction[]     @relation("LedgerToAccount")
+  linked_cards           Card[]                  @relation("LinkedAccount")
+  settlement_cards         Card[]                  @relation("SettlementAccount")
+  recurring_items          RecurringItem[]         @relation("RecurringAccount")
+  recurring_to_items       RecurringItem[]         @relation("RecurringToAccount")
+  account_snapshots        AccountSnapshot[]
+
+  @@map("accounts")
+}
+
+model Holding {
+  id                    Int       @id @default(autoincrement())
+  account_id            Int
+  asset_class           String    @default("stock")
+  symbol                String
+  name                  String
+  quantity              Decimal   @default(0)
+  avg_cost_price        Decimal   @default(0)
+  manual_price          Decimal?
+  interest_rate         Decimal?
+  start_date            DateTime?
+  maturity_date         DateTime?
+  last_market_price     Decimal?
+  last_price_updated_at DateTime?
+
+  account                 Account                 @relation(fields: [account_id], references: [id])
+  investment_transactions InvestmentTransaction[]
+
+  @@map("holdings")
+}
+
+model InvestmentTransaction {
+  id               Int      @id @default(autoincrement())
+  account_id       Int
+  holding_id       Int?
+  type             String
+  transaction_date DateTime
+  quantity         Decimal?
+  price            Decimal?
+  amount           Decimal
+  fee              Decimal  @default(0)
+  memo             String?
+  created_at       DateTime @default(now())
+
+  account Account  @relation(fields: [account_id], references: [id])
+  holding Holding? @relation(fields: [holding_id], references: [id])
+
+  @@map("investment_transactions")
+}
+
+model AccountYearlyLimit {
+  id                 Int     @id @default(autoincrement())
+  account_id         Int
+  year               Int
+  contribution_limit Decimal @default(0)
+  contributed_amount Decimal @default(0)
+
+  account Account @relation(fields: [account_id], references: [id])
+
+  @@unique([account_id, year], name: "uq_account_year")
+  @@map("account_yearly_limits")
+}
+
+model Category {
+  id         Int     @id @default(autoincrement())
+  parent_id  Int?
+  name       String
+  type       String
+  sort_order Int     @default(0)
+  is_system  Boolean @default(false)
+  is_active  Boolean @default(true)
+
+  parent              Category?           @relation("CategoryTree", fields: [parent_id], references: [id])
+  children            Category[]          @relation("CategoryTree")
+  ledger_transactions LedgerTransaction[]
+  budgets             Budget[]
+  recurring_items     RecurringItem[]
+
+  @@map("categories")
+}
+
+model PaymentMethod {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  is_system Boolean @default(false)
+
+  ledger_transactions LedgerTransaction[]
+  recurring_items     RecurringItem[]
+
+  @@map("payment_methods")
+}
+
+model Liability {
+  id              Int      @id @default(autoincrement())
+  type            String
+  name            String
+  institution     String?
+  original_amount Decimal  @default(0)
+  current_balance Decimal  @default(0)
+  interest_rate   Decimal?
+  due_day         Int?
+  notes           String?
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+
+  transactions        LiabilityTransaction[]
+  linked_cards        Card[]
+  liability_snapshots LiabilitySnapshot[]
+
+  @@map("liabilities")
+}
+
+model Card {
+  id                    Int      @id @default(autoincrement())
+  name                  String
+  card_type             String
+  institution           String?
+  last_four             String?
+  linked_account_id     Int?
+  linked_liability_id   Int?
+  settlement_account_id Int?
+  due_day               Int?
+  is_active             Boolean  @default(true)
+  created_at            DateTime @default(now())
+
+  linked_account      Account?          @relation("LinkedAccount", fields: [linked_account_id], references: [id])
+  linked_liability    Liability?        @relation(fields: [linked_liability_id], references: [id])
+  settlement_account  Account?          @relation("SettlementAccount", fields: [settlement_account_id], references: [id])
+  ledger_transactions LedgerTransaction[]
+  recurring_items     RecurringItem[]
+  settlements         CardSettlement[]
+
+  @@map("cards")
+}
+
+model CardSettlement {
+  id              Int      @id @default(autoincrement())
+  card_id         Int
+  year            Int
+  month           Int
+  amount          Decimal
+  settlement_date DateTime
+  created_at      DateTime @default(now())
+
+  card Card @relation(fields: [card_id], references: [id])
+
+  @@unique([card_id, year, month], name: "uq_card_settlement_period")
+  @@map("card_settlements")
+}
+
+model LedgerTransaction {
+  id                Int      @id @default(autoincrement())
+  transaction_date  DateTime
+  type              String
+  amount            Decimal
+  category_id       Int
+  payment_method_id Int?
+  account_id        Int?
+  to_account_id     Int?
+  card_id           Int?
+  merchant          String?
+  memo              String?
+  is_fixed          Boolean  @default(false)
+  created_at        DateTime @default(now())
+
+  category       Category       @relation(fields: [category_id], references: [id])
+  payment_method PaymentMethod? @relation(fields: [payment_method_id], references: [id])
+  account        Account?       @relation("LedgerAccount", fields: [account_id], references: [id])
+  to_account     Account?       @relation("LedgerToAccount", fields: [to_account_id], references: [id])
+  card           Card?          @relation(fields: [card_id], references: [id])
+  tags           LedgerTransactionTag[]
+
+  @@map("ledger_transactions")
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  ledger_transactions LedgerTransactionTag[]
+
+  @@map("tags")
+}
+
+model LedgerTransactionTag {
+  ledger_transaction_id Int
+  tag_id                Int
+
+  ledger_transaction LedgerTransaction @relation(fields: [ledger_transaction_id], references: [id])
+  tag                Tag               @relation(fields: [tag_id], references: [id])
+
+  @@id([ledger_transaction_id, tag_id])
+  @@map("ledger_transaction_tags")
+}
+
+model RecurringItem {
+  id                Int     @id @default(autoincrement())
+  type              String
+  amount            Decimal
+  category_id       Int
+  payment_method_id Int?
+  account_id        Int?
+  to_account_id     Int?
+  card_id           Int?
+  merchant          String?
+  memo              String?
+  frequency         String  @default("monthly")
+  day_of_month      Int     @default(1)
+  is_active         Boolean @default(true)
+
+  category       Category       @relation(fields: [category_id], references: [id])
+  payment_method PaymentMethod? @relation(fields: [payment_method_id], references: [id])
+  account        Account?       @relation("RecurringAccount", fields: [account_id], references: [id])
+  to_account     Account?       @relation("RecurringToAccount", fields: [to_account_id], references: [id])
+  card           Card?          @relation(fields: [card_id], references: [id])
+
+  @@map("recurring_items")
+}
+
+model Budget {
+  id          Int     @id @default(autoincrement())
+  category_id Int
+  year        Int
+  month       Int
+  amount      Decimal
+
+  category Category @relation(fields: [category_id], references: [id])
+
+  @@unique([category_id, year, month], name: "uq_budget_period")
+  @@map("budgets")
+}
+
+model LiabilityTransaction {
+  id               Int      @id @default(autoincrement())
+  liability_id     Int
+  transaction_date DateTime
+  type             String
+  amount           Decimal
+  memo             String?
+  created_at       DateTime @default(now())
+
+  liability Liability @relation(fields: [liability_id], references: [id])
+
+  @@map("liability_transactions")
+}
+
+model DailySnapshot {
+  id                Int      @id @default(autoincrement())
+  snapshot_date     DateTime @unique
+  total_assets      Decimal  @default(0)
+  total_liabilities Decimal  @default(0)
+  net_worth         Decimal  @default(0)
+  investment_total  Decimal  @default(0)
+  cash_total        Decimal  @default(0)
+
+  @@map("daily_snapshots")
+}
+
+model AccountSnapshot {
+  id            Int      @id @default(autoincrement())
+  snapshot_date DateTime
+  account_id    Int
+  balance_value Decimal  @default(0)
+
+  account Account @relation(fields: [account_id], references: [id])
+
+  @@unique([snapshot_date, account_id], name: "uq_account_snapshot")
+  @@map("account_snapshots")
+}
+
+model LiabilitySnapshot {
+  id            Int      @id @default(autoincrement())
+  snapshot_date DateTime
+  liability_id  Int
+  balance_value Decimal  @default(0)
+
+  liability Liability @relation(fields: [liability_id], references: [id])
+
+  @@unique([snapshot_date, liability_id], name: "uq_liability_snapshot")
+  @@map("liability_snapshots")
+}

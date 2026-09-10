@@ -1,0 +1,764 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --width-sidebar: 220px;
+  --spacing-sidebar: 220px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-width: 1024px;
+  font-family:
+    "Pretendard",
+    "Malgun Gothic",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-gray-200 bg-white p-5;
+  }
+
+  .btn-primary {
+    @apply rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8];
+  }
+
+  .btn-danger {
+    @apply text-danger;
+  }
+
+  .stat-card .stat-label {
+    @apply mb-2 text-[13px] text-gray-500;
+  }
+
+  .stat-card .stat-value {
+    @apply text-[22px] font-bold;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 z-[1000] flex items-center justify-center bg-black/40;
+  }
+
+  .form-group {
+    @apply mb-4;
+  }
+
+  .form-group label {
+    @apply mb-1.5 block text-[13px] font-medium text-gray-500;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    @apply w-full rounded-lg border border-gray-200 px-3 py-2;
+  }
+
+  .btn {
+    @apply rounded-lg px-4 py-2 text-sm font-medium transition-colors;
+  }
+
+  .btn-secondary {
+    @apply border border-gray-200 bg-white text-gray-900 hover:bg-gray-50;
+  }
+
+  .btn-sm {
+    @apply px-2.5 py-1 text-[13px];
+  }
+
+  .text-success {
+    @apply text-green-600;
+  }
+
+  .text-danger {
+    @apply text-red-600;
+  }
+
+  .text-warning {
+    @apply text-amber-600;
+  }
+
+  .text-muted {
+    @apply text-gray-500;
+  }
+
+  .amount-positive {
+    @apply text-green-600;
+  }
+
+  .amount-negative {
+    @apply text-red-600;
+  }
+
+  .stat-grid {
+    @apply grid grid-cols-4 gap-4;
+  }
+
+  .page-header {
+    @apply mb-6 flex items-center justify-between;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold;
+  }
+
+  .page-actions {
+    @apply flex gap-2;
+  }
+
+  .card-grid {
+    @apply grid gap-4;
+  }
+
+  .card-grid-4 {
+    @apply grid-cols-4;
+  }
+
+  .card-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  .card-grid-1 {
+    @apply grid-cols-1 max-w-[280px];
+  }
+
+  .alert {
+    @apply mb-4 rounded-lg px-4 py-3 text-sm;
+  }
+
+  .alert-warning {
+    @apply border border-amber-200 bg-amber-50 text-amber-800;
+  }
+
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table th,
+  .table td {
+    @apply border-b border-gray-200 px-3 py-3 text-left text-sm;
+  }
+
+  .table th {
+    @apply text-[13px] font-medium text-gray-500;
+  }
+
+  .table tr:hover td {
+    @apply bg-gray-50;
+  }
+
+  .filters {
+    @apply mb-4 flex flex-wrap gap-3;
+  }
+
+  .filters select,
+  .filters input {
+    @apply rounded-lg border border-gray-200 bg-white px-3 py-2;
+  }
+
+  .month-nav {
+    @apply flex items-center gap-2;
+  }
+
+  .month-nav-label {
+    @apply min-w-24 text-center font-semibold;
+  }
+
+  .view-toggle {
+    @apply flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1;
+  }
+
+  .view-toggle button {
+    @apply cursor-pointer rounded-md border-0 bg-transparent px-3.5 py-1.5 text-sm font-medium text-gray-500;
+  }
+
+  .view-toggle button.active {
+    @apply bg-white text-gray-900 shadow-sm;
+  }
+
+  .ledger-calendar {
+    @apply p-4;
+  }
+
+  .ledger-calendar-weekdays,
+  .ledger-calendar-grid {
+    @apply grid grid-cols-7 gap-1.5;
+  }
+
+  .ledger-calendar-weekdays {
+    @apply mb-2;
+  }
+
+  .ledger-calendar-weekday {
+    @apply py-1 text-center text-xs font-semibold text-gray-500;
+  }
+
+  .ledger-calendar-weekday.is-sunday {
+    @apply text-danger;
+  }
+
+  .ledger-calendar-weekday.is-saturday {
+    @apply text-primary;
+  }
+
+  .ledger-calendar-cell {
+    @apply flex min-h-[88px] cursor-pointer flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2 text-left;
+  }
+
+  .ledger-calendar-cell.is-empty {
+    @apply cursor-default border-transparent bg-transparent;
+  }
+
+  .ledger-calendar-cell.has-activity {
+    @apply bg-gray-50;
+  }
+
+  .ledger-calendar-cell.is-today,
+  .ledger-calendar-cell.is-selected {
+    @apply border-primary bg-blue-50;
+  }
+
+  .ledger-calendar-cell.is-selected {
+    @apply shadow-[inset_0_0_0_1px_#2563eb];
+  }
+
+  .ledger-calendar-cell.is-sunday .ledger-calendar-day {
+    @apply text-danger;
+  }
+
+  .ledger-calendar-cell.is-saturday .ledger-calendar-day {
+    @apply text-primary;
+  }
+
+  .ledger-calendar-day {
+    @apply text-sm font-bold;
+  }
+
+  .ledger-calendar-income {
+    @apply truncate text-[11px] font-semibold leading-tight text-success;
+  }
+
+  .ledger-calendar-expense {
+    @apply truncate text-[11px] font-semibold leading-tight text-danger;
+  }
+
+  .ledger-calendar-empty-day {
+    @apply p-5 text-center text-gray-500;
+  }
+
+  .modal {
+    @apply max-h-[90vh] w-[480px] overflow-y-auto rounded-xl bg-white shadow-2xl;
+  }
+
+  .modal-header {
+    @apply flex items-center justify-between border-b border-gray-200 px-6 py-5;
+  }
+
+  .modal-header h2 {
+    @apply text-lg;
+  }
+
+  .modal-body {
+    @apply p-6;
+  }
+
+  .modal-footer {
+    @apply flex justify-end gap-2 border-t border-gray-200 px-6 py-4;
+  }
+
+  .form-row {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  .type-toggle {
+    @apply mb-4 flex gap-2;
+  }
+
+  .type-toggle button {
+    @apply flex-1 rounded-lg border border-gray-200 p-2.5 font-medium;
+  }
+
+  .type-toggle button.active-income {
+    @apply border-success bg-emerald-50 text-success;
+  }
+
+  .type-toggle button.active-expense {
+    @apply border-danger bg-red-50 text-danger;
+  }
+
+  .type-toggle button.active-reimbursement-out {
+    @apply border-warning bg-amber-50 text-warning;
+  }
+
+  .type-toggle button.active-reimbursement-in {
+    @apply border-primary bg-blue-50 text-primary;
+  }
+
+  .type-toggle--compact {
+    @apply mb-0;
+  }
+
+  .empty-state {
+    @apply px-5 py-16 text-center text-gray-500;
+  }
+
+  .empty-state h3 {
+    @apply mb-2 text-gray-900;
+  }
+
+  .empty-state p {
+    @apply mb-5;
+  }
+
+  .section-title {
+    @apply my-6 mb-3 text-base font-semibold;
+  }
+
+  .group-header {
+    @apply flex cursor-pointer items-center justify-between border-b border-gray-200 py-3 font-semibold;
+  }
+
+  .account-row {
+    @apply flex cursor-pointer items-center justify-between border-b border-gray-200 px-4 py-3.5 transition-colors hover:bg-gray-50;
+  }
+
+  .account-row-info {
+    @apply flex flex-col gap-0.5;
+  }
+
+  .account-row-name {
+    @apply font-medium;
+  }
+
+  .account-row-meta {
+    @apply text-[13px] text-gray-500;
+  }
+
+  .account-row-value {
+    @apply text-right;
+  }
+
+  .progress-bar {
+    @apply mt-1.5 h-2 overflow-hidden rounded bg-gray-200;
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded bg-primary transition-[width] duration-300;
+  }
+
+  .progress-bar-fill.over {
+    @apply bg-danger;
+  }
+
+  .progress-bar-fill.near {
+    @apply bg-warning;
+  }
+
+  .settings-layout {
+    @apply flex gap-6;
+  }
+
+  .settings-nav {
+    @apply flex w-40 flex-col gap-1;
+  }
+
+  .settings-nav a {
+    @apply rounded-lg px-3 py-2.5 text-gray-500;
+  }
+
+  .settings-nav a.active {
+    @apply bg-blue-50 font-medium text-primary;
+  }
+
+  .settings-content {
+    @apply flex-1;
+  }
+
+  .category-panels {
+    @apply flex flex-col gap-5;
+  }
+
+  .category-group {
+    @apply overflow-hidden rounded-xl border border-gray-200;
+  }
+
+  .category-group--income {
+    @apply border-green-300 bg-green-50;
+  }
+
+  .category-group--expense {
+    @apply border-red-300 bg-red-50;
+  }
+
+  .category-group-header {
+    @apply flex items-center justify-between border-b border-gray-200 px-4 py-3.5;
+  }
+
+  .category-group--income .category-group-header {
+    @apply border-green-300 bg-green-100;
+  }
+
+  .category-group--expense .category-group-header {
+    @apply border-red-300 bg-red-100;
+  }
+
+  .category-group-title {
+    @apply flex items-center gap-2.5;
+  }
+
+  .category-group-count {
+    @apply text-[13px] font-normal text-gray-500;
+  }
+
+  .category-type-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-semibold;
+  }
+
+  .category-type-badge--income {
+    @apply border border-success bg-emerald-50 text-success;
+  }
+
+  .category-type-badge--expense {
+    @apply border border-danger bg-red-50 text-danger;
+  }
+
+  .category-type-badge--transfer,
+  .category-type-badge--reimbursement_in {
+    @apply border border-primary bg-blue-50 text-primary;
+  }
+
+  .category-type-badge--reimbursement_out {
+    @apply border border-warning bg-amber-50 text-warning;
+  }
+
+  .category-tree {
+    @apply px-3 pb-3 pt-2;
+  }
+
+  .category-empty {
+    @apply p-4 text-center text-sm text-gray-500;
+  }
+
+  .category-block {
+    @apply mb-2 overflow-hidden rounded-lg bg-white;
+  }
+
+  .category-block:last-child {
+    @apply mb-0;
+  }
+
+  .category-block--income {
+    @apply border-l-4 border-success;
+  }
+
+  .category-block--expense {
+    @apply border-l-4 border-danger;
+  }
+
+  .category-parent {
+    @apply flex items-center justify-between gap-3 border-b border-gray-200 px-3 py-2.5 font-semibold;
+  }
+
+  .category-parent--income {
+    @apply bg-green-50;
+  }
+
+  .category-parent--expense {
+    @apply bg-red-50/50;
+  }
+
+  .category-child {
+    @apply flex items-center justify-between gap-3 border-b border-gray-200 py-2 pl-5 pr-3;
+  }
+
+  .category-child:last-child {
+    @apply border-b-0;
+  }
+
+  .category-child--income {
+    @apply bg-green-50/30;
+  }
+
+  .category-child--expense {
+    @apply bg-red-50/30;
+  }
+
+  .category-name {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .category-level {
+    @apply rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+  }
+
+  .category-parent--income .category-level,
+  .category-child--income .category-level {
+    @apply bg-green-100 text-success;
+  }
+
+  .category-parent--expense .category-level,
+  .category-child--expense .category-level {
+    @apply bg-red-100 text-danger;
+  }
+
+  .category-child-path {
+    @apply text-[13px] font-medium text-gray-500;
+  }
+
+  .category-child-sep {
+    @apply text-xs text-gray-500;
+  }
+
+  .category-child--income .category-name {
+    @apply text-green-800;
+  }
+
+  .category-child--expense .category-name {
+    @apply text-red-800;
+  }
+
+  .category-actions {
+    @apply flex shrink-0 gap-2;
+  }
+
+  .symbol-lookup-status {
+    @apply mt-1 block text-xs text-gray-500;
+  }
+
+  .symbol-lookup-status--error {
+    @apply text-danger;
+  }
+
+  .input-readonly {
+    @apply bg-gray-100 text-gray-900;
+  }
+
+  .market-status {
+    @apply mb-4 flex flex-col gap-1 rounded-lg p-3.5 text-sm;
+  }
+
+  .market-status--ok {
+    @apply border border-green-300 bg-emerald-50 text-green-800;
+  }
+
+  .market-status--warn {
+    @apply border border-amber-300 bg-amber-50 text-amber-800;
+  }
+
+  .market-status--off {
+    @apply border border-gray-200 bg-gray-100 text-gray-500;
+  }
+
+  .tx-group-date {
+    @apply flex items-center justify-between gap-3 py-3 pb-1.5 text-[13px] font-semibold text-gray-500;
+  }
+
+  .tx-group-daily-summary {
+    @apply flex gap-3 text-xs font-medium;
+  }
+
+  .tx-row {
+    @apply flex items-center justify-between border-b border-gray-200 py-2.5;
+  }
+
+  .tx-row--income {
+    @apply border-l-[3px] border-l-success pl-2.5;
+  }
+
+  .tx-row--expense {
+    @apply border-l-[3px] border-l-danger pl-2.5;
+  }
+
+  .tx-row--transfer,
+  .tx-row--reimbursement_in {
+    @apply border-l-[3px] border-l-primary pl-2.5;
+  }
+
+  .tx-row--reimbursement_out {
+    @apply border-l-[3px] border-l-warning pl-2.5;
+  }
+
+  .tx-row-left {
+    @apply flex items-center gap-3;
+  }
+
+  .tx-category {
+    @apply min-w-20 font-medium;
+  }
+
+  .tx-merchant {
+    @apply text-sm text-gray-500;
+  }
+
+  .tx-amount-income {
+    @apply font-semibold text-success;
+  }
+
+  .tx-amount-expense {
+    @apply font-semibold text-danger;
+  }
+
+  .month-summary {
+    @apply mt-4 flex gap-6 rounded-lg bg-gray-50 p-4 text-sm;
+  }
+
+  .chart-container {
+    @apply h-[280px];
+  }
+
+  .spending-breakdown {
+    @apply mb-4 overflow-hidden;
+  }
+
+  .spending-breakdown--empty {
+    @apply pb-7;
+  }
+
+  .spending-breakdown-header {
+    @apply mb-6 flex items-start justify-between gap-6;
+  }
+
+  .spending-breakdown-subtitle {
+    @apply mt-1 text-sm text-gray-500;
+  }
+
+  .spending-breakdown-subtitle strong {
+    @apply text-gray-900;
+  }
+
+  .spending-breakdown-total {
+    @apply shrink-0 text-right;
+  }
+
+  .spending-breakdown-total-label {
+    @apply mb-1 block text-xs text-gray-500;
+  }
+
+  .spending-breakdown-total-value {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  .spending-breakdown-body {
+    @apply grid items-center gap-8 [grid-template-columns:minmax(240px,320px)_1fr];
+  }
+
+  .spending-breakdown-chart {
+    @apply relative;
+  }
+
+  .spending-donut-label {
+    @apply fill-gray-500 text-xs font-medium;
+  }
+
+  .spending-donut-value {
+    @apply fill-gray-900 text-lg font-bold;
+  }
+
+  .spending-breakdown-list {
+    @apply flex flex-col gap-1;
+  }
+
+  .spending-row {
+    @apply flex items-start gap-2.5 rounded-[10px] px-3.5 py-3 transition-colors;
+  }
+
+  .spending-row:hover,
+  .spending-row.is-active {
+    @apply bg-gray-50;
+  }
+
+  .spending-row-rank {
+    @apply w-5 shrink-0 text-xs font-semibold leading-5 text-gray-500;
+  }
+
+  .spending-row-color {
+    @apply mt-0.5 h-9 w-1 shrink-0 rounded-sm;
+  }
+
+  .spending-row-content {
+    @apply min-w-0 flex-1;
+  }
+
+  .spending-row-top {
+    @apply mb-2 flex items-baseline justify-between gap-3;
+  }
+
+  .spending-row-name,
+  .spending-row-amount {
+    @apply text-sm font-semibold;
+  }
+
+  .spending-row-amount {
+    @apply whitespace-nowrap;
+  }
+
+  .spending-row-bar-track {
+    @apply mb-1.5 h-1.5 overflow-hidden rounded-sm bg-gray-100;
+  }
+
+  .spending-row-bar-fill {
+    @apply h-full min-w-0.5 rounded-sm transition-[width] duration-400;
+  }
+
+  .spending-row-meta {
+    @apply flex justify-between text-xs text-gray-500;
+  }
+
+  .spending-budget-note {
+    @apply mt-5 border-t border-gray-200 pt-4 text-[13px] text-gray-500;
+  }
+
+  .spending-budget-note a {
+    @apply font-medium text-primary;
+  }
+
+  .spending-tooltip {
+    @apply rounded-[10px] border border-gray-200 bg-white px-3.5 py-2.5 shadow-lg;
+  }
+
+  .spending-tooltip-name {
+    @apply mb-1 text-[13px] font-semibold;
+  }
+
+  .spending-tooltip-amount {
+    @apply text-[15px] font-bold;
+  }
+
+  .spending-tooltip-ratio {
+    @apply mt-0.5 text-xs text-gray-500;
+  }
+
+  .loading {
+    @apply p-10 text-center text-gray-500;
+  }
+
+  .checkbox-label {
+    @apply flex items-center gap-2 text-sm;
+  }
+}

@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
 venv/
 data/*.db
@@ -12,3 +13,5 @@ data/toss_credentials.json
 dist/
 build/
 node_modules/
+.next/
+out/

@@ -1,0 +1,482 @@
+﻿[
+    {
+        "id":  1,
+        "name":  "ìë¹",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  0,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  2,
+                             "name":  "ì¸ì",
+                             "parent_id":  1,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  27,
+                             "name":  "ë°°ë¬",
+                             "parent_id":  1,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  3,
+                             "name":  "ì¥ë³´ê¸°",
+                             "parent_id":  1,
+                             "type":  "expense",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  4,
+                             "name":  "ì¹´í",
+                             "parent_id":  1,
+                             "type":  "expense",
+                             "sort_order":  2,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  30,
+        "name":  "ë°ì´í¸",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  0,
+        "is_system":  false,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  31,
+                             "name":  "ìë¹",
+                             "parent_id":  30,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  32,
+                             "name":  "ê³µì©",
+                             "parent_id":  30,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  33,
+                             "name":  "ì©ë",
+                             "parent_id":  30,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  38,
+        "name":  "ì¤ê³ ê±°ë",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  0,
+        "is_system":  false,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  39,
+                             "name":  "ë¹ê·¼",
+                             "parent_id":  38,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  40,
+        "name":  "ì©ë",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  0,
+        "is_system":  false,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  41,
+                             "name":  "ì£¼í¬",
+                             "parent_id":  40,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  42,
+                             "name":  "ê¸°í",
+                             "parent_id":  40,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  43,
+        "name":  "ê¸°í",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  0,
+        "is_system":  false,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  44,
+                             "name":  "ì±í\u0085í¬",
+                             "parent_id":  43,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  45,
+                             "name":  "ìºìë°±",
+                             "parent_id":  43,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  46,
+        "name":  "ê¸ì¬",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  0,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  47,
+                             "name":  "ë³¸ë´",
+                             "parent_id":  46,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  48,
+                             "name":  "ìì¬",
+                             "parent_id":  46,
+                             "type":  "income",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  49,
+        "name":  "ê¸°íìì\u0085",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  3,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  50,
+                             "name":  "ì´ì",
+                             "parent_id":  49,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  51,
+                             "name":  "ë°°ë¹",
+                             "parent_id":  49,
+                             "type":  "income",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  52,
+                             "name":  "ê¸°í",
+                             "parent_id":  49,
+                             "type":  "income",
+                             "sort_order":  2,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  5,
+        "name":  "êµíµ",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  4,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  6,
+                             "name":  "ëì¤êµíµ",
+                             "parent_id":  5,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  7,
+                             "name":  "ì£¼ì ",
+                             "parent_id":  5,
+                             "type":  "expense",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  8,
+                             "name":  "íì",
+                             "parent_id":  5,
+                             "type":  "expense",
+                             "sort_order":  2,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  13,
+        "name":  "ìí",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  12,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  14,
+                             "name":  "íµì ë¹",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  29,
+                             "name":  "ë¡ë",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  34,
+                             "name":  "ìíì©í",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  35,
+                             "name":  "ë³´í",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  15,
+                             "name":  "ìë£",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  16,
+                             "name":  "ì¼í",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  2,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  28,
+                             "name":  "ì¹´ëëê¸",
+                             "parent_id":  13,
+                             "type":  "expense",
+                             "sort_order":  3,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  17,
+        "name":  "ë¬¸í",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  16,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  18,
+                             "name":  "ì¬ê°",
+                             "parent_id":  17,
+                             "type":  "expense",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  19,
+                             "name":  "êµ¬ë\u0085",
+                             "parent_id":  17,
+                             "type":  "expense",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  20,
+        "name":  "íì¬",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  19,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  21,
+                             "name":  "ìê¸",
+                             "parent_id":  20,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  36,
+                             "name":  "ë¬¸íì²´ë ¨ë¹",
+                             "parent_id":  20,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  37,
+                             "name":  "íë¡ì í¸ ë¹ì©",
+                             "parent_id":  20,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  false,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  22,
+                             "name":  "ìì¬",
+                             "parent_id":  20,
+                             "type":  "income",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  23,
+        "name":  "ê¸ìµ",
+        "type":  "income",
+        "parent_id":  null,
+        "sort_order":  22,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+                         {
+                             "id":  24,
+                             "name":  "ì´ì",
+                             "parent_id":  23,
+                             "type":  "income",
+                             "sort_order":  0,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  25,
+                             "name":  "ë°°ë¹",
+                             "parent_id":  23,
+                             "type":  "income",
+                             "sort_order":  1,
+                             "is_system":  true,
+                             "is_active":  true
+                         },
+                         {
+                             "id":  26,
+                             "name":  "ê¸°í",
+                             "parent_id":  23,
+                             "type":  "income",
+                             "sort_order":  2,
+                             "is_system":  true,
+                             "is_active":  true
+                         }
+                     ]
+    },
+    {
+        "id":  54,
+        "name":  "ë°íìì ",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  998,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+
+                     ]
+    },
+    {
+        "id":  53,
+        "name":  "ë´ë¶ì´ì²´",
+        "type":  "expense",
+        "parent_id":  null,
+        "sort_order":  999,
+        "is_system":  true,
+        "is_active":  true,
+        "children":  [
+
+                     ]
+    }
+]
