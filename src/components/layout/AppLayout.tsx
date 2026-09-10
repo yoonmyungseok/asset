@@ -23,7 +23,6 @@ export function useRefresh() {
 const NAV_ITEMS = [
   { href: '/', label: '대시보드', exact: true },
   { href: '/ledger', label: '가계부' },
-  { href: '/ledger/analysis', label: '가계부 분석' },
   { href: '/ledger/budget', label: '예산' },
   { href: '/investment', label: '자산' },
   { href: '/settings', label: '설정' },
