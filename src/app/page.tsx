@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [cashflow, setCashflow] = useState<CashflowTrendPoint[]>([]);
   const [liabilities, setLiabilities] = useState<{ name: string; current_balance: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -42,6 +43,14 @@ export default function DashboardPage() {
     const handler = () => load();
     window.addEventListener('dashboard-refreshed', handler);
     return () => window.removeEventListener('dashboard-refreshed', handler);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, []);
 
   if (loading || !overview) return <div className="loading">로딩 중...</div>;
@@ -110,7 +119,7 @@ export default function DashboardPage() {
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={renderAssetLabel}>
+                <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={isMobile ? 75 : 100} label={isMobile ? false : renderAssetLabel}>
                   {donutData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
                 </Pie>
                 <Tooltip formatter={(v) => formatMoney(v as number)} />
@@ -143,28 +152,30 @@ export default function DashboardPage() {
         </div>
         <div className="card">
           <h3 className="section-title mt-0">계좌별 breakdown</h3>
-          <table className="table">
-            <thead>
-              <tr><th>계좌</th><th>유형</th><th>평가금액</th><th>비중</th></tr>
-            </thead>
-            <tbody>
-              {overview.accounts_summary.map((a) => (
-                <tr key={a.account_id}>
-                  <td>{a.name}</td>
-                  <td className="text-muted">{a.type}</td>
-                  <td>{formatMoney(a.total_value)}</td>
-                  <td>{a.ratio}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr><th>계좌</th><th>유형</th><th>평가금액</th><th>비중</th></tr>
+              </thead>
+              <tbody>
+                {overview.accounts_summary.map((a) => (
+                  <tr key={a.account_id}>
+                    <td>{a.name}</td>
+                    <td className="text-muted">{a.type}</td>
+                    <td>{formatMoney(a.total_value)}</td>
+                    <td>{a.ratio}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {liabilities.length > 0 && (
         <div className="card">
           <h3 className="section-title mt-0">부채 요약</h3>
-          <div className="flex gap-8">
+          <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-8">
             {liabilities.map((l) => (
               <div key={l.name}>
                 <div className="text-muted text-[13px]">{l.name}</div>

@@ -6,7 +6,7 @@ export default function MonthNavigator() {
   const { year, month, goPrev, goNext, goToday, isCurrentMonth } = useLedgerMonth();
 
   return (
-    <div className="month-nav">
+    <div className="month-nav w-full lg:w-auto">
       <button type="button" className="btn btn-sm btn-secondary" onClick={goPrev} aria-label="이전 달">
         ‹
       </button>

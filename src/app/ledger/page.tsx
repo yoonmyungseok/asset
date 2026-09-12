@@ -22,7 +22,9 @@ export default function LedgerPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<LedgerTransaction | null>(null);
   const [search, setSearch] = useState('');
-  const [view, setView] = useState<LedgerView>('list');
+  const [view, setView] = useState<LedgerView>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches ? 'list' : 'calendar',
+  );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,7 +100,7 @@ export default function LedgerPage() {
         }
       />
 
-      <div className="filters">
+      <div className="filters ledger-filters">
         <MonthNavigator />
         <div className="view-toggle">
           <button type="button" className={view === 'list' ? 'active' : ''} onClick={() => setView('list')}>
@@ -109,7 +111,12 @@ export default function LedgerPage() {
           </button>
         </div>
         {view === 'list' && (
-          <input placeholder="검색..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input
+            className="w-full min-w-0 flex-1"
+            placeholder="검색..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         )}
       </div>
 
@@ -168,6 +175,15 @@ export default function LedgerPage() {
           {monthSummary}
         </div>
       )}
+
+      <button
+        type="button"
+        className="ledger-fab lg:hidden"
+        onClick={openCreateForm}
+        aria-label="거래 추가"
+      >
+        +
+      </button>
 
       <TransactionFormModal
         open={showForm}

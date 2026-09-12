@@ -79,7 +79,7 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
 
       <div className="spending-breakdown-body">
         <div className="spending-breakdown-chart">
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
@@ -87,8 +87,8 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={72}
-                outerRadius={108}
+                innerRadius="45%"
+                outerRadius="70%"
                 paddingAngle={2}
                 stroke="none"
                 onMouseEnter={(_, index) => setActiveId(chartData[index].categoryId)}
@@ -127,6 +127,7 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
                 className={`spending-row${isActive ? ' is-active' : ''}`}
                 onMouseEnter={() => setActiveId(c.category_id)}
                 onMouseLeave={() => setActiveId(null)}
+                onClick={() => setActiveId(c.category_id)}
               >
                 <div className="spending-row-rank">{index + 1}</div>
                 <div className="spending-row-color" style={{ backgroundColor: color }} />

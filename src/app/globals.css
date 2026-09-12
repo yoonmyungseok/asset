@@ -62,7 +62,7 @@ textarea {
   }
 
   .modal-overlay {
-    @apply fixed inset-0 z-[1000] flex items-center justify-center bg-black/40;
+    @apply fixed inset-0 z-[1000] flex items-end justify-center bg-black/40 px-4 lg:items-center lg:px-0;
   }
 
   .form-group {
@@ -76,7 +76,7 @@ textarea {
   .form-group input,
   .form-group select,
   .form-group textarea {
-    @apply w-full rounded-lg border border-gray-200 px-3 py-2;
+    @apply w-full rounded-lg border border-gray-200 px-3 py-2 text-base;
   }
 
   .btn {
@@ -124,7 +124,7 @@ textarea {
   }
 
   .page-title {
-    @apply text-2xl font-bold;
+    @apply text-xl font-bold lg:text-2xl;
   }
 
   .page-actions {
@@ -147,6 +147,7 @@ textarea {
     @apply grid-cols-1 max-w-full lg:max-w-[280px];
   }
 
+  /* 가로 스크롤이 필요한 테이블은 <div class="table-scroll"><table class="table">...</table></div> 로 감싸세요 */
   .table-scroll {
     @apply -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0;
   }
@@ -156,7 +157,7 @@ textarea {
   }
 
   .alert {
-    @apply mb-4 rounded-lg px-4 py-3 text-sm;
+    @apply mb-4 break-words rounded-lg px-4 py-3 text-sm;
   }
 
   .alert-warning {
@@ -169,7 +170,7 @@ textarea {
 
   .table th,
   .table td {
-    @apply border-b border-gray-200 px-3 py-3 text-left text-sm;
+    @apply whitespace-nowrap border-b border-gray-200 px-3 py-3 text-left text-sm;
   }
 
   .table th {
@@ -181,12 +182,28 @@ textarea {
   }
 
   .filters {
-    @apply mb-4 flex flex-wrap gap-3;
+    @apply mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center;
+  }
+
+  .filters .ml-auto {
+    @apply w-full sm:ml-auto sm:w-auto;
   }
 
   .filters select,
   .filters input {
-    @apply rounded-lg border border-gray-200 bg-white px-3 py-2;
+    @apply rounded-lg border border-gray-200 bg-white px-3 py-2 text-base;
+  }
+
+  .ledger-filters {
+    @apply flex-col;
+  }
+
+  .ledger-filters .month-nav {
+    @apply justify-center;
+  }
+
+  .ledger-filters .view-toggle {
+    @apply w-full justify-center;
   }
 
   .month-nav {
@@ -210,12 +227,12 @@ textarea {
   }
 
   .ledger-calendar {
-    @apply p-4;
+    @apply p-2 lg:p-4;
   }
 
   .ledger-calendar-weekdays,
   .ledger-calendar-grid {
-    @apply grid grid-cols-7 gap-1.5;
+    @apply grid grid-cols-7 gap-1;
   }
 
   .ledger-calendar-weekdays {
@@ -235,7 +252,7 @@ textarea {
   }
 
   .ledger-calendar-cell {
-    @apply flex min-h-[88px] cursor-pointer flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2 text-left;
+    @apply flex min-h-[56px] cursor-pointer flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2 text-left lg:min-h-[88px];
   }
 
   .ledger-calendar-cell.is-empty {
@@ -268,11 +285,11 @@ textarea {
   }
 
   .ledger-calendar-income {
-    @apply break-all text-[11px] font-semibold leading-tight text-success;
+    @apply hidden break-all text-[11px] font-semibold leading-tight text-success sm:block;
   }
 
   .ledger-calendar-expense {
-    @apply break-all text-[11px] font-semibold leading-tight text-danger;
+    @apply hidden break-all text-[11px] font-semibold leading-tight text-danger sm:block;
   }
 
   .ledger-calendar-empty-day {
@@ -280,11 +297,11 @@ textarea {
   }
 
   .modal {
-    @apply max-h-[90vh] w-[480px] overflow-y-auto rounded-xl bg-white shadow-2xl;
+    @apply flex max-h-[90vh] w-full max-w-[480px] flex-col rounded-t-xl bg-white shadow-2xl lg:rounded-xl;
   }
 
   .modal-header {
-    @apply flex items-center justify-between border-b border-gray-200 px-6 py-5;
+    @apply flex shrink-0 items-center justify-between border-b border-gray-200 px-6 py-5;
   }
 
   .modal-header h2 {
@@ -292,11 +309,11 @@ textarea {
   }
 
   .modal-body {
-    @apply p-6;
+    @apply min-h-0 overflow-y-auto p-6;
   }
 
   .modal-footer {
-    @apply flex justify-end gap-2 border-t border-gray-200 px-6 py-4;
+    @apply flex shrink-0 justify-end gap-2 border-t border-gray-200 px-6 py-4;
   }
 
   .form-row {
@@ -304,7 +321,7 @@ textarea {
   }
 
   .type-toggle {
-    @apply mb-4 flex gap-2;
+    @apply mb-4 flex flex-wrap gap-2;
   }
 
   .type-toggle button {
@@ -583,15 +600,15 @@ textarea {
   }
 
   .tx-group-date {
-    @apply flex items-center justify-between gap-3 py-3 pb-1.5 text-[13px] font-semibold text-gray-500;
+    @apply flex flex-col items-start gap-1 py-3 pb-1.5 text-[13px] font-semibold text-gray-500 sm:flex-row sm:items-center sm:justify-between sm:gap-3;
   }
 
   .tx-group-daily-summary {
-    @apply flex gap-3 text-xs font-medium;
+    @apply flex flex-wrap gap-2 text-xs font-medium;
   }
 
   .tx-row {
-    @apply flex items-center justify-between border-b border-gray-200 py-2.5;
+    @apply flex flex-col items-start gap-1 border-b border-gray-200 py-2.5 lg:flex-row lg:items-center lg:justify-between;
   }
 
   .tx-row--income {
@@ -612,7 +629,11 @@ textarea {
   }
 
   .tx-row-left {
-    @apply flex items-center gap-3;
+    @apply flex flex-wrap items-center gap-2 lg:gap-3;
+  }
+
+  .tx-row-actions {
+    @apply flex w-full items-center justify-between gap-3 lg:w-auto lg:justify-start;
   }
 
   .tx-category {
@@ -632,11 +653,15 @@ textarea {
   }
 
   .month-summary {
-    @apply mt-4 flex gap-6 rounded-lg bg-gray-50 p-4 text-sm;
+    @apply mt-4 flex flex-col gap-2 rounded-lg bg-gray-50 p-4 text-sm sm:flex-row sm:gap-6;
+  }
+
+  .ledger-fab {
+    @apply fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-2xl font-light text-white shadow-lg transition-colors hover:bg-[#1d4ed8];
   }
 
   .chart-container {
-    @apply h-[280px];
+    @apply h-[220px] lg:h-[280px];
   }
 
   .spending-breakdown {
@@ -648,7 +673,7 @@ textarea {
   }
 
   .spending-breakdown-header {
-    @apply mb-6 flex items-start justify-between gap-6;
+    @apply mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between;
   }
 
   .spending-breakdown-subtitle {
@@ -660,7 +685,7 @@ textarea {
   }
 
   .spending-breakdown-total {
-    @apply shrink-0 text-right;
+    @apply shrink-0 lg:text-right;
   }
 
   .spending-breakdown-total-label {
@@ -672,11 +697,11 @@ textarea {
   }
 
   .spending-breakdown-body {
-    @apply grid items-center gap-8 [grid-template-columns:minmax(240px,320px)_1fr];
+    @apply grid grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(240px,320px)_1fr] lg:gap-8;
   }
 
   .spending-breakdown-chart {
-    @apply relative;
+    @apply relative mx-auto h-[200px] w-full max-w-[280px] lg:mx-0 lg:h-[280px] lg:max-w-none;
   }
 
   .spending-donut-label {
@@ -696,6 +721,7 @@ textarea {
   }
 
   .spending-row:hover,
+  .spending-row:active,
   .spending-row.is-active {
     @apply bg-gray-50;
   }

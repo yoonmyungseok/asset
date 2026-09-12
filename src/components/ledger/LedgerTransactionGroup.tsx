@@ -82,7 +82,7 @@ export default function LedgerTransactionGroup({ date, transactions, showHeader 
               )}
               {tx.is_fixed && <span className="text-muted text-xs">고정</span>}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="tx-row-actions">
               <span className={amountClass(tx.type)}>
                 {amountPrefix(tx.type)}
                 {formatMoney(tx.amount)}

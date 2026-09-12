@@ -47,8 +47,12 @@ export default function LedgerAnalysisPage() {
           <h3 className="section-title mt-0">전월 대비</h3>
           <p>
             이번 달 지출: <strong>{formatMoney(summary.total_expense)}</strong>
-            {' | '}전월: {formatMoney(summary.comparison.prev_month_expense)}
-            {' | '}변화: <strong className={Number(summary.comparison.expense_change_rate) > 0 ? 'text-danger' : 'text-success'}>
+            <span className="hidden sm:inline">{' | '}</span>
+            <br className="sm:hidden" />
+            전월: {formatMoney(summary.comparison.prev_month_expense)}
+            <span className="hidden sm:inline">{' | '}</span>
+            <br className="sm:hidden" />
+            변화: <strong className={Number(summary.comparison.expense_change_rate) > 0 ? 'text-danger' : 'text-success'}>
               {Number(summary.comparison.expense_change_rate) > 0 ? '+' : ''}{summary.comparison.expense_change_rate}%
             </strong>
           </p>
@@ -64,24 +68,26 @@ export default function LedgerAnalysisPage() {
               ? ((totalCardExpense / Number(summary.total_expense)) * 100).toFixed(1)
               : '0'}%)
           </p>
-          <table className="table">
-            <thead>
-              <tr><th>카드</th><th>유형</th><th>사용액</th><th>비중</th></tr>
-            </thead>
-            <tbody>
-              {sortedCards.map((c) => (
-                <tr key={c.card_id}>
-                  <td>
-                    {c.card_name}
-                    {c.last_four ? <span className="text-muted"> · {c.last_four}</span> : null}
-                  </td>
-                  <td className="text-muted">{CARD_TYPES[c.card_type] ?? c.card_type}</td>
-                  <td>{formatMoney(c.amount)}</td>
-                  <td>{c.ratio}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr><th>카드</th><th>유형</th><th>사용액</th><th>비중</th></tr>
+              </thead>
+              <tbody>
+                {sortedCards.map((c) => (
+                  <tr key={c.card_id}>
+                    <td>
+                      {c.card_name}
+                      {c.last_four ? <span className="text-muted"> · {c.last_four}</span> : null}
+                    </td>
+                    <td className="text-muted">{CARD_TYPES[c.card_type] ?? c.card_type}</td>
+                    <td>{formatMoney(c.amount)}</td>
+                    <td>{c.ratio}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </>
