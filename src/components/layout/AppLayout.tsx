@@ -28,9 +28,21 @@ const NAV_ITEMS = [
   { href: '/settings', label: '설정' },
 ];
 
+const MOBILE_NAV_ITEMS = [
+  { href: '/', label: '대시보드', exact: true },
+  { href: '/ledger', label: '가계부' },
+  { href: '/investment', label: '자산' },
+  { href: '/settings', label: '설정' },
+];
+
 function isActive(pathname: string, href: string, exact?: boolean) {
   if (exact) return pathname === href;
   if (href === '/settings') return pathname.startsWith('/settings');
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function isMobileNavActive(pathname: string, href: string, exact?: boolean) {
+  if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -71,7 +83,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed bottom-0 left-0 top-0 flex w-sidebar flex-col border-r border-gray-200 bg-white px-4 py-6">
+      <aside className="fixed bottom-0 left-0 top-0 hidden w-sidebar flex-col border-r border-gray-200 bg-white px-4 py-6 lg:flex">
         <div className="mb-8 px-2 text-lg font-bold">💰 내 자산 관리</div>
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
@@ -96,7 +108,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="mt-1 text-lg font-bold">{formatMoney(netWorth)}</div>
         </div>
       </aside>
-      <main className="ml-sidebar min-h-screen flex-1 p-4 lg:p-6">
+
+      <nav className="mobile-nav lg:hidden">
+        <div className="mobile-net-worth">
+          <span className="mobile-net-worth-label">순자산</span>
+          <span className="mobile-net-worth-value">{formatMoney(netWorth)}</span>
+        </div>
+        <div className="mobile-nav-items">
+          {MOBILE_NAV_ITEMS.map((item) => {
+            const active = isMobileNavActive(pathname, item.href, item.exact);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`mobile-nav-item${active ? ' active' : ''}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      <main className="ml-0 min-h-screen flex-1 p-4 pb-20 lg:ml-sidebar lg:p-6 lg:pb-6">
         <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
           {children}
         </RefreshContext.Provider>
