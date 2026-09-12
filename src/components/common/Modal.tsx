@@ -18,6 +18,15 @@ export default function Modal({ open, onClose, title, children, footer }: ModalP
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open || !mounted) return null;
 
   return createPortal(
@@ -25,7 +34,7 @@ export default function Modal({ open, onClose, title, children, footer }: ModalP
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>
-          <button onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="닫기">✕</button>
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-footer">{footer}</div>}

@@ -8,6 +8,8 @@ import { api } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/AppLayout';
 import InvestmentTxFormModal from '@/components/investment/InvestmentTxFormModal';
 import HoldingFormModal, { emptyHoldingFormValues } from '@/components/investment/HoldingFormModal';
+import HoldingCard from '@/components/investment/HoldingCard';
+import RecentTransactionRow from '@/components/investment/RecentTransactionRow';
 import type { HoldingFormValues } from '@/components/investment/HoldingFormModal';
 import TransactionFormModal from '@/components/ledger/TransactionFormModal';
 import InstitutionSelect from '@/components/common/InstitutionSelect';
@@ -51,6 +53,7 @@ export default function AccountDetailPage() {
   });
   const [limitForm, setLimitForm] = useState({ year: String(new Date().getFullYear()), contribution_limit: '' });
   const [holdingForm, setHoldingForm] = useState<HoldingFormValues>(emptyHoldingFormValues());
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const load = async () => {
     const [acc, types, investmentTx, ledgerTx, limits, snaps] = await Promise.all([
@@ -313,9 +316,35 @@ export default function AccountDetailPage() {
         actions={
           <>
             <Link href="/investment" className="btn btn-secondary">← 자산</Link>
-            <button className="btn btn-secondary" onClick={openEditForm}>계좌 수정</button>
-            <button className="btn btn-danger" onClick={handleRemoveAccount}>삭제</button>
+            <button className="btn btn-secondary hidden lg:inline-flex" onClick={openEditForm}>계좌 수정</button>
+            <button className="btn btn-danger hidden lg:inline-flex" onClick={handleRemoveAccount}>삭제</button>
             <button className="btn btn-primary" onClick={openCreateTxForm}>거래 추가</button>
+            <div className="relative lg:hidden">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowMobileMenu((open) => !open)}
+                aria-label="더보기"
+                aria-expanded={showMobileMenu}
+              >
+                ⋯
+              </button>
+              {showMobileMenu && (
+                <div className="action-menu">
+                  <button
+                    className="action-menu-item"
+                    onClick={() => { setShowMobileMenu(false); openEditForm(); }}
+                  >
+                    계좌 수정
+                  </button>
+                  <button
+                    className="action-menu-item action-menu-item--danger"
+                    onClick={() => { setShowMobileMenu(false); handleRemoveAccount(); }}
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         }
       />
@@ -364,9 +393,9 @@ export default function AccountDetailPage() {
 
       {supportsLimit && (
         <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: hasLimit ? 8 : 0 }}>
-            <span style={{ fontWeight: 600 }}>연간 납입 한도</span>
-            <span style={{ display: 'flex', gap: 8 }}>
+          <div className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between${hasLimit ? ' mb-2' : ''}`}>
+            <span className="font-semibold">연간 납입 한도</span>
+            <span className="flex gap-2">
               {hasLimit ? (
                 <>
                   <button className="btn btn-sm btn-secondary" onClick={openLimitForm}>수정</button>
@@ -403,9 +432,9 @@ export default function AccountDetailPage() {
 
       {supportsHoldings && (
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="section-title" style={{ margin: 0 }}>보유 종목</h3>
-          <span style={{ display: 'flex', gap: 8 }}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="section-title m-0">보유 종목</h3>
+          <span className="flex gap-2">
             <button
               className="btn btn-sm btn-secondary"
               onClick={async () => {
@@ -421,64 +450,80 @@ export default function AccountDetailPage() {
           </span>
         </div>
         {holdings.length === 0 ? (
-          <p className="text-muted" style={{ padding: '20px 0' }}>보유 종목이 없습니다.</p>
+          <p className="text-muted py-5">보유 종목이 없습니다.</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>상품</th>
-                <th>유형</th>
-                <th>수량/원금</th>
-                <th>금리</th>
-                <th>가입일</th>
-                <th>만기일</th>
-                <th>미수이자</th>
-                <th>평가금액</th>
-                <th>수익금액</th>
-                <th>수익률</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {holdings.map((h) => {
-                const isDeposit = h.asset_class === 'deposit';
-                return (
-                <tr key={h.id}>
-                  <td>
-                    <strong>{h.name}</strong>
-                    {!isDeposit && (
-                      <>
-                        <br /><span className="text-muted" style={{ fontSize: 12 }}>{h.symbol}</span>
-                        <br /><span className="text-muted" style={{ fontSize: 12 }}>
-                          {formatQuantity(h.quantity)}좌 · 평단 {formatAvgCostPrice(h.avg_cost_price)} · 현재 {formatAvgCostPrice(h.current_price)}
-                        </span>
-                      </>
-                    )}
-                  </td>
-                  <td>{ASSET_CLASS_LABELS[h.asset_class] || h.asset_class}</td>
-                  <td>{isDeposit ? formatMoney(h.quantity) : formatMoney(h.cost_basis)}</td>
-                  <td>{isDeposit ? formatInterestRate(h.interest_rate) : '-'}</td>
-                  <td>{isDeposit ? formatMaturityLabel(h.start_date) : '-'}</td>
-                  <td>{isDeposit ? formatMaturityLabel(h.maturity_date) : '-'}</td>
-                  <td>{isDeposit ? formatMoney(h.accrued_interest) : '-'}</td>
-                  <td>{formatMoney(h.market_value)}</td>
-                  <td className={Number(h.profit_loss) >= 0 ? 'text-success' : 'text-danger'}>
-                    {formatMoney(h.profit_loss)}
-                  </td>
-                  <td className={Number(h.profit_loss_rate) >= 0 ? 'text-success' : 'text-danger'}>
-                    {formatPercent(h.profit_loss_rate)}
-                  </td>
-                  <td>
-                    <span style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => openEditHoldingForm(h)}>수정</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDeleteHolding(h)}>삭제</button>
-                    </span>
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <>
+            <div className="holding-list lg:hidden">
+              {holdings.map((h) => (
+                <HoldingCard
+                  key={h.id}
+                  holding={h}
+                  onEdit={openEditHoldingForm}
+                  onDelete={handleDeleteHolding}
+                />
+              ))}
+            </div>
+            <div className="hidden lg:block">
+              <div className="table-scroll">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>상품</th>
+                      <th>유형</th>
+                      <th>수량/원금</th>
+                      <th>금리</th>
+                      <th>가입일</th>
+                      <th>만기일</th>
+                      <th>미수이자</th>
+                      <th>평가금액</th>
+                      <th>수익금액</th>
+                      <th>수익률</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {holdings.map((h) => {
+                      const isDeposit = h.asset_class === 'deposit';
+                      return (
+                      <tr key={h.id}>
+                        <td>
+                          <strong>{h.name}</strong>
+                          {!isDeposit && (
+                            <>
+                              <br /><span className="text-muted text-xs">{h.symbol}</span>
+                              <br /><span className="text-muted text-xs">
+                                {formatQuantity(h.quantity)}좌 · 평단 {formatAvgCostPrice(h.avg_cost_price)} · 현재 {formatAvgCostPrice(h.current_price)}
+                              </span>
+                            </>
+                          )}
+                        </td>
+                        <td>{ASSET_CLASS_LABELS[h.asset_class] || h.asset_class}</td>
+                        <td>{isDeposit ? formatMoney(h.quantity) : formatMoney(h.cost_basis)}</td>
+                        <td>{isDeposit ? formatInterestRate(h.interest_rate) : '-'}</td>
+                        <td>{isDeposit ? formatMaturityLabel(h.start_date) : '-'}</td>
+                        <td>{isDeposit ? formatMaturityLabel(h.maturity_date) : '-'}</td>
+                        <td>{isDeposit ? formatMoney(h.accrued_interest) : '-'}</td>
+                        <td>{formatMoney(h.market_value)}</td>
+                        <td className={Number(h.profit_loss) >= 0 ? 'text-success' : 'text-danger'}>
+                          {formatMoney(h.profit_loss)}
+                        </td>
+                        <td className={Number(h.profit_loss_rate) >= 0 ? 'text-success' : 'text-danger'}>
+                          {formatPercent(h.profit_loss_rate)}
+                        </td>
+                        <td>
+                          <span className="flex justify-end gap-2">
+                            <button className="btn btn-sm btn-secondary" onClick={() => openEditHoldingForm(h)}>수정</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDeleteHolding(h)}>삭제</button>
+                          </span>
+                        </td>
+                      </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
       )}
@@ -488,28 +533,45 @@ export default function AccountDetailPage() {
         {recentTransactions.length === 0 ? (
           <p className="text-muted">거래 내역이 없습니다.</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr><th>날짜</th><th>유형</th><th>내용</th><th>금액</th><th>메모</th><th></th></tr>
-            </thead>
-            <tbody>
+          <>
+            <div className="lg:hidden">
               {recentTransactions.map((item) => (
-                <tr key={recentTransactionKey(item)}>
-                  <td>{item.data.transaction_date}</td>
-                  <td>{recentTransactionTypeLabel(item)}</td>
-                  <td>{recentTransactionDetailLabel(item, accountId)}</td>
-                  <td>{formatMoney(item.data.amount)}</td>
-                  <td className="text-muted">{recentTransactionMemo(item)}</td>
-                  <td>
-                    <span style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => handleEditRecentTransaction(item)}>수정</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDeleteRecentTransaction(item)}>삭제</button>
-                    </span>
-                  </td>
-                </tr>
+                <RecentTransactionRow
+                  key={recentTransactionKey(item)}
+                  item={item}
+                  accountId={accountId}
+                  onEdit={handleEditRecentTransaction}
+                  onDelete={handleDeleteRecentTransaction}
+                />
               ))}
-            </tbody>
-          </table>
+            </div>
+            <div className="hidden lg:block">
+              <div className="table-scroll">
+                <table className="table">
+                  <thead>
+                    <tr><th>날짜</th><th>유형</th><th>내용</th><th>금액</th><th>메모</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    {recentTransactions.map((item) => (
+                      <tr key={recentTransactionKey(item)}>
+                        <td>{item.data.transaction_date}</td>
+                        <td>{recentTransactionTypeLabel(item)}</td>
+                        <td>{recentTransactionDetailLabel(item, accountId)}</td>
+                        <td>{formatMoney(item.data.amount)}</td>
+                        <td className="text-muted">{recentTransactionMemo(item)}</td>
+                        <td>
+                          <span className="flex justify-end gap-2">
+                            <button className="btn btn-sm btn-secondary" onClick={() => handleEditRecentTransaction(item)}>수정</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDeleteRecentTransaction(item)}>삭제</button>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

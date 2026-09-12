@@ -321,36 +321,38 @@ function RecurringPanel() {
       {items.length === 0 ? (
         <p className="text-muted">등록된 정기 항목이 없습니다.</p>
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>항목</th>
-              <th>유형</th>
-              <th>결제</th>
-              <th>금액</th>
-              <th>일자</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{formatRecurringItemLabel(item)}</td>
-                <td>{item.type === 'income' ? '수입' : '지출'}</td>
-                <td>{formatRecurringPayment(item)}</td>
-                <td>{formatMoney(item.amount)}</td>
-                <td>매월 {item.day_of_month}일</td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  <button className="btn btn-sm btn-secondary" onClick={() => openEdit(item)}>수정</button>
-                  {' '}
-                  <button className="btn btn-sm btn-danger" onClick={async () => { await api.deleteRecurringItem(item.id); load(); }}>
-                    삭제
-                  </button>
-                </td>
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>항목</th>
+                <th>유형</th>
+                <th>결제</th>
+                <th>금액</th>
+                <th>일자</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td>{formatRecurringItemLabel(item)}</td>
+                  <td>{item.type === 'income' ? '수입' : '지출'}</td>
+                  <td>{formatRecurringPayment(item)}</td>
+                  <td>{formatMoney(item.amount)}</td>
+                  <td>매월 {item.day_of_month}일</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <button className="btn btn-sm btn-secondary" onClick={() => openEdit(item)}>수정</button>
+                    {' '}
+                    <button className="btn btn-sm btn-danger" onClick={async () => { await api.deleteRecurringItem(item.id); load(); }}>
+                      삭제
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <Modal
         open={showForm}
@@ -566,45 +568,47 @@ function CardsPanel() {
       {items.length === 0 ? (
         <p className="text-muted">등록된 카드가 없습니다.</p>
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>이름</th>
-              <th>유형</th>
-              <th>연결</th>
-              <th>결제일</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((card) => (
-              <tr key={card.id}>
-                <td>{card.name}</td>
-                <td>{CARD_TYPES[card.card_type] || card.card_type}</td>
-                <td>
-                  {card.card_type === 'debit'
-                    ? card.linked_account_name
-                    : `${card.settlement_account_name || '-'} → 부채`}
-                </td>
-                <td>{card.card_type === 'credit' && card.due_day ? `매월 ${card.due_day}일` : '-'}</td>
-                <td>
-                  <button className="btn btn-sm btn-secondary" onClick={() => openEdit(card)}>수정</button>
-                  {' '}
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={async () => {
-                      if (!confirm(`"${card.name}" 카드를 삭제하시겠습니까?`)) return;
-                      await api.deleteCard(card.id);
-                      load();
-                    }}
-                  >
-                    삭제
-                  </button>
-                </td>
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>유형</th>
+                <th>연결</th>
+                <th>결제일</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((card) => (
+                <tr key={card.id}>
+                  <td>{card.name}</td>
+                  <td>{CARD_TYPES[card.card_type] || card.card_type}</td>
+                  <td>
+                    {card.card_type === 'debit'
+                      ? card.linked_account_name
+                      : `${card.settlement_account_name || '-'} → 부채`}
+                  </td>
+                  <td>{card.card_type === 'credit' && card.due_day ? `매월 ${card.due_day}일` : '-'}</td>
+                  <td>
+                    <button className="btn btn-sm btn-secondary" onClick={() => openEdit(card)}>수정</button>
+                    {' '}
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={async () => {
+                        if (!confirm(`"${card.name}" 카드를 삭제하시겠습니까?`)) return;
+                        await api.deleteCard(card.id);
+                        load();
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <Modal
         open={showForm}
@@ -711,22 +715,24 @@ function LiabilitiesPanel() {
       {items.length === 0 ? (
         <p className="text-muted">등록된 부채가 없습니다.</p>
       ) : (
-        <table className="table">
-          <thead><tr><th>이름</th><th>유형</th><th>기관</th><th>잔액</th><th></th></tr></thead>
-          <tbody>
-            {items.map((l) => (
-              <tr key={l.id}>
-                <td>{l.name}</td>
-                <td>{LIABILITY_TYPES[l.type] || l.type}</td>
-                <td>{l.institution}</td>
-                <td className="text-danger">{formatMoney(l.current_balance)}</td>
-                <td>
-                  <button className="btn btn-sm btn-danger" onClick={async () => { await api.deleteLiability(l.id); load(); }}>삭제</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="table-scroll">
+          <table className="table">
+            <thead><tr><th>이름</th><th>유형</th><th>기관</th><th>잔액</th><th></th></tr></thead>
+            <tbody>
+              {items.map((l) => (
+                <tr key={l.id}>
+                  <td>{l.name}</td>
+                  <td>{LIABILITY_TYPES[l.type] || l.type}</td>
+                  <td>{l.institution}</td>
+                  <td className="text-danger">{formatMoney(l.current_balance)}</td>
+                  <td>
+                    <button className="btn btn-sm btn-danger" onClick={async () => { await api.deleteLiability(l.id); load(); }}>삭제</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="부채 추가"
         footer={<><button className="btn btn-secondary" onClick={() => setShowForm(false)}>취소</button><button className="btn btn-primary" onClick={handleSave}>저장</button></>}>
@@ -823,12 +829,12 @@ function MarketPanel() {
           autoComplete="new-password"
         />
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+        <button className="btn btn-primary w-full sm:w-auto" onClick={handleSave} disabled={saving}>
           {saving ? '연결 확인 중...' : '저장 및 연결 테스트'}
         </button>
         {status?.configured && (
-          <button className="btn btn-danger" onClick={handleDelete}>설정 삭제</button>
+          <button className="btn btn-danger w-full sm:w-auto" onClick={handleDelete}>설정 삭제</button>
         )}
       </div>
       <p className="text-muted" style={{ marginTop: 16, fontSize: 13, marginBottom: 0 }}>
@@ -862,9 +868,9 @@ function BackupPanel() {
     <div className="card">
       <h3 className="section-title" style={{ marginTop: 0 }}>데이터 백업</h3>
       <p className="text-muted" style={{ marginBottom: 20 }}>DB 파일: data/asset.db</p>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button className="btn btn-primary" onClick={() => api.downloadBackup()}>📥 백업 다운로드</button>
-        <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+        <button className="btn btn-primary w-full sm:w-auto" onClick={() => api.downloadBackup()}>📥 백업 다운로드</button>
+        <label className="btn btn-secondary w-full cursor-pointer sm:w-auto">
           {restoring ? '복구 중...' : '📤 백업 복구'}
           <input type="file" accept=".db" style={{ display: 'none' }} onChange={handleRestore} />
         </label>

@@ -122,6 +122,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={`mobile-nav-item${active ? ' active' : ''}`}
+                aria-current={active ? 'page' : undefined}
               >
                 {item.label}
               </Link>
@@ -130,7 +131,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
-      <main className="ml-0 min-h-screen flex-1 p-4 pb-20 lg:ml-sidebar lg:p-6 lg:pb-6">
+      <main className="ml-0 min-h-screen flex-1 p-4 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:ml-sidebar lg:p-6 lg:pb-6">
         <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
           {children}
         </RefreshContext.Provider>

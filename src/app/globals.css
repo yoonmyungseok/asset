@@ -17,6 +17,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
   font-family:
     "Pretendard",
     "Malgun Gothic",
@@ -38,6 +40,15 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 @layer components {
@@ -120,11 +131,11 @@ textarea {
   }
 
   .page-header {
-    @apply mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between;
+    @apply mb-6 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between;
   }
 
   .page-title {
-    @apply text-xl font-bold lg:text-2xl;
+    @apply min-w-0 truncate text-xl font-bold lg:text-2xl;
   }
 
   .page-actions {
@@ -136,7 +147,7 @@ textarea {
   }
 
   .card-grid-4 {
-    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-4;
+    @apply grid-cols-2 lg:grid-cols-4;
   }
 
   .card-grid-2 {
@@ -153,7 +164,7 @@ textarea {
   }
 
   .safe-bottom {
-    @apply pb-20 lg:pb-0;
+    @apply pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pb-0;
   }
 
   .alert {
@@ -302,7 +313,7 @@ textarea {
   }
 
   .modal {
-    @apply flex max-h-[90vh] w-full max-w-[480px] flex-col rounded-t-xl bg-white shadow-2xl lg:rounded-xl;
+    @apply flex max-h-[90dvh] w-full max-w-[480px] flex-col rounded-t-xl bg-white shadow-2xl lg:max-h-[90vh] lg:rounded-xl;
   }
 
   .modal-header {
@@ -310,7 +321,11 @@ textarea {
   }
 
   .modal-header h2 {
-    @apply text-lg;
+    @apply min-w-0 truncate text-lg;
+  }
+
+  .modal-close {
+    @apply -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100;
   }
 
   .modal-body {
@@ -445,16 +460,88 @@ textarea {
     @apply flex flex-col gap-1.5;
   }
 
+  .holding-list {
+    @apply mt-4 flex flex-col gap-3;
+  }
+
+  .holding-card {
+    @apply rounded-lg border border-gray-200 bg-gray-50 p-4;
+  }
+
+  .holding-card-header {
+    @apply mb-3 flex items-start justify-between gap-3;
+  }
+
+  .holding-card-title {
+    @apply flex min-w-0 flex-col gap-0.5;
+  }
+
+  .holding-card-name {
+    @apply font-semibold;
+  }
+
+  .holding-card-symbol {
+    @apply text-xs text-gray-500;
+  }
+
+  .holding-card-type {
+    @apply text-xs text-gray-500;
+  }
+
+  .holding-card-value {
+    @apply shrink-0 text-right;
+  }
+
+  .holding-card-market {
+    @apply font-semibold;
+  }
+
+  .holding-card-details {
+    @apply mb-3 text-sm;
+  }
+
+  .holding-card-detail-grid {
+    @apply grid grid-cols-3 gap-2;
+  }
+
+  .holding-card-label {
+    @apply mb-0.5 block text-xs text-gray-500;
+  }
+
+  .holding-card-stock-detail {
+    @apply text-gray-600;
+  }
+
+  .holding-card-footer {
+    @apply flex items-center justify-between gap-2 border-t border-gray-200 pt-3;
+  }
+
+  .holding-card-actions {
+    @apply flex gap-2;
+  }
+
+  .action-menu {
+    @apply absolute right-0 top-full z-10 mt-1 flex min-w-[140px] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg;
+  }
+
+  .action-menu-item {
+    @apply px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50;
+  }
+
+  .action-menu-item--danger {
+    @apply text-danger;
+  }
+
   .settings-layout {
-    @apply flex gap-6;
+    @apply flex flex-col gap-4 lg:flex-row lg:gap-6;
   }
 
   .settings-nav {
-    @apply flex w-40 flex-col gap-1;
+    @apply flex w-full flex-row gap-1 overflow-x-auto border-b border-gray-200 pb-2 lg:w-40 lg:shrink-0 lg:flex-col lg:overflow-visible lg:border-0 lg:pb-0;
   }
 
   .settings-nav a {
-    @apply rounded-lg px-3 py-2.5 text-gray-500;
+    @apply shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-gray-500;
   }
 
   .settings-nav a.active {
@@ -462,7 +549,7 @@ textarea {
   }
 
   .settings-content {
-    @apply flex-1;
+    @apply min-w-0 flex-1;
   }
 
   .category-panels {
@@ -482,7 +569,7 @@ textarea {
   }
 
   .category-group-header {
-    @apply flex items-center justify-between border-b border-gray-200 px-4 py-3.5;
+    @apply flex flex-col gap-2 border-b border-gray-200 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between;
   }
 
   .category-group--income .category-group-header {
@@ -523,7 +610,7 @@ textarea {
   }
 
   .category-tree {
-    @apply px-3 pb-3 pt-2;
+    @apply px-2 pb-3 pt-2 lg:px-3;
   }
 
   .category-empty {
@@ -547,7 +634,7 @@ textarea {
   }
 
   .category-parent {
-    @apply flex items-center justify-between gap-3 border-b border-gray-200 px-3 py-2.5 font-semibold;
+    @apply flex flex-col gap-2 border-b border-gray-200 px-3 py-2.5 font-semibold sm:flex-row sm:items-center sm:justify-between sm:gap-3;
   }
 
   .category-parent--income {
@@ -559,7 +646,7 @@ textarea {
   }
 
   .category-child {
-    @apply flex items-center justify-between gap-3 border-b border-gray-200 py-2 pl-5 pr-3;
+    @apply flex flex-col gap-2 border-b border-gray-200 py-2 pl-5 pr-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3;
   }
 
   .category-child:last-child {
@@ -575,7 +662,7 @@ textarea {
   }
 
   .category-name {
-    @apply flex flex-wrap items-center gap-2;
+    @apply flex min-w-0 flex-wrap items-center gap-2 truncate;
   }
 
   .category-level {
@@ -609,7 +696,11 @@ textarea {
   }
 
   .category-actions {
-    @apply flex shrink-0 gap-2;
+    @apply flex shrink-0 flex-wrap gap-2;
+  }
+
+  .category-actions .btn {
+    @apply min-h-[36px];
   }
 
   .symbol-lookup-status {
@@ -698,7 +789,7 @@ textarea {
   }
 
   .ledger-fab {
-    @apply fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-2xl font-light text-white shadow-lg transition-colors hover:bg-[#1d4ed8];
+    @apply fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-2xl font-light text-white shadow-lg transition-colors hover:bg-[#1d4ed8];
   }
 
   .chart-container {
@@ -857,7 +948,7 @@ textarea {
   }
 
   .mobile-nav-item {
-    @apply flex flex-1 flex-col items-center justify-center py-2.5 text-xs font-medium text-gray-500 transition-colors;
+    @apply flex min-h-[44px] flex-1 flex-col items-center justify-center py-2.5 text-xs font-medium text-gray-500 transition-colors;
   }
 
   .mobile-nav-item.active {
