@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import AppInitializer from '@/components/layout/AppInitializer';
 import AppLayout from '@/components/layout/AppLayout';
 import './globals.css';
@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({

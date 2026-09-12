@@ -6,13 +6,18 @@ export interface DailyTotal {
   transactions: LedgerTransaction[];
 }
 
+function toDateKey(transactionDate: string): string {
+  return transactionDate.slice(0, 10);
+}
+
 export function aggregateDailyTotals(transactions: LedgerTransaction[]): Record<string, DailyTotal> {
   return transactions.reduce<Record<string, DailyTotal>>((acc, tx) => {
-    const day = acc[tx.transaction_date] ?? { income: 0, expense: 0, transactions: [] };
+    const dateKey = toDateKey(tx.transaction_date);
+    const day = acc[dateKey] ?? { income: 0, expense: 0, transactions: [] };
     day.transactions.push(tx);
     if (tx.type === 'income') day.income += Number(tx.amount);
     else if (tx.type === 'expense') day.expense += Number(tx.amount);
-    acc[tx.transaction_date] = day;
+    acc[dateKey] = day;
     return acc;
   }, {});
 }

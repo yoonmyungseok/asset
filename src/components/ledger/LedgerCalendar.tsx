@@ -2,7 +2,7 @@
 
 import type { DailyTotal } from '@/lib/utils/ledger';
 import { buildCalendarDays } from '@/lib/utils/ledger';
-import { formatMoneyCompact, toDateISO, todayISO } from '@/lib/utils/format';
+import { formatMoney, toDateISO, todayISO } from '@/lib/utils/format';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -59,10 +59,10 @@ export default function LedgerCalendar({ year, month, dailyTotals, selectedDate,
             >
               <span className="ledger-calendar-day">{day}</span>
               {income > 0 && (
-                <span className="ledger-calendar-income">+{formatMoneyCompact(income)}</span>
+                <span className="ledger-calendar-income">+{formatMoney(income)}</span>
               )}
               {expense > 0 && (
-                <span className="ledger-calendar-expense">-{formatMoneyCompact(expense)}</span>
+                <span className="ledger-calendar-expense">-{formatMoney(expense)}</span>
               )}
             </button>
           );

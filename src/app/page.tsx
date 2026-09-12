@@ -8,7 +8,7 @@ import {
 import { api } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/AppLayout';
 import type { CashflowTrendPoint, DashboardOverview, TrendPoint } from '@/types/api';
-import { formatMoney } from '@/lib/utils/format';
+import { dedupeByChartDate, formatChartDate, formatMoney } from '@/lib/utils/format';
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#8b5cf6'];
 
@@ -29,7 +29,7 @@ export default function DashboardPage() {
         api.getLiabilities(),
       ]);
       setOverview(ov);
-      setTrend(tr.data);
+      setTrend(dedupeByChartDate(tr.data, (point) => point.date));
       setCashflow(cf.data);
       setLiabilities(liab);
     } finally {
@@ -97,9 +97,9 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={(v) => String(v).slice(5)} />
+                <XAxis dataKey="date" tickFormatter={formatChartDate} />
                 <YAxis tickFormatter={(v) => `${(Number(v) / 10000).toFixed(0)}만`} />
-                <Tooltip formatter={(v) => formatMoney(v as number)} />
+                <Tooltip formatter={(v) => formatMoney(v as number)} labelFormatter={formatChartDate} />
                 <Line type="monotone" dataKey="net_worth" name="순자산" stroke="#2563eb" dot={false} />
               </LineChart>
             </ResponsiveContainer>

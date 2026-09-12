@@ -20,3 +20,11 @@ export function formatMoney(value: Decimal.Value | null | undefined): string {
 export function serializeDecimal(value: Decimal.Value | null | undefined): string {
   return toDecimal(value).toFixed();
 }
+
+export function roundAvgCostPrice(value: Decimal.Value | null | undefined): Decimal {
+  return toDecimal(value).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
+}
+
+export function roundAvgCostPriceDisplay(value: Decimal.Value | null | undefined): Decimal {
+  return toDecimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+}

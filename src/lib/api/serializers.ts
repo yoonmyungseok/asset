@@ -14,7 +14,7 @@ import type {
 import Decimal from "decimal.js";
 
 import { formatDateOnly } from "@/lib/api/route-utils";
-import { toDecimal } from "@/lib/decimal";
+import { roundAvgCostPriceDisplay, toDecimal } from "@/lib/decimal";
 import { holdingToResponse } from "@/lib/services/core";
 import type {
   AccountLimitResponse,
@@ -112,9 +112,11 @@ export function serializeCardSettlement(
 }
 
 export function serializeLedgerTransaction(tx: LedgerTxWithRelations): LedgerTransactionResponse {
+  const transactionDate =
+    tx.transaction_date instanceof Date ? tx.transaction_date : new Date(tx.transaction_date);
   return {
     id: tx.id,
-    transaction_date: tx.transaction_date,
+    transaction_date: formatDateOnly(transactionDate),
     type: tx.type,
     amount: toDecimal(tx.amount),
     category: serializeCategoryBrief(tx.category),
@@ -256,7 +258,7 @@ export function serializeHoldingResponse(holding: HoldingResponse) {
   return {
     ...holding,
     quantity: serializeDecimalField(holding.quantity),
-    avg_cost_price: serializeDecimalField(holding.avg_cost_price),
+    avg_cost_price: serializeDecimalField(roundAvgCostPriceDisplay(holding.avg_cost_price)),
     manual_price: serializeDecimalField(holding.manual_price),
     last_market_price: serializeDecimalField(holding.last_market_price),
     last_price_updated_at: holding.last_price_updated_at?.toISOString() ?? null,
@@ -286,17 +288,26 @@ export function serializeHoldingModel(holding: Holding, accountName?: string | n
   return serializeHoldingResponse(holdingToResponse(holding, accountName));
 }
 
-export function serializeInvestmentTransaction(tx: InvestmentTransaction): InvestmentTransactionResponse {
+type InvestmentTransactionWithHolding = InvestmentTransaction & {
+  holding?: { name: string; symbol: string } | null;
+};
+
+export function serializeInvestmentTransaction(
+  tx: InvestmentTransactionWithHolding,
+): InvestmentTransactionResponse {
   return {
     id: tx.id,
     account_id: tx.account_id,
     holding_id: tx.holding_id,
+    holding_name: tx.holding?.name ?? null,
+    holding_symbol: tx.holding?.symbol ?? null,
     type: tx.type,
     transaction_date: tx.transaction_date,
     quantity: tx.quantity != null ? toDecimal(tx.quantity) : null,
     price: tx.price != null ? toDecimal(tx.price) : null,
     amount: toDecimal(tx.amount),
     fee: toDecimal(tx.fee),
+    tax: toDecimal(tx.tax),
     memo: tx.memo,
   };
 }
@@ -311,6 +322,7 @@ export function serializeInvestmentTransactionResponse(tx: InvestmentTransaction
     price: serializeDecimalField(tx.price),
     amount: serializeDecimalField(tx.amount),
     fee: serializeDecimalField(tx.fee),
+    tax: serializeDecimalField(tx.tax),
   };
 }
 

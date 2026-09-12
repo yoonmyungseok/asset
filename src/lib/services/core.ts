@@ -22,6 +22,7 @@ import {
   isDepositHolding,
   parseMetadata,
 } from "@/lib/utils";
+import { normalizeChartDate } from "@/lib/utils/format";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -206,7 +207,12 @@ export async function updateContributedAmount(db: DbClient, accountId: number, y
   });
 }
 
-export function applyBuy(holding: Holding, quantity: Decimal.Value, price: Decimal.Value): void {
+export function applyBuy(
+  holding: Holding,
+  quantity: Decimal.Value,
+  price: Decimal.Value,
+  costAmount?: Decimal.Value | null,
+): void {
   const buyQuantity = toDecimal(quantity);
   const buyPrice = toDecimal(price);
   const oldQty = toDecimal(holding.quantity);
@@ -216,8 +222,8 @@ export function applyBuy(holding: Holding, quantity: Decimal.Value, price: Decim
     return;
   }
   const oldCost = oldQty.times(toDecimal(holding.avg_cost_price));
-  const addedCost = buyQuantity.times(buyPrice);
-  holding.avg_cost_price = oldCost.plus(addedCost).div(newQty);
+  const addedCost = costAmount != null ? toDecimal(costAmount) : buyQuantity.times(buyPrice);
+  holding.avg_cost_price = oldCost.plus(addedCost).div(newQty).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
   holding.quantity = newQty;
 }
 
@@ -332,11 +338,61 @@ export async function aggregateAssets(db: DbClient = prisma): Promise<AssetAggre
   };
 }
 
+export async function cleanupLegacyAccountSnapshots(db: DbClient = prisma): Promise<void> {
+  const rows = await db.accountSnapshot.findMany({
+    select: { id: true, snapshot_date: true },
+  });
+
+  const nonNormalizedIds = rows
+    .filter((row) => row.snapshot_date.getTime() !== normalizeChartDate(row.snapshot_date).getTime())
+    .map((row) => row.id);
+
+  if (nonNormalizedIds.length > 0) {
+    await db.accountSnapshot.deleteMany({
+      where: { id: { in: nonNormalizedIds } },
+    });
+  }
+
+  const accounts = await db.account.findMany({
+    where: { is_active: true },
+    include: { account_type: true },
+  });
+
+  for (const account of accounts) {
+    if (!account.account_type.supports_holdings) {
+      continue;
+    }
+
+    const totalValue = await getAccountTotalValue(db, account);
+    const cashBalance = toDecimal(account.cash_balance);
+    if (!totalValue.gt(cashBalance.plus(10000))) {
+      continue;
+    }
+
+    const snapshots = await db.accountSnapshot.findMany({
+      where: { account_id: account.id },
+      select: { id: true, balance_value: true },
+    });
+
+    const underestimatedIds = snapshots
+      .filter((snapshot) => toDecimal(snapshot.balance_value).lte(cashBalance))
+      .map((snapshot) => snapshot.id);
+
+    if (underestimatedIds.length > 0) {
+      await db.accountSnapshot.deleteMany({
+        where: { id: { in: underestimatedIds } },
+      });
+    }
+  }
+}
+
 export async function saveDailySnapshot(
   db: DbClient = prisma,
   snapshotDate?: Date,
 ): Promise<DailySnapshot> {
-  const dateValue = snapshotDate ?? new Date();
+  await cleanupLegacyAccountSnapshots(db);
+
+  const dateValue = normalizeChartDate(snapshotDate ?? new Date());
   const totals = await aggregateAssets(db);
 
   const snapshot = await db.dailySnapshot.upsert({
@@ -358,7 +414,10 @@ export async function saveDailySnapshot(
     },
   });
 
-  const accounts = await db.account.findMany({ where: { is_active: true } });
+  const accounts = await db.account.findMany({
+    where: { is_active: true },
+    include: { account_type: true },
+  });
   for (const account of accounts) {
     const value = await getAccountTotalValue(db, account);
     await db.accountSnapshot.upsert({
@@ -461,7 +520,7 @@ export function holdingToResponse(holding: Holding, accountName?: string | null)
     symbol: holding.symbol,
     name: holding.name,
     quantity: toDecimal(holding.quantity),
-    avg_cost_price: toDecimal(holding.avg_cost_price),
+    avg_cost_price: toDecimal(holding.avg_cost_price).toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
     manual_price: holding.manual_price != null ? toDecimal(holding.manual_price) : null,
     last_market_price: holding.last_market_price != null ? toDecimal(holding.last_market_price) : null,
     last_price_updated_at: holding.last_price_updated_at,

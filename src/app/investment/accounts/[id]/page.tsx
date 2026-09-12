@@ -9,9 +9,18 @@ import { PageHeader } from '@/components/layout/AppLayout';
 import InvestmentTxFormModal from '@/components/investment/InvestmentTxFormModal';
 import HoldingFormModal, { emptyHoldingFormValues } from '@/components/investment/HoldingFormModal';
 import type { HoldingFormValues } from '@/components/investment/HoldingFormModal';
+import TransactionFormModal from '@/components/ledger/TransactionFormModal';
 import InstitutionSelect from '@/components/common/InstitutionSelect';
-import type { Account, AccountLimit, AccountType, Holding, InvestmentTransaction } from '@/types/api';
-import { formatMoney, formatPercent, formatQuantity, INVESTMENT_TX_TYPES, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
+import type { Account, AccountLimit, AccountType, Holding, InvestmentTransaction, LedgerTransaction } from '@/types/api';
+import {
+  mergeAccountRecentTransactions,
+  recentTransactionDetailLabel,
+  recentTransactionKey,
+  recentTransactionMemo,
+  recentTransactionTypeLabel,
+  type AccountRecentTransaction,
+} from '@/lib/utils/account-recent-transactions';
+import { dedupeByChartDate, formatAvgCostPrice, formatChartDate, formatMoney, formatPercent, formatQuantity, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, needsMarketPriceRefresh, toAvgCostPriceString, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
 import Modal from '@/components/common/Modal';
 
 export default function AccountDetailPage() {
@@ -21,10 +30,13 @@ export default function AccountDetailPage() {
   const [account, setAccount] = useState<Account | null>(null);
   const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [transactions, setTransactions] = useState<InvestmentTransaction[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<AccountRecentTransaction[]>([]);
   const [limit, setLimit] = useState<AccountLimit | null>(null);
   const [snapshots, setSnapshots] = useState<{ snapshot_date: string; balance_value: string }[]>([]);
   const [showTxForm, setShowTxForm] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<InvestmentTransaction | null>(null);
+  const [editingLedgerTransaction, setEditingLedgerTransaction] = useState<LedgerTransaction | null>(null);
+  const [showLedgerForm, setShowLedgerForm] = useState(false);
   const [showHoldingForm, setShowHoldingForm] = useState(false);
   const [editingHoldingId, setEditingHoldingId] = useState<number | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -41,10 +53,11 @@ export default function AccountDetailPage() {
   const [holdingForm, setHoldingForm] = useState<HoldingFormValues>(emptyHoldingFormValues());
 
   const load = async () => {
-    const [acc, types, tx, limits, snaps] = await Promise.all([
+    const [acc, types, investmentTx, ledgerTx, limits, snaps] = await Promise.all([
       api.getAccount(accountId),
       api.getAccountTypes(),
       api.getInvestmentTransactions({ account_id: accountId, page_size: 20 }),
+      api.getLedgerTransactions({ account_id: accountId, page_size: 20 }),
       api.getAccountLimits(new Date().getFullYear()),
       api.getAccountSnapshots(accountId),
     ]);
@@ -55,11 +68,11 @@ export default function AccountDetailPage() {
     let holdings: Holding[] = [];
     if (supportsHoldings) {
       holdings = await api.getHoldings(accountId);
-      const missingPriceIds = holdings
-        .filter((holding) => holding.asset_class !== 'deposit' && !holding.last_market_price)
+      const stalePriceIds = holdings
+        .filter((holding) => holding.asset_class !== 'deposit' && needsMarketPriceRefresh(holding.last_price_updated_at))
         .map((holding) => holding.id);
-      if (missingPriceIds.length > 0) {
-        await api.refreshPrices(missingPriceIds);
+      if (stalePriceIds.length > 0) {
+        await api.refreshPrices(stalePriceIds);
         holdings = await api.getHoldings(accountId);
       }
     }
@@ -67,9 +80,9 @@ export default function AccountDetailPage() {
     setAccount(acc);
     setAccountTypes(types);
     setHoldings(holdings);
-    setTransactions(tx.items);
+    setRecentTransactions(mergeAccountRecentTransactions(investmentTx.items, ledgerTx.items));
     setLimit(limits.find((l) => l.account_id === accountId) ?? null);
-    setSnapshots(snaps);
+    setSnapshots(dedupeByChartDate(snaps, (snap) => snap.snapshot_date));
   };
 
   useEffect(() => { if (accountId) load(); }, [accountId]);
@@ -99,11 +112,14 @@ export default function AccountDetailPage() {
 
     const depositFields = values.asset_class === 'deposit' ? depositPayload(values) : {};
 
+    const stockBookCost = values.book_cost ? Number(values.book_cost) : null;
+
     if (editingHoldingId) {
       await api.updateHolding(editingHoldingId, {
         name: values.name,
         quantity: Number(values.quantity),
         avg_cost_price: values.asset_class === 'deposit' ? 1 : Number(values.avg_cost_price),
+        book_cost: values.asset_class === 'deposit' ? null : stockBookCost,
         manual_price: values.asset_class === 'deposit' ? 1 : undefined,
         ...depositFields,
       });
@@ -115,6 +131,7 @@ export default function AccountDetailPage() {
         name: values.name,
         quantity: Number(values.quantity),
         avg_cost_price: values.asset_class === 'deposit' ? 1 : Number(values.avg_cost_price),
+        book_cost: values.asset_class === 'deposit' ? null : stockBookCost,
         ...depositFields,
       });
     }
@@ -137,7 +154,8 @@ export default function AccountDetailPage() {
       quantity: holding.asset_class === 'deposit'
         ? String(Math.round(Number(holding.quantity)))
         : String(holding.quantity),
-      avg_cost_price: String(holding.avg_cost_price),
+      avg_cost_price: toAvgCostPriceString(holding.avg_cost_price),
+      book_cost: holding.asset_class === 'deposit' ? '' : toWholeMoneyString(holding.cost_basis),
       interest_rate: holding.interest_rate ? String(holding.interest_rate) : '',
       start_date: holding.start_date ? holding.start_date.slice(0, 10) : '',
       maturity_date: holding.maturity_date ? holding.maturity_date.slice(0, 10) : '',
@@ -155,6 +173,67 @@ export default function AccountDetailPage() {
     if (!confirm(`"${holding.name}" 종목을 삭제하시겠습니까?`)) return;
     await api.deleteHolding(holding.id);
     load();
+  };
+
+  const openCreateTxForm = () => {
+    setEditingTransaction(null);
+    setShowTxForm(true);
+  };
+
+  const openEditTxForm = (tx: InvestmentTransaction) => {
+    setEditingTransaction(tx);
+    setShowTxForm(true);
+  };
+
+  const closeTxForm = () => {
+    setShowTxForm(false);
+    setEditingTransaction(null);
+  };
+
+  const handleDeleteTx = async (tx: InvestmentTransaction) => {
+    if (!confirm('이 거래를 삭제하시겠습니까?')) return;
+    try {
+      await api.deleteInvestmentTransaction(tx.id);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제 실패');
+    }
+  };
+
+  const openEditLedgerForm = (tx: LedgerTransaction) => {
+    setEditingLedgerTransaction(tx);
+    setShowLedgerForm(true);
+  };
+
+  const closeLedgerForm = () => {
+    setShowLedgerForm(false);
+    setEditingLedgerTransaction(null);
+  };
+
+  const handleDeleteLedgerTx = async (tx: LedgerTransaction) => {
+    if (!confirm('이 거래를 삭제하시겠습니까?')) return;
+    try {
+      await api.deleteLedgerTransaction(tx.id);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제 실패');
+    }
+  };
+
+  const handleEditRecentTransaction = (item: AccountRecentTransaction) => {
+    if (item.source === 'investment') {
+      openEditTxForm(item.data);
+      return;
+    }
+    openEditLedgerForm(item.data);
+  };
+
+  const handleDeleteRecentTransaction = async (item: AccountRecentTransaction) => {
+    if (item.source === 'investment') {
+      await handleDeleteTx(item.data);
+      return;
+    }
+    await handleDeleteLedgerTx(item.data);
   };
 
   const openEditForm = () => {
@@ -190,7 +269,7 @@ export default function AccountDetailPage() {
   };
 
   const handleRemoveAccount = async () => {
-    const hasData = holdings.length > 0 || transactions.length > 0;
+    const hasData = holdings.length > 0 || recentTransactions.length > 0;
     if (hasData) {
       if (!confirm('보유 종목이나 거래 내역이 있어 완전 삭제할 수 없습니다. 계좌를 비활성화하시겠습니까?')) return;
       await api.deactivateAccount(accountId);
@@ -236,7 +315,7 @@ export default function AccountDetailPage() {
             <Link href="/investment" className="btn btn-secondary">← 자산</Link>
             <button className="btn btn-secondary" onClick={openEditForm}>계좌 수정</button>
             <button className="btn btn-danger" onClick={handleRemoveAccount}>삭제</button>
-            <button className="btn btn-primary" onClick={() => setShowTxForm(true)}>거래 추가</button>
+            <button className="btn btn-primary" onClick={openCreateTxForm}>거래 추가</button>
           </>
         }
       />
@@ -355,6 +434,7 @@ export default function AccountDetailPage() {
                 <th>만기일</th>
                 <th>미수이자</th>
                 <th>평가금액</th>
+                <th>수익금액</th>
                 <th>수익률</th>
                 <th></th>
               </tr>
@@ -366,15 +446,25 @@ export default function AccountDetailPage() {
                 <tr key={h.id}>
                   <td>
                     <strong>{h.name}</strong>
-                    {!isDeposit && <><br /><span className="text-muted" style={{ fontSize: 12 }}>{h.symbol}</span></>}
+                    {!isDeposit && (
+                      <>
+                        <br /><span className="text-muted" style={{ fontSize: 12 }}>{h.symbol}</span>
+                        <br /><span className="text-muted" style={{ fontSize: 12 }}>
+                          {formatQuantity(h.quantity)}좌 · 평단 {formatAvgCostPrice(h.avg_cost_price)} · 현재 {formatAvgCostPrice(h.current_price)}
+                        </span>
+                      </>
+                    )}
                   </td>
                   <td>{ASSET_CLASS_LABELS[h.asset_class] || h.asset_class}</td>
-                  <td>{isDeposit ? formatMoney(h.quantity) : formatQuantity(h.quantity)}</td>
+                  <td>{isDeposit ? formatMoney(h.quantity) : formatMoney(h.cost_basis)}</td>
                   <td>{isDeposit ? formatInterestRate(h.interest_rate) : '-'}</td>
                   <td>{isDeposit ? formatMaturityLabel(h.start_date) : '-'}</td>
                   <td>{isDeposit ? formatMaturityLabel(h.maturity_date) : '-'}</td>
                   <td>{isDeposit ? formatMoney(h.accrued_interest) : '-'}</td>
                   <td>{formatMoney(h.market_value)}</td>
+                  <td className={Number(h.profit_loss) >= 0 ? 'text-success' : 'text-danger'}>
+                    {formatMoney(h.profit_loss)}
+                  </td>
                   <td className={Number(h.profit_loss_rate) >= 0 ? 'text-success' : 'text-danger'}>
                     {formatPercent(h.profit_loss_rate)}
                   </td>
@@ -395,20 +485,27 @@ export default function AccountDetailPage() {
 
       <div className="card" style={{ marginBottom: 16 }}>
         <h3 className="section-title" style={{ marginTop: 0 }}>최근 거래</h3>
-        {transactions.length === 0 ? (
+        {recentTransactions.length === 0 ? (
           <p className="text-muted">거래 내역이 없습니다.</p>
         ) : (
           <table className="table">
             <thead>
-              <tr><th>날짜</th><th>유형</th><th>금액</th><th>메모</th></tr>
+              <tr><th>날짜</th><th>유형</th><th>내용</th><th>금액</th><th>메모</th><th></th></tr>
             </thead>
             <tbody>
-              {transactions.map((tx) => (
-                <tr key={tx.id}>
-                  <td>{tx.transaction_date}</td>
-                  <td>{INVESTMENT_TX_TYPES[tx.type] || tx.type}</td>
-                  <td>{formatMoney(tx.amount)}</td>
-                  <td className="text-muted">{tx.memo}</td>
+              {recentTransactions.map((item) => (
+                <tr key={recentTransactionKey(item)}>
+                  <td>{item.data.transaction_date}</td>
+                  <td>{recentTransactionTypeLabel(item)}</td>
+                  <td>{recentTransactionDetailLabel(item, accountId)}</td>
+                  <td>{formatMoney(item.data.amount)}</td>
+                  <td className="text-muted">{recentTransactionMemo(item)}</td>
+                  <td>
+                    <span style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <button className="btn btn-sm btn-secondary" onClick={() => handleEditRecentTransaction(item)}>수정</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDeleteRecentTransaction(item)}>삭제</button>
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -423,9 +520,9 @@ export default function AccountDetailPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={snapshots}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="snapshot_date" tickFormatter={(v) => String(v).slice(5)} />
+                <XAxis dataKey="snapshot_date" tickFormatter={formatChartDate} />
                 <YAxis tickFormatter={(v) => `${(Number(v) / 10000).toFixed(0)}만`} />
-                <Tooltip formatter={(v) => formatMoney(v as number)} />
+                <Tooltip formatter={(v) => formatMoney(v as number)} labelFormatter={formatChartDate} />
                 <Line type="monotone" dataKey="balance_value" name="평가금액" stroke="#2563eb" dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -435,9 +532,17 @@ export default function AccountDetailPage() {
 
       <InvestmentTxFormModal
         open={showTxForm}
-        onClose={() => setShowTxForm(false)}
+        onClose={closeTxForm}
         onSaved={load}
         accountId={accountId}
+        transaction={editingTransaction}
+      />
+
+      <TransactionFormModal
+        open={showLedgerForm}
+        transaction={editingLedgerTransaction}
+        onClose={closeLedgerForm}
+        onSaved={load}
       />
 
       <Modal

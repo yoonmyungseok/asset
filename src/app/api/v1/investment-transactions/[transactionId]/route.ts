@@ -9,7 +9,10 @@ import { apiError } from "@/lib/api-error";
 import { handleRouteError, jsonOk, parseJsonBody } from "@/lib/api/route-utils";
 import { prisma } from "@/lib/db";
 import { updateContributedAmount } from "@/lib/services/core";
-import { reverseTransactionEffects } from "@/lib/services/investment-transactions";
+import {
+  reverseTransactionEffects,
+  updateInvestmentTransaction,
+} from "@/lib/services/investment-transactions";
 import { investmentTransactionUpdateSchema } from "@/lib/validations/account";
 
 type RouteParams = { params: Promise<{ transactionId: string }> };
@@ -19,6 +22,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     const { transactionId: transactionIdParam } = await params;
     const tx = await prisma.investmentTransaction.findUnique({
       where: { id: Number(transactionIdParam) },
+      include: { holding: { select: { name: true, symbol: true } } },
     });
     if (!tx) {
       return apiError(404, "거래를 찾을 수 없습니다.");
@@ -37,17 +41,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const txId = Number(transactionIdParam);
     const payload = parseJsonBody(investmentTransactionUpdateSchema, await request.json());
 
-    const existing = await prisma.investmentTransaction.findUnique({ where: { id: txId } });
-    if (!existing) {
-      return apiError(404, "거래를 찾을 수 없습니다.");
-    }
-
-    const updated = await prisma.investmentTransaction.update({
+    await updateInvestmentTransaction(txId, payload);
+    const updated = await prisma.investmentTransaction.findUniqueOrThrow({
       where: { id: txId },
-      data: payload,
+      include: { holding: { select: { name: true, symbol: true } } },
     });
 
-    await updateContributedAmount(prisma, updated.account_id, updated.transaction_date.getFullYear());
     return jsonOk(
       serializeInvestmentTransactionResponse(serializeInvestmentTransaction(updated)),
     );

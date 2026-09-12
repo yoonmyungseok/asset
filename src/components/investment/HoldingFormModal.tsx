@@ -10,6 +10,7 @@ export interface HoldingFormValues {
   name: string;
   quantity: string;
   avg_cost_price: string;
+  book_cost: string;
   interest_rate: string;
   start_date: string;
   maturity_date: string;
@@ -29,6 +30,7 @@ const EMPTY_VALUES: HoldingFormValues = {
   name: '',
   quantity: '',
   avg_cost_price: '',
+  book_cost: '',
   interest_rate: '',
   start_date: new Date().toISOString().slice(0, 10),
   maturity_date: '',
@@ -141,7 +143,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
             </div>
           </div>
           <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            평가금액은 원금에 가입일부터 오늘까지의 단리 이자를 더해 계산합니다. 이자 거래 입력 시 기산일이 갱신됩니다.
+            평가금액은 원금에 가입일부터 오늘까지의 월복리 이자를 더해 계산합니다. 이자 거래 입력 시 기산일이 갱신됩니다.
           </p>
         </>
       ) : editing ? (
@@ -166,11 +168,24 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
               <label>평단가</label>
               <input
                 type="number"
+                step="0.01"
                 value={form.avg_cost_price}
                 onChange={(e) => setForm((prev) => ({ ...prev, avg_cost_price: e.target.value }))}
               />
             </div>
+            <div className="form-group">
+              <label>상품잔액 (원금)</label>
+              <input
+                type="number"
+                value={form.book_cost}
+                onChange={(e) => setForm((prev) => ({ ...prev, book_cost: e.target.value }))}
+                placeholder="퇴직연금 앱 상품잔액"
+              />
+            </div>
           </div>
+          <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
+            상품잔액을 입력하면 퇴직연금 앱과 원금이 정확히 맞습니다. 비워두면 수량×평단가로 계산합니다.
+          </p>
         </>
       ) : (
         <>
@@ -193,11 +208,24 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
               <label>평단가</label>
               <input
                 type="number"
+                step="0.01"
                 value={form.avg_cost_price}
                 onChange={(e) => setForm((prev) => ({ ...prev, avg_cost_price: e.target.value }))}
               />
             </div>
+            <div className="form-group">
+              <label>상품잔액 (원금)</label>
+              <input
+                type="number"
+                value={form.book_cost}
+                onChange={(e) => setForm((prev) => ({ ...prev, book_cost: e.target.value }))}
+                placeholder="퇴직연금 앱 상품잔액"
+              />
+            </div>
           </div>
+          <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
+            상품잔액을 입력하면 퇴직연금 앱과 원금이 정확히 맞습니다. 비워두면 수량×평단가로 계산합니다.
+          </p>
         </>
       )}
     </Modal>

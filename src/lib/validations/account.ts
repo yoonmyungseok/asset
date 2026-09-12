@@ -7,6 +7,14 @@ export const decimalSchema = z
   .union([z.string(), z.number(), z.instanceof(Decimal)])
   .transform((value) => new Decimal(value));
 
+export const avgCostPriceSchema = decimalSchema.transform((value) =>
+  value.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+);
+
+export const bookCostSchema = decimalSchema.transform((value) =>
+  value.toDecimalPlaces(0, Decimal.ROUND_HALF_UP),
+);
+
 export const dateSchema = z.preprocess(
   (value) => {
     if (value instanceof Date) {
@@ -122,7 +130,8 @@ export const holdingCreateSchema = z
     symbol: z.string().nullable().optional(),
     name: z.string(),
     quantity: decimalSchema,
-    avg_cost_price: decimalSchema.nullable().optional(),
+    avg_cost_price: avgCostPriceSchema.nullable().optional(),
+    book_cost: bookCostSchema.nullable().optional(),
     interest_rate: decimalSchema.nullable().optional(),
     start_date: dateSchema.nullable().optional(),
     maturity_date: dateSchema.nullable().optional(),
@@ -148,7 +157,8 @@ export const holdingUpdateSchema = z.object({
   symbol: z.string().optional(),
   name: z.string().optional(),
   quantity: decimalSchema.optional(),
-  avg_cost_price: decimalSchema.optional(),
+  avg_cost_price: avgCostPriceSchema.optional(),
+  book_cost: bookCostSchema.nullable().optional(),
   manual_price: decimalSchema.nullable().optional(),
   interest_rate: decimalSchema.nullable().optional(),
   start_date: dateSchema.nullable().optional(),
@@ -168,12 +178,15 @@ export const investmentTransactionResponseSchema = z.object({
   id: z.number().int(),
   account_id: z.number().int(),
   holding_id: z.number().int().nullable(),
+  holding_name: z.string().nullable().optional(),
+  holding_symbol: z.string().nullable().optional(),
   type: z.string(),
   transaction_date: dateSchema,
   quantity: decimalSchema.nullable(),
   price: decimalSchema.nullable(),
   amount: decimalSchema,
   fee: decimalSchema,
+  tax: decimalSchema,
   memo: z.string().nullable(),
 });
 
@@ -189,6 +202,7 @@ export const investmentTransactionCreateSchema = z.object({
   price: decimalSchema.nullable().optional(),
   amount: decimalSchema,
   fee: decimalSchema.default(new Decimal(0)),
+  tax: decimalSchema.default(new Decimal(0)),
   memo: z.string().nullable().optional(),
   sync_to_ledger: z.boolean().default(false),
   ledger_category_id: z.number().int().nullable().optional(),
@@ -201,6 +215,7 @@ export const investmentTransactionUpdateSchema = z.object({
   price: decimalSchema.optional(),
   amount: decimalSchema.optional(),
   fee: decimalSchema.optional(),
+  tax: decimalSchema.optional(),
   memo: z.string().nullable().optional(),
 });
 

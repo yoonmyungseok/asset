@@ -7,19 +7,27 @@ import { ServiceError } from "@/lib/service-error";
 import {
   applyBuy,
   applySell,
-  removeHolding,
   updateContributedAmount,
 } from "@/lib/services/core";
 import {
+  adjustBookCostOnBuy,
+  adjustBookCostOnSell,
   ASSET_CLASS_DEPOSIT,
   generateDepositSymbol,
+  holdingMarketValue,
   isDepositHolding,
   normalizeDepositHolding,
+  restoreBookCostOnSellReversal,
 } from "@/lib/utils";
-import type { investmentTransactionCreateSchema } from "@/lib/validations/account";
+import type {
+  investmentTransactionCreateSchema,
+  investmentTransactionUpdateSchema,
+} from "@/lib/validations/account";
+import { prisma } from "@/lib/db";
 
 type TxClient = Prisma.TransactionClient;
 type InvestmentCreate = z.infer<typeof investmentTransactionCreateSchema>;
+type InvestmentUpdate = z.infer<typeof investmentTransactionUpdateSchema>;
 
 export async function resolveHolding(
   db: TxClient,
@@ -93,8 +101,9 @@ export async function applyTransactionEffects(
 ): Promise<void> {
   const amount = toDecimal(tx.amount);
   const fee = toDecimal(tx.fee);
+  const tax = toDecimal(tx.tax);
   let cashBalance = toDecimal(account.cash_balance);
-  let holdingRemoved = false;
+  let depositSellData: { amount: Decimal; quantity: Decimal } | null = null;
 
   switch (tx.type) {
     case "buy": {
@@ -106,7 +115,8 @@ export async function applyTransactionEffects(
         normalizeDepositHolding(holding);
         applyBuy(holding, quantity, new Decimal(1));
       } else {
-        applyBuy(holding, toDecimal(tx.quantity), toDecimal(tx.price));
+        applyBuy(holding, toDecimal(tx.quantity), toDecimal(tx.price), amount);
+        adjustBookCostOnBuy(holding, amount);
       }
       cashBalance = cashBalance.minus(amount).minus(fee);
       break;
@@ -115,13 +125,24 @@ export async function applyTransactionEffects(
       if (!holding) {
         throw new ServiceError(400, "매도 거래에는 보유 종목이 필요합니다.");
       }
-      const sellQty = tx.quantity != null ? toDecimal(tx.quantity) : amount;
-      applySell(holding, sellQty);
-      cashBalance = cashBalance.plus(amount).minus(fee);
-      if (toDecimal(holding.quantity).lte(0)) {
-        tx.holding_id = null;
-        await removeHolding(db, holding);
-        holdingRemoved = true;
+      if (isDepositHolding(holding)) {
+        const principal = toDecimal(holding.quantity);
+        if (principal.lte(0)) {
+          throw new ServiceError(400, "해지할 예금 원금이 없습니다.");
+        }
+        const redemptionAmount = holdingMarketValue(holding, tx.transaction_date);
+        applySell(holding, principal);
+        cashBalance = cashBalance.plus(redemptionAmount);
+        depositSellData = { amount: redemptionAmount, quantity: principal };
+        tx.amount = redemptionAmount;
+        tx.quantity = principal;
+        tx.price = new Decimal(1);
+      } else {
+        const sellQty = tx.quantity != null ? toDecimal(tx.quantity) : amount;
+        const priorQty = toDecimal(holding.quantity);
+        adjustBookCostOnSell(holding, sellQty, priorQty);
+        applySell(holding, sellQty);
+        cashBalance = cashBalance.plus(amount).minus(fee).minus(tax);
       }
       break;
     }
@@ -151,7 +172,7 @@ export async function applyTransactionEffects(
   });
   account.cash_balance = cashBalance;
 
-  if (holding && !holdingRemoved) {
+  if (holding) {
     const exists = await db.holding.findUnique({ where: { id: holding.id } });
     if (exists) {
       await db.holding.update({
@@ -159,6 +180,7 @@ export async function applyTransactionEffects(
         data: {
           quantity: holding.quantity,
           avg_cost_price: holding.avg_cost_price,
+          book_cost: holding.book_cost,
           manual_price: holding.manual_price,
           start_date: holding.start_date,
         },
@@ -166,10 +188,16 @@ export async function applyTransactionEffects(
     }
   }
 
-  if (tx.holding_id === null && tx.id) {
+  if (tx.id && depositSellData) {
     await db.investmentTransaction.update({
       where: { id: tx.id },
-      data: { holding_id: null },
+      data: {
+        amount: depositSellData.amount,
+        quantity: depositSellData.quantity,
+        price: new Decimal(1),
+        fee: new Decimal(0),
+        tax: new Decimal(0),
+      },
     });
   }
 
@@ -183,15 +211,59 @@ export async function reverseTransactionEffects(
 ): Promise<void> {
   const amount = toDecimal(tx.amount);
   const fee = toDecimal(tx.fee);
+  const tax = toDecimal(tx.tax);
   let cashBalance = toDecimal(account.cash_balance);
 
   switch (tx.type) {
-    case "buy":
+    case "buy": {
       cashBalance = cashBalance.plus(amount).plus(fee);
+      const holding = tx.holding_id
+        ? await db.holding.findUnique({ where: { id: tx.holding_id } })
+        : null;
+      if (holding) {
+        const sellQty = tx.quantity != null ? toDecimal(tx.quantity) : amount;
+        if (!isDepositHolding(holding)) {
+          holding.book_cost = toDecimal(holding.book_cost).minus(amount);
+          if (toDecimal(holding.book_cost).lt(0)) {
+            holding.book_cost = new Decimal(0);
+          }
+        }
+        applySell(holding, sellQty);
+        await db.holding.update({
+          where: { id: holding.id },
+          data: {
+            quantity: holding.quantity,
+            book_cost: holding.book_cost,
+          },
+        });
+      }
       break;
-    case "sell":
-      cashBalance = cashBalance.minus(amount).plus(fee);
+    }
+    case "sell": {
+      cashBalance = cashBalance.minus(amount).plus(fee).plus(tax);
+      const holding = tx.holding_id
+        ? await db.holding.findUnique({ where: { id: tx.holding_id } })
+        : null;
+      if (holding) {
+        const buyQty = tx.quantity != null ? toDecimal(tx.quantity) : amount;
+        const buyPrice = tx.price != null ? toDecimal(tx.price) : toDecimal(holding.avg_cost_price);
+        if (isDepositHolding(holding)) {
+          applyBuy(holding, buyQty, new Decimal(1));
+        } else {
+          restoreBookCostOnSellReversal(holding, buyQty);
+          applyBuy(holding, buyQty, buyPrice, amount);
+        }
+        await db.holding.update({
+          where: { id: holding.id },
+          data: {
+            quantity: holding.quantity,
+            avg_cost_price: holding.avg_cost_price,
+            book_cost: holding.book_cost,
+          },
+        });
+      }
       break;
+    }
     case "deposit":
       cashBalance = cashBalance.minus(amount);
       break;
@@ -220,5 +292,46 @@ export async function reverseTransactionEffects(
   await db.account.update({
     where: { id: account.id },
     data: { cash_balance: cashBalance },
+  });
+}
+
+export async function updateInvestmentTransaction(
+  transactionId: number,
+  payload: InvestmentUpdate,
+): Promise<InvestmentTransaction> {
+  return prisma.$transaction(async (db) => {
+    const existing = await db.investmentTransaction.findUnique({ where: { id: transactionId } });
+    if (!existing) {
+      throw new ServiceError(404, "거래를 찾을 수 없습니다.");
+    }
+
+    const account = await db.account.findUnique({ where: { id: existing.account_id } });
+    if (!account) {
+      throw new ServiceError(404, "계좌를 찾을 수 없습니다.");
+    }
+
+    const oldYear = existing.transaction_date.getFullYear();
+
+    await reverseTransactionEffects(db, account, existing);
+
+    const updated = await db.investmentTransaction.update({
+      where: { id: transactionId },
+      data: payload,
+    });
+
+    const holding = updated.holding_id
+      ? await db.holding.findUnique({ where: { id: updated.holding_id } })
+      : null;
+
+    const refreshedAccount = await db.account.findUniqueOrThrow({ where: { id: account.id } });
+    await applyTransactionEffects(db, refreshedAccount, holding, updated);
+
+    const newYear = updated.transaction_date.getFullYear();
+    await updateContributedAmount(db, account.id, oldYear);
+    if (newYear !== oldYear) {
+      await updateContributedAmount(db, account.id, newYear);
+    }
+
+    return updated;
   });
 }

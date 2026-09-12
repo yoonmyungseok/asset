@@ -34,6 +34,17 @@ function isActive(pathname: string, href: string, exact?: boolean) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function getActiveNavHref(pathname: string): string | null {
+  let best: (typeof NAV_ITEMS)[number] | null = null;
+  for (const item of NAV_ITEMS) {
+    if (!isActive(pathname, item.href, item.exact)) continue;
+    if (!best || item.href.length > best.href.length) {
+      best = item;
+    }
+  }
+  return best?.href ?? null;
+}
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [netWorth, setNetWorth] = useState<string>('—');
@@ -64,7 +75,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="mb-8 px-2 text-lg font-bold">💰 내 자산 관리</div>
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
-            const active = isActive(pathname, item.href, item.exact);
+            const active = getActiveNavHref(pathname) === item.href;
             return (
               <Link
                 key={item.href}
@@ -85,7 +96,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="mt-1 text-lg font-bold">{formatMoney(netWorth)}</div>
         </div>
       </aside>
-      <main className="ml-sidebar min-h-screen flex-1 p-6">
+      <main className="ml-sidebar min-h-screen flex-1 p-4 lg:p-6">
         <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
           {children}
         </RefreshContext.Provider>

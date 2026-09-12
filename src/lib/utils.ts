@@ -1,12 +1,11 @@
 import { randomUUID } from "crypto";
-import { differenceInCalendarDays, isBefore, startOfDay } from "date-fns";
+import { differenceInMonths, isBefore, startOfDay } from "date-fns";
 import Decimal from "decimal.js";
 
 import { toDecimal } from "@/lib/decimal";
 
 export const ASSET_CLASS_STOCK = "stock";
 export const ASSET_CLASS_DEPOSIT = "deposit";
-const DAYS_PER_YEAR = new Decimal(365);
 
 export interface HoldingLike {
   asset_class?: string;
@@ -17,6 +16,7 @@ export interface HoldingLike {
   last_market_price?: Decimal.Value | null;
   manual_price?: Decimal.Value | null;
   avg_cost_price?: Decimal.Value | null;
+  book_cost?: Decimal.Value | null;
 }
 
 export function parseMetadata(raw: unknown): Record<string, unknown> {
@@ -68,6 +68,16 @@ export function holdingInterestAccrualEnd(holding: HoldingLike, asOf?: Date): Da
   return today;
 }
 
+export function holdingInterestAccrualMonths(holding: HoldingLike, asOf?: Date): number {
+  const startDate = holding.start_date;
+  if (!startDate) {
+    return 0;
+  }
+
+  const endDate = holdingInterestAccrualEnd(holding, asOf);
+  return Math.max(0, differenceInMonths(endDate, startOfDay(startDate)));
+}
+
 export function holdingAccruedInterest(holding: HoldingLike, asOf?: Date): Decimal {
   if (!isDepositHolding(holding)) {
     return new Decimal(0);
@@ -89,17 +99,13 @@ export function holdingAccruedInterest(holding: HoldingLike, asOf?: Date): Decim
     return new Decimal(0);
   }
 
-  const endDate = holdingInterestAccrualEnd(holding, asOf);
-  const days = differenceInCalendarDays(endDate, startOfDay(startDate));
-  if (days <= 0) {
+  const months = holdingInterestAccrualMonths(holding, asOf);
+  if (months <= 0) {
     return new Decimal(0);
   }
 
-  const accrued = principal
-    .times(rateDecimal)
-    .div(100)
-    .times(days)
-    .div(DAYS_PER_YEAR);
+  const monthlyFactor = new Decimal(1).plus(rateDecimal.div(100).div(12));
+  const accrued = principal.times(monthlyFactor.pow(months).minus(1));
   return accrued.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 }
 
@@ -120,9 +126,65 @@ export function holdingMarketValue(holding: HoldingLike, asOf?: Date): Decimal {
   if (isDepositHolding(holding)) {
     return toDecimal(holding.quantity).plus(holdingAccruedInterest(holding, asOf));
   }
-  return toDecimal(holding.quantity).times(holdingCurrentPrice(holding));
+  return toDecimal(holding.quantity)
+    .times(holdingCurrentPrice(holding))
+    .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+}
+
+export function computeEstimatedBookCost(
+  quantity: Decimal.Value,
+  avgCostPrice: Decimal.Value,
+): Decimal {
+  return toDecimal(quantity)
+    .times(toDecimal(avgCostPrice))
+    .toDecimalPlaces(0, Decimal.ROUND_HALF_DOWN);
 }
 
 export function holdingCostBasis(holding: HoldingLike): Decimal {
-  return toDecimal(holding.quantity).times(toDecimal(holding.avg_cost_price));
+  if (holding.book_cost != null) {
+    return toDecimal(holding.book_cost).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+  }
+  return computeEstimatedBookCost(holding.quantity, toDecimal(holding.avg_cost_price));
+}
+
+export function adjustBookCostOnBuy(
+  holding: { book_cost?: Decimal.Value | null },
+  buyAmount: Decimal.Value,
+): void {
+  holding.book_cost = toDecimal(holding.book_cost).plus(buyAmount);
+}
+
+export function adjustBookCostOnSell(
+  holding: { quantity: Decimal.Value; book_cost?: Decimal.Value | null },
+  sellQuantity: Decimal.Value,
+  priorQuantity: Decimal.Value,
+): void {
+  const oldQty = toDecimal(priorQuantity);
+  const sellQty = toDecimal(sellQuantity);
+  const remainingQty = oldQty.minus(sellQty);
+  if (remainingQty.lte(0)) {
+    holding.book_cost = new Decimal(0);
+    return;
+  }
+
+  const oldBookCost = toDecimal(holding.book_cost ?? holdingCostBasis(holding));
+  holding.book_cost = oldBookCost
+    .times(remainingQty.div(oldQty))
+    .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+}
+
+export function restoreBookCostOnSellReversal(
+  holding: { quantity: Decimal.Value; book_cost?: Decimal.Value | null },
+  restoreQuantity: Decimal.Value,
+): void {
+  const currentQty = toDecimal(holding.quantity);
+  const restoreQty = toDecimal(restoreQuantity);
+  if (currentQty.lte(0)) {
+    return;
+  }
+
+  const priorTotalQty = currentQty.plus(restoreQty);
+  holding.book_cost = toDecimal(holding.book_cost)
+    .times(priorTotalQty.div(currentQty))
+    .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
 }

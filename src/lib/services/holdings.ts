@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import Decimal from "decimal.js";
 
+import { roundAvgCostPrice } from "@/lib/decimal";
 import { prisma } from "@/lib/db";
 import { getQuote, RateLimitError } from "@/lib/external/market-data";
 import { ServiceError } from "@/lib/service-error";
@@ -46,7 +47,7 @@ export function prepareHoldingFields(payload: HoldingCreate) {
       symbol: payload.symbol ?? generateDepositSymbol(),
       name: payload.name,
       quantity: payload.quantity,
-      avg_cost_price: payload.avg_cost_price ?? new Decimal(1),
+      avg_cost_price: roundAvgCostPrice(payload.avg_cost_price ?? 1),
       manual_price: payload.avg_cost_price ?? new Decimal(1),
       interest_rate: payload.interest_rate ?? null,
       start_date: payload.start_date ?? new Date(),
@@ -58,7 +59,8 @@ export function prepareHoldingFields(payload: HoldingCreate) {
     symbol: payload.symbol!,
     name: payload.name,
     quantity: payload.quantity,
-    avg_cost_price: payload.avg_cost_price!,
+    avg_cost_price: roundAvgCostPrice(payload.avg_cost_price!),
+    book_cost: payload.book_cost ?? null,
     manual_price: null,
     interest_rate: null,
     start_date: null,

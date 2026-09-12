@@ -1,3 +1,5 @@
+import { roundAvgCostPrice, roundAvgCostPriceDisplay } from '@/lib/decimal';
+
 export function formatMoney(value: string | number | null | undefined): string {
   const num = Number(value ?? 0);
   return new Intl.NumberFormat('ko-KR').format(Math.round(num)) + '원';
@@ -33,6 +35,23 @@ export function formatQuantity(value: string | number | null | undefined): strin
   return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(num);
 }
 
+export function toAvgCostPriceString(value: string | number | null | undefined): string {
+  if (value === '' || value === null || value === undefined) return '';
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '';
+  return roundAvgCostPriceDisplay(value).toFixed();
+}
+
+export function formatAvgCostPrice(value: string | number | null | undefined): string {
+  const raw = toAvgCostPriceString(value);
+  if (!raw) return '-';
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return '-';
+  const [integerPart, fractionPart] = raw.split('.');
+  const formattedInteger = new Intl.NumberFormat('ko-KR').format(Number(integerPart));
+  return fractionPart ? `${formattedInteger}.${fractionPart}` : formattedInteger;
+}
+
 export function formatPercent(value: string | number | null | undefined): string {
   const num = Number(value ?? 0);
   const sign = num > 0 ? '+' : '';
@@ -49,6 +68,64 @@ export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '-';
   const [year, month, day] = dateStr.slice(0, 10).split('-');
   return `${year}.${month}.${day}`;
+}
+
+export function formatChartDate(value: string | number | Date | null | undefined): string {
+  if (value == null || value === '') return '';
+  const raw = value instanceof Date ? value.toISOString() : String(value);
+  const datePart = raw.slice(0, 10);
+  const [, month, day] = datePart.split('-');
+  if (!month || !day) return datePart;
+  return `${month}-${day}`;
+}
+
+export function compareByDate(
+  a: string | number | Date | null | undefined,
+  b: string | number | Date | null | undefined,
+): number {
+  return new Date(String(a ?? 0)).getTime() - new Date(String(b ?? 0)).getTime();
+}
+
+export function chartDateKey(value: string | number | Date | null | undefined): string {
+  if (value == null || value === '') return '';
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const date = new Date(Number(value));
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return raw.slice(0, 10);
+  }
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+  return raw.slice(0, 10);
+}
+
+export function dedupeByChartDate<T>(
+  items: T[],
+  getDate: (item: T) => string | Date | null | undefined,
+): T[] {
+  const sorted = [...items].sort((a, b) => compareByDate(getDate(a), getDate(b)));
+  const byDate = new Map<string, T>();
+  for (const item of sorted) {
+    const key = chartDateKey(getDate(item));
+    if (!key) continue;
+    byDate.set(key, item);
+  }
+  return [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, item]) => item);
+}
+
+export function normalizeChartDate(value: Date): Date {
+  return new Date(`${value.toISOString().slice(0, 10)}T00:00:00.000Z`);
 }
 
 export function formatInterestRate(value: string | number | null | undefined): string {
@@ -134,3 +211,13 @@ export const ASSET_CLASS_LABELS: Record<string, string> = {
   stock: '주식/ETF',
   deposit: '예금',
 };
+
+/** 시세 API 캐시 TTL과 동일하게 유지 */
+export const MARKET_PRICE_REFRESH_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+export function needsMarketPriceRefresh(lastUpdatedAt: string | Date | null | undefined): boolean {
+  if (!lastUpdatedAt) return true;
+  const updated = lastUpdatedAt instanceof Date ? lastUpdatedAt : new Date(lastUpdatedAt);
+  if (Number.isNaN(updated.getTime())) return true;
+  return Date.now() - updated.getTime() > MARKET_PRICE_REFRESH_MAX_AGE_MS;
+}

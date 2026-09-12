@@ -57,6 +57,11 @@ export async function GET(request: NextRequest) {
     const total = await prisma.investmentTransaction.count({ where: dateFilteredWhere });
     const items = await prisma.investmentTransaction.findMany({
       where: dateFilteredWhere,
+      include: {
+        holding: {
+          select: { name: true, symbol: true },
+        },
+      },
       orderBy:
         sortOrder === "asc"
           ? [{ transaction_date: "asc" }, { id: "asc" }]
@@ -109,6 +114,7 @@ export async function POST(request: NextRequest) {
           price: payload.price ?? null,
           amount: payload.amount,
           fee: payload.fee,
+          tax: payload.tax,
           memo: payload.memo ?? null,
         },
       });
@@ -131,7 +137,10 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      return created;
+      return db.investmentTransaction.findUniqueOrThrow({
+        where: { id: created.id },
+        include: { holding: { select: { name: true, symbol: true } } },
+      });
     });
 
     return jsonOk(

@@ -88,12 +88,15 @@ export interface InvestmentTransaction {
   id: number;
   account_id: number;
   holding_id: number | null;
+  holding_name?: string | null;
+  holding_symbol?: string | null;
   type: string;
   transaction_date: string;
   quantity: string | null;
   price: string | null;
   amount: string;
   fee: string;
+  tax: string;
   memo: string | null;
 }
 
