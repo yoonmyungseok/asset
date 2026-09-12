@@ -10,6 +10,30 @@ import type { Budget, CategoryTree } from '@/types/api';
 import { formatMoney } from '@/lib/utils/format';
 import Modal from '@/components/common/Modal';
 
+function budgetFillClass(b: Budget) {
+  if (b.over_budget) return ' over';
+  if (Number(b.usage_rate) >= 90) return ' near';
+  return '';
+}
+
+function BudgetUsageBar({ budget, compact }: { budget: Budget; compact?: boolean }) {
+  return (
+    <div className={compact ? 'budget-card-usage' : 'flex flex-wrap items-center gap-2'}>
+      <div className={`progress-bar ${compact ? 'w-full' : 'w-full sm:w-[120px]'}`}>
+        <div
+          className={`progress-bar-fill${budgetFillClass(budget)}`}
+          style={{ width: `${Math.min(Number(budget.usage_rate), 100)}%` }}
+        />
+      </div>
+      {!compact && (
+        <span className={budget.over_budget ? 'text-danger' : ''}>
+          {budget.usage_rate}%{budget.over_budget && ' 🔴'}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function LedgerBudgetPage() {
   const { year, month, monthQuery } = useLedgerMonth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -62,35 +86,65 @@ export default function LedgerBudgetPage() {
           <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ 예산 설정</button>
         </div>
       ) : (
-        <div className="card">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>카테고리</th><th>예산</th><th>사용</th><th>잔여</th><th>사용률</th>
-              </tr>
-            </thead>
-            <tbody>
-              {budgets.map((b) => (
-                <tr key={b.id}>
-                  <td>{b.category_name}</td>
-                  <td>{formatMoney(b.amount)}</td>
-                  <td>{formatMoney(b.spent)}</td>
-                  <td className={Number(b.remaining) < 0 ? 'text-danger' : ''}>{formatMoney(b.remaining)}</td>
-                  <td>
-                    <div className="progress-bar w-[120px]">
-                      <div
-                        className={`progress-bar-fill${b.over_budget ? ' over' : Number(b.usage_rate) >= 90 ? ' near' : ''}`}
-                        style={{ width: `${Math.min(Number(b.usage_rate), 100)}%` }}
-                      />
+        <>
+          <div className="budget-list lg:hidden">
+            {budgets.map((b) => (
+              <div
+                key={b.id}
+                className={`card budget-card${b.over_budget ? ' budget-card--over' : ''}`}
+              >
+                <div className="budget-card-header">
+                  <span className="budget-card-name">{b.category_name}</span>
+                  <span className={b.over_budget ? 'text-danger font-semibold' : 'font-medium'}>
+                    {b.usage_rate}%{b.over_budget && ' 🔴'}
+                  </span>
+                </div>
+                <div className="budget-card-stats">
+                  <div>
+                    <div className="budget-card-stat-label">예산</div>
+                    <div>{formatMoney(b.amount)}</div>
+                  </div>
+                  <div>
+                    <div className="budget-card-stat-label">사용</div>
+                    <div>{formatMoney(b.spent)}</div>
+                  </div>
+                  <div>
+                    <div className="budget-card-stat-label">잔여</div>
+                    <div className={Number(b.remaining) < 0 ? 'text-danger' : ''}>
+                      {formatMoney(b.remaining)}
                     </div>
-                    <span className={b.over_budget ? 'text-danger' : ''}>{b.usage_rate}%</span>
-                    {b.over_budget && ' 🔴'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+                <BudgetUsageBar budget={b} compact />
+              </div>
+            ))}
+          </div>
+
+          <div className="card hidden lg:block">
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>카테고리</th><th>예산</th><th>사용</th><th>잔여</th><th>사용률</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {budgets.map((b) => (
+                    <tr key={b.id}>
+                      <td>{b.category_name}</td>
+                      <td>{formatMoney(b.amount)}</td>
+                      <td>{formatMoney(b.spent)}</td>
+                      <td className={Number(b.remaining) < 0 ? 'text-danger' : ''}>{formatMoney(b.remaining)}</td>
+                      <td>
+                        <BudgetUsageBar budget={b} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       <Modal

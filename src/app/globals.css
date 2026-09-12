@@ -185,6 +185,11 @@ textarea {
     @apply mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center;
   }
 
+  .filter-chips {
+    @apply -mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 sm:flex-wrap sm:overflow-visible;
+  }
+
+  .filters-total,
   .filters .ml-auto {
     @apply w-full sm:ml-auto sm:w-auto;
   }
@@ -365,27 +370,31 @@ textarea {
   }
 
   .group-header {
-    @apply flex cursor-pointer items-center justify-between border-b border-gray-200 py-3 font-semibold;
+    @apply flex min-w-0 cursor-pointer items-center justify-between border-b border-gray-200 py-3 text-sm font-semibold sm:text-base;
+  }
+
+  .group-header > span {
+    @apply truncate;
   }
 
   .account-row {
-    @apply flex cursor-pointer items-center justify-between border-b border-gray-200 px-4 py-3.5 transition-colors hover:bg-gray-50;
+    @apply flex min-h-[48px] cursor-pointer items-center justify-between gap-3 border-b border-gray-200 px-4 py-3.5 transition-colors hover:bg-gray-50;
   }
 
   .account-row-info {
-    @apply flex flex-col gap-0.5;
+    @apply flex min-w-0 flex-col gap-0.5;
   }
 
   .account-row-name {
-    @apply font-medium;
+    @apply truncate font-medium;
   }
 
   .account-row-meta {
-    @apply text-[13px] text-gray-500;
+    @apply truncate text-[13px] text-gray-500;
   }
 
   .account-row-value {
-    @apply text-right;
+    @apply shrink-0 text-right;
   }
 
   .progress-bar {
@@ -402,6 +411,38 @@ textarea {
 
   .progress-bar-fill.near {
     @apply bg-warning;
+  }
+
+  .budget-list {
+    @apply flex flex-col gap-3;
+  }
+
+  .budget-card {
+    @apply p-4;
+  }
+
+  .budget-card--over {
+    @apply border-l-4 border-l-danger;
+  }
+
+  .budget-card-header {
+    @apply mb-3 flex items-center justify-between gap-2;
+  }
+
+  .budget-card-name {
+    @apply font-semibold;
+  }
+
+  .budget-card-stats {
+    @apply mb-3 grid grid-cols-3 gap-2 text-sm;
+  }
+
+  .budget-card-stat-label {
+    @apply mb-0.5 text-[13px] text-gray-500;
+  }
+
+  .budget-card-usage {
+    @apply flex flex-col gap-1.5;
   }
 
   .settings-layout {

@@ -108,16 +108,18 @@ export default function InvestmentPage() {
       />
 
       <div className="filters">
-        {['all', 'investment', 'pension', 'deposit', 'cash'].map((f) => (
-          <button
-            key={f}
-            className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter(f)}
-          >
-            {f === 'all' ? '전체' : CATEGORY_LABELS[f]}
-          </button>
-        ))}
-        <span className="ml-auto">총 평가: <strong>{formatMoney(grandTotal)}</strong></span>
+        <div className="filter-chips">
+          {['all', 'investment', 'pension', 'deposit', 'cash'].map((f) => (
+            <button
+              key={f}
+              className={`btn btn-sm shrink-0 ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === 'all' ? '전체' : CATEGORY_LABELS[f]}
+            </button>
+          ))}
+        </div>
+        <span className="filters-total">총 평가: <strong>{formatMoney(grandTotal)}</strong></span>
       </div>
 
       {loading ? (
