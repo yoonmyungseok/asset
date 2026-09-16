@@ -31,12 +31,12 @@ export async function applyMarketQuote(holding: {
   try {
     const quote = await getQuote(holding.symbol);
     holding.last_market_price = quote.price;
-    holding.last_price_updated_at = new Date();
+    holding.last_price_updated_at = quote.updated_at ?? new Date();
     if (quote.name) {
       holding.name = quote.name;
     }
   } catch {
-    // silent swallow (matches Python ValueError/RateLimitError on create)
+    // ignore price fetch failures on create
   }
 }
 
@@ -87,7 +87,7 @@ export async function refreshPrices(holdingIds?: number[] | null) {
         where: { id: holding.id },
         data: {
           last_market_price: quote.price,
-          last_price_updated_at: new Date(),
+          last_price_updated_at: quote.updated_at ?? new Date(),
           ...(quote.name ? { name: quote.name } : {}),
         },
       });

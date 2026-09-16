@@ -311,11 +311,6 @@ export default function TransactionFormModal({ open, transaction, onClose, onSav
               setFromAccountId('');
               setToAccountId('');
               setTransferMode('external');
-              const nextMethod = paymentMethods.find((m) => m.id === nextId);
-              if (nextMethod?.name === '계좌이체') {
-                setType('expense');
-                setCategoryId('');
-              }
             }}
           >
             <option value="">선택</option>

@@ -288,7 +288,8 @@ export interface DashboardOverview {
 }
 
 export interface TrendPoint {
-  date: string;
+  year: number;
+  month: number;
   total_assets: string;
   total_liabilities: string;
   net_worth: string;

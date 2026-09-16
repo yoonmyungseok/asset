@@ -52,6 +52,29 @@ export function formatAvgCostPrice(value: string | number | null | undefined): s
   return fractionPart ? `${formattedInteger}.${fractionPart}` : formattedInteger;
 }
 
+/** 국내 주식·ETF 1주 가격(원). 지수(S&P 500 등)와 혼동하지 않도록 원 단위로 표시 */
+export function formatStockUnitPrice(value: string | number | null | undefined): string {
+  const raw = toAvgCostPriceString(value);
+  if (!raw) return '-';
+  return formatMoney(raw);
+}
+
+export function formatMarketPriceUpdatedAt(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Seoul',
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('month')}/${get('day')} ${get('hour')}:${get('minute')} 기준`;
+}
+
 export function formatPercent(value: string | number | null | undefined): string {
   const num = Number(value ?? 0);
   const sign = num > 0 ? '+' : '';
@@ -206,6 +229,13 @@ export const CATEGORY_LABELS: Record<string, string> = {
   deposit: '예적금',
   cash: '입출금',
 };
+
+export function formatAccountMeta(account: {
+  account_type?: { name: string } | null;
+  institution?: string | null;
+}): string {
+  return [account.account_type?.name, account.institution].filter(Boolean).join(' · ');
+}
 
 export const ASSET_CLASS_LABELS: Record<string, string> = {
   stock: '주식/ETF',

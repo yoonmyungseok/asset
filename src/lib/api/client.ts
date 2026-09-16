@@ -1,10 +1,15 @@
 const BASE = '/api/v1';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      ...options,
+    });
+  } catch {
+    throw new Error('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     const detail = err.detail;
@@ -55,7 +60,10 @@ export const api = {
   deleteHolding: (id: number) =>
     request(`/holdings/${id}`, { method: 'DELETE' }),
   refreshPrices: (holdingIds?: number[]) =>
-    request('/holdings/refresh-prices', {
+    request<{
+      updated: number;
+      failed: Array<{ holding_id: number; symbol: string; reason: string }>;
+    }>('/holdings/refresh-prices', {
       method: 'POST',
       body: JSON.stringify({ holding_ids: holdingIds }),
     }),
@@ -141,9 +149,9 @@ export const api = {
 
   getDashboardOverview: () =>
     request<import('@/types/api').DashboardOverview>('/dashboard/overview'),
-  getNetWorthTrend: (from?: string, to?: string) =>
+  getNetWorthTrend: (months = 12) =>
     request<{ data: import('@/types/api').TrendPoint[] }>(
-      `/dashboard/net-worth-trend${qs({ from_date: from, to_date: to })}`,
+      `/dashboard/net-worth-trend${qs({ months })}`,
     ),
   getCashflowTrend: (months = 6) =>
     request<{ data: import('@/types/api').CashflowTrendPoint[] }>(

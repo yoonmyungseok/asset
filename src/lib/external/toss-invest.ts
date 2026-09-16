@@ -266,6 +266,14 @@ function priceValue(price: Record<string, unknown>): Decimal | null {
   return null;
 }
 
+export function parseTossPriceTimestamp(value: unknown): Date | null {
+  if (value == null) {
+    return null;
+  }
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 async function lookupSymbol(symbol: string): Promise<MarketSearchItem | null> {
   const tossSymbol = toTossSymbol(symbol);
   const stocks = await getStocks([tossSymbol]);
@@ -295,12 +303,14 @@ export async function getQuote(symbol: string): Promise<MarketQuoteResponse> {
 
   const appSymbol = toAppSymbol(String(priceRow.symbol ?? tossSymbol), stockMarket(stock));
   const currency = String(priceRow.currency ?? stock.currency ?? "KRW");
+  const updatedAt =
+    parseTossPriceTimestamp(priceRow.timestamp ?? priceRow.tradedAt ?? priceRow.traded_at) ?? new Date();
   return {
     symbol: appSymbol,
     name: stockName(stock),
     price,
     currency,
-    updated_at: new Date(),
+    updated_at: updatedAt,
   };
 }
 

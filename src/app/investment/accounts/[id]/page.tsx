@@ -13,6 +13,7 @@ import RecentTransactionRow from '@/components/investment/RecentTransactionRow';
 import type { HoldingFormValues } from '@/components/investment/HoldingFormModal';
 import TransactionFormModal from '@/components/ledger/TransactionFormModal';
 import InstitutionSelect from '@/components/common/InstitutionSelect';
+import InstitutionIcon from '@/components/common/InstitutionIcon';
 import type { Account, AccountLimit, AccountType, Holding, InvestmentTransaction, LedgerTransaction } from '@/types/api';
 import {
   mergeAccountRecentTransactions,
@@ -22,7 +23,7 @@ import {
   recentTransactionTypeLabel,
   type AccountRecentTransaction,
 } from '@/lib/utils/account-recent-transactions';
-import { dedupeByChartDate, formatAvgCostPrice, formatChartDate, formatMoney, formatPercent, formatQuantity, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, needsMarketPriceRefresh, toAvgCostPriceString, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
+import { dedupeByChartDate, formatAccountMeta, formatAvgCostPrice, formatChartDate, formatMarketPriceUpdatedAt, formatMoney, formatPercent, formatQuantity, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, formatStockUnitPrice, needsMarketPriceRefresh, toAvgCostPriceString, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
 import Modal from '@/components/common/Modal';
 
 export default function AccountDetailPage() {
@@ -54,43 +55,81 @@ export default function AccountDetailPage() {
   const [limitForm, setLimitForm] = useState({ year: String(new Date().getFullYear()), contribution_limit: '' });
   const [holdingForm, setHoldingForm] = useState<HoldingFormValues>(emptyHoldingFormValues());
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [priceRefreshing, setPriceRefreshing] = useState(false);
+  const [priceMessage, setPriceMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
-    const [acc, types, investmentTx, ledgerTx, limits, snaps] = await Promise.all([
-      api.getAccount(accountId),
-      api.getAccountTypes(),
-      api.getInvestmentTransactions({ account_id: accountId, page_size: 20 }),
-      api.getLedgerTransactions({ account_id: accountId, page_size: 20 }),
-      api.getAccountLimits(new Date().getFullYear()),
-      api.getAccountSnapshots(accountId),
-    ]);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [acc, types, investmentTx, ledgerTx, limits, snaps] = await Promise.all([
+        api.getAccount(accountId),
+        api.getAccountTypes(),
+        api.getInvestmentTransactions({ account_id: accountId, page_size: 20 }),
+        api.getLedgerTransactions({ account_id: accountId, page_size: 20 }),
+        api.getAccountLimits(new Date().getFullYear()),
+        api.getAccountSnapshots(accountId),
+      ]);
 
-    const accountType = types.find((t) => t.id === acc.account_type_id);
-    const supportsHoldings = accountType?.supports_holdings ?? acc.account_type?.supports_holdings ?? false;
+      const accountType = types.find((t) => t.id === acc.account_type_id);
+      const supportsHoldings = accountType?.supports_holdings ?? acc.account_type?.supports_holdings ?? false;
 
-    let holdings: Holding[] = [];
-    if (supportsHoldings) {
-      holdings = await api.getHoldings(accountId);
-      const stalePriceIds = holdings
-        .filter((holding) => holding.asset_class !== 'deposit' && needsMarketPriceRefresh(holding.last_price_updated_at))
-        .map((holding) => holding.id);
-      if (stalePriceIds.length > 0) {
-        await api.refreshPrices(stalePriceIds);
+      let holdings: Holding[] = [];
+      if (supportsHoldings) {
         holdings = await api.getHoldings(accountId);
+        const stalePriceIds = holdings
+          .filter((holding) => holding.asset_class !== 'deposit' && needsMarketPriceRefresh(holding.last_price_updated_at))
+          .map((holding) => holding.id);
+        if (stalePriceIds.length > 0) {
+          try {
+            await api.refreshPrices(stalePriceIds);
+            holdings = await api.getHoldings(accountId);
+          } catch {
+            // 초기 로드는 시세 갱신 실패 시에도 계좌 화면을 표시한다.
+          }
+        }
       }
-    }
 
-    setAccount(acc);
-    setAccountTypes(types);
-    setHoldings(holdings);
-    setRecentTransactions(mergeAccountRecentTransactions(investmentTx.items, ledgerTx.items));
-    setLimit(limits.find((l) => l.account_id === accountId) ?? null);
-    setSnapshots(dedupeByChartDate(snaps, (snap) => snap.snapshot_date));
+      setAccount(acc);
+      setAccountTypes(types);
+      setHoldings(holdings);
+      setRecentTransactions(mergeAccountRecentTransactions(investmentTx.items, ledgerTx.items));
+      setLimit(limits.find((l) => l.account_id === accountId) ?? null);
+      setSnapshots(dedupeByChartDate(snaps, (snap) => snap.snapshot_date));
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : '데이터를 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { if (accountId) load(); }, [accountId]);
+  useEffect(() => {
+    if (!Number.isFinite(accountId)) {
+      setLoading(false);
+      setLoadError('잘못된 계좌 ID입니다.');
+      return;
+    }
+    void load();
+  }, [accountId]);
 
-  if (!account) return <div className="loading">로딩 중...</div>;
+  if (loading) {
+    return <div className="loading">로딩 중...</div>;
+  }
+
+  if (loadError || !account) {
+    return (
+      <>
+        <PageHeader title="계좌" actions={<Link href="/investment" className="btn btn-secondary">← 자산</Link>} />
+        <div className="empty-state card">
+          <h3>데이터를 불러오지 못했습니다</h3>
+          <p>{loadError ?? '알 수 없는 오류가 발생했습니다.'}</p>
+          <button type="button" className="btn btn-primary" onClick={() => void load()}>다시 시도</button>
+        </div>
+      </>
+    );
+  }
 
   const totalValue = Number(account.summary?.total_value ?? account.cash_balance);
   const holdingsValue = Number(account.summary?.holdings_value ?? 0);
@@ -140,6 +179,34 @@ export default function AccountDetailPage() {
     }
     closeHoldingForm();
     load();
+  };
+
+  const handleRefreshHoldingPrices = async () => {
+    const stockIds = holdings
+      .filter((holding) => holding.asset_class !== 'deposit')
+      .map((holding) => holding.id);
+    if (stockIds.length === 0) {
+      setPriceMessage('갱신할 주식·ETF 보유 종목이 없습니다.');
+      return;
+    }
+    setPriceRefreshing(true);
+    setPriceMessage(null);
+    try {
+      const result = await api.refreshPrices(stockIds);
+      await load();
+      if (result.failed.length > 0) {
+        const detail = result.failed.slice(0, 2).map((f) => `${f.symbol}: ${f.reason}`).join(', ');
+        setPriceMessage(`${result.updated}건 갱신, ${result.failed.length}건 실패 (${detail})`);
+      } else if (result.updated === 0) {
+        setPriceMessage('갱신할 시세가 없습니다.');
+      } else {
+        setPriceMessage(`${result.updated}건 시세를 갱신했습니다.`);
+      }
+    } catch (e) {
+      setPriceMessage(e instanceof Error ? e.message : '시세 갱신에 실패했습니다.');
+    } finally {
+      setPriceRefreshing(false);
+    }
   };
 
   const openCreateHoldingForm = () => {
@@ -348,8 +415,9 @@ export default function AccountDetailPage() {
           </>
         }
       />
-      <p className="text-muted" style={{ marginBottom: 16 }}>
-        {account.account_type?.name} {account.institution && `· ${account.institution}`}
+      <p className="text-muted flex items-center gap-2" style={{ marginBottom: 16 }}>
+        <InstitutionIcon institution={account.institution} size={24} />
+        {formatAccountMeta(account)}
       </p>
 
       <div className={`card-grid ${supportsHoldings ? 'card-grid-4' : 'card-grid-1'}`} style={{ marginBottom: 16 }}>
@@ -436,19 +504,19 @@ export default function AccountDetailPage() {
           <h3 className="section-title m-0">보유 종목</h3>
           <span className="flex gap-2">
             <button
+              type="button"
               className="btn btn-sm btn-secondary"
-              onClick={async () => {
-                const stockIds = holdings.filter((holding) => holding.asset_class !== 'deposit').map((holding) => holding.id);
-                if (stockIds.length === 0) return;
-                await api.refreshPrices(stockIds);
-                load();
-              }}
+              onClick={handleRefreshHoldingPrices}
+              disabled={priceRefreshing}
             >
-              시세 갱신
+              {priceRefreshing ? '갱신 중...' : '시세 갱신'}
             </button>
             <button className="btn btn-sm btn-primary" onClick={openCreateHoldingForm}>+ 보유 추가</button>
           </span>
         </div>
+        {priceMessage && (
+          <p className="mb-3 text-sm text-gray-600" role="status">{priceMessage}</p>
+        )}
         {holdings.length === 0 ? (
           <p className="text-muted py-5">보유 종목이 없습니다.</p>
         ) : (
@@ -492,7 +560,8 @@ export default function AccountDetailPage() {
                             <>
                               <br /><span className="text-muted text-xs">{h.symbol}</span>
                               <br /><span className="text-muted text-xs">
-                                {formatQuantity(h.quantity)}좌 · 평단 {formatAvgCostPrice(h.avg_cost_price)} · 현재 {formatAvgCostPrice(h.current_price)}
+                                {formatQuantity(h.quantity)}좌 · 평단 {formatStockUnitPrice(h.avg_cost_price)} · 현재 {formatStockUnitPrice(h.current_price)}
+                                {h.last_price_updated_at ? ` (${formatMarketPriceUpdatedAt(h.last_price_updated_at)})` : ''}
                               </span>
                             </>
                           )}

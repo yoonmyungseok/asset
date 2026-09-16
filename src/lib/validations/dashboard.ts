@@ -49,7 +49,8 @@ export const dashboardOverviewSchema = z.object({
 });
 
 export const trendPointSchema = z.object({
-  date: dateSchema,
+  year: z.number().int(),
+  month: z.number().int(),
   total_assets: decimalSchema,
   total_liabilities: decimalSchema,
   net_worth: decimalSchema,

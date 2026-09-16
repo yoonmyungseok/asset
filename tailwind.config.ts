@@ -9,10 +9,10 @@ const config: Config = {
         danger: '#dc2626',
       },
       width: {
-        sidebar: '220px',
+        sidebar: '240px',
       },
       spacing: {
-        sidebar: '220px',
+        sidebar: '240px',
       },
     },
   },

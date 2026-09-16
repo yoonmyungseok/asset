@@ -65,6 +65,12 @@ describe("market data helpers", () => {
     expect(tossInvest.toTossSymbol("AAPL")).toBe("AAPL");
   });
 
+  it("parses toss price timestamps", () => {
+    const parsed = tossInvest.parseTossPriceTimestamp("2026-09-15T15:59:44.000+09:00");
+    expect(parsed).not.toBeNull();
+    expect(parsed?.getFullYear()).toBe(2026);
+  });
+
   it("parses flat oauth token responses", () => {
     const [token, expiresIn] = tossInvest.parseOauthToken({
       access_token: "abc123",

@@ -5,10 +5,12 @@ import {
   ASSET_CLASS_LABELS,
   formatAvgCostPrice,
   formatInterestRate,
+  formatMarketPriceUpdatedAt,
   formatMaturityLabel,
   formatMoney,
   formatPercent,
   formatQuantity,
+  formatStockUnitPrice,
 } from '@/lib/utils/format';
 
 interface Props {
@@ -60,8 +62,13 @@ export default function HoldingCard({ holding, onEdit, onDelete }: Props) {
           </div>
         ) : (
           <div className="holding-card-stock-detail">
-            {formatQuantity(holding.quantity)}좌 · 평단 {formatAvgCostPrice(holding.avg_cost_price)} · 현재{' '}
-            {formatAvgCostPrice(holding.current_price)}
+            {formatQuantity(holding.quantity)}좌 · 평단 {formatStockUnitPrice(holding.avg_cost_price)} · 현재{' '}
+            {formatStockUnitPrice(holding.current_price)}
+            {holding.last_price_updated_at && (
+              <span className="text-muted text-xs">
+                {' '}({formatMarketPriceUpdatedAt(holding.last_price_updated_at)})
+              </span>
+            )}
           </div>
         )}
       </div>

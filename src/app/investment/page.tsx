@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/AppLayout';
 import type { Account, AccountPerformance } from '@/types/api';
-import { CATEGORY_LABELS, formatMoney, formatPercent, toWholeMoney } from '@/lib/utils/format';
+import { CATEGORY_LABELS, formatAccountMeta, formatMoney, formatPercent, toWholeMoney } from '@/lib/utils/format';
 import Modal from '@/components/common/Modal';
 import InstitutionSelect from '@/components/common/InstitutionSelect';
+import InstitutionIcon from '@/components/common/InstitutionIcon';
 
 export default function InvestmentPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function InvestmentPage() {
   const [accountTypes, setAccountTypes] = useState<{ id: number; name: string; category: string; supports_holdings: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [priceRefreshing, setPriceRefreshing] = useState(false);
+  const [priceMessage, setPriceMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
     account_type_id: '',
     name: '',
@@ -91,8 +94,24 @@ export default function InvestmentPage() {
   };
 
   const handleRefreshPrices = async () => {
-    await api.refreshPrices();
-    load();
+    setPriceRefreshing(true);
+    setPriceMessage(null);
+    try {
+      const result = await api.refreshPrices();
+      await load();
+      if (result.failed.length > 0) {
+        const detail = result.failed.slice(0, 2).map((f) => `${f.symbol}: ${f.reason}`).join(', ');
+        setPriceMessage(`${result.updated}건 갱신, ${result.failed.length}건 실패 (${detail})`);
+      } else if (result.updated === 0) {
+        setPriceMessage('갱신할 주식·ETF 보유 종목이 없습니다.');
+      } else {
+        setPriceMessage(`${result.updated}건 시세를 갱신했습니다.`);
+      }
+    } catch (e) {
+      setPriceMessage(e instanceof Error ? e.message : '시세 갱신에 실패했습니다.');
+    } finally {
+      setPriceRefreshing(false);
+    }
   };
 
   return (
@@ -101,11 +120,22 @@ export default function InvestmentPage() {
         title="자산"
         actions={
           <>
-            <button className="btn btn-secondary" onClick={handleRefreshPrices}>시세 갱신</button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleRefreshPrices}
+              disabled={priceRefreshing || loading}
+            >
+              {priceRefreshing ? '시세 갱신 중...' : '시세 갱신'}
+            </button>
             <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ 계좌 추가</button>
           </>
         }
       />
+
+      {priceMessage && (
+        <p className="mb-4 text-sm text-gray-600" role="status">{priceMessage}</p>
+      )}
 
       <div className="filters">
         <div className="filter-chips">
@@ -154,9 +184,12 @@ export default function InvestmentPage() {
                     onClick={() => router.push(`/investment/accounts/${account.id}`)}
                   >
                     <div className="account-row-info">
-                      <span className="account-row-name">{account.name}</span>
+                      <div className="account-row-title">
+                        <InstitutionIcon institution={account.institution} />
+                        <span className="account-row-name">{account.name}</span>
+                      </div>
                       <span className="account-row-meta">
-                        {account.account_type?.name} {account.institution && `· ${account.institution}`}
+                        {formatAccountMeta(account)}
                       </span>
                     </div>
                     <div className="account-row-value">
