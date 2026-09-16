@@ -1,0 +1,16 @@
+---
+description: asset 프로젝트 핵심 (항상 적용)
+alwaysApply: true
+---
+
+# asset
+
+Next.js 16 개인 자산·가계부·투자 앱 · SQLite(`data/asset.db`) · Prisma · **dev 포트 4000**.
+
+- Next.js는 `AGENTS.md` 및 `node_modules/next/dist/docs/` 기준 (학습 데이터와 다를 수 있음).
+- 금액·수량: `@/lib/decimal` / decimal.js만 사용. JS `number`로 돈 계산 금지.
+- `@/` import, Prisma 필드 snake_case, 사용자-facing 문구는 한국어.
+- 요청 범위만 수정; 주변 파일 패턴 복제.
+- 커밋 금지: `.env`, `data/*.db`, `data/*.bak`, credentials, `.next`.
+- 사람용 요약: `README.md`.
+- `npm run dev` | `test` | `db:migrate` | `db:seed`. 신규 API 라우트 → `tests/helpers/api-client.ts` `ROUTE_DEFINITIONS`.

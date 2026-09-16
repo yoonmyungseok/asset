@@ -1,0 +1,22 @@
+---
+description: asset 코드 패턴 (API·lib·UI·DB·test)
+globs:
+  - src/app/api/**/*.ts
+  - src/lib/**/*.ts
+  - src/**/*.tsx
+  - prisma/**
+  - tests/**
+alwaysApply: false
+---
+
+# 패턴
+
+**API** — `try/catch`; `jsonOk` / `handleRouteError` (`@/lib/api/route-utils`). `parseQueryInt`·`parseQueryBool`·`parseJsonBody(zod, body)`. `throw new ServiceError(code, "…")`. 응답 `@/lib/api/serializers`·`*ToResponse`. 비즈니스는 `src/lib/services`.
+
+**lib** — `prisma` (`@/lib/db`). Zod `src/lib/validations/**`. SQLite 날짜 `@/lib/sqlite-date-filter`. 시세·토스 `@/lib/external/*` (라우트 에러 핸들러 처리).
+
+**UI** — App Router; `"use client"`는 인접 파일과 동일. fetch `/api/v1`, 타입 `src/types/api.ts`. `Modal`·`*FormModal`. Tailwind 4·`globals.css`; ledger/investment/settings UI 톤 유지.
+
+**Prisma** — PascalCase 모델·`@@map`, 마이그레이션 후 generate.
+
+**tests** — Vitest; DB `tests/helpers/test-db.ts`; API `tests/helpers/api-client.ts`.

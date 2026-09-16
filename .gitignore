@@ -1,17 +1,57 @@
+# Dependencies
+node_modules/
+
+# Local Python venv/cache (not used; ignore if leftover on disk)
+.venv/
+venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.venv/
-venv/
-data/*.db
-data/*.db.bak
-data/*.db-journal
-data/test_*.db
-data/toss_credentials.json
-.env
-*.egg-info/
-dist/
-build/
-node_modules/
+
+# Next.js
 .next/
 out/
+.vercel/
+
+# Build / tooling
+*.tsbuildinfo
+.turbo/
+
+# Test & coverage
+coverage/
+
+# Logs & debug
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment (keep example)
+.env
+.env.*
+!.env.example
+
+# Local SQLite & secrets (track only data/.gitkeep)
+data/*
+!data/.gitkeep
+
+# Stray DB copies
+prisma/data/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors (optional local overrides)
+.idea/
+*.swp
+*.swo
+*~
+
+# Cursor local state (keep .cursor/rules in git)
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
