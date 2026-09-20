@@ -1,4 +1,4 @@
-import type { Account, Holding, InvestmentTransaction, Prisma } from "@prisma/client";
+import type { Account, AccountType, Holding, InvestmentTransaction, Prisma } from "@prisma/client";
 import Decimal from "decimal.js";
 import type { z } from "zod";
 
@@ -28,6 +28,39 @@ import { prisma } from "@/lib/db";
 type TxClient = Prisma.TransactionClient;
 type InvestmentCreate = z.infer<typeof investmentTransactionCreateSchema>;
 type InvestmentUpdate = z.infer<typeof investmentTransactionUpdateSchema>;
+
+type AccountWithType = Account & { account_type: AccountType };
+
+export function assertTransactionAllowedForAccount(
+  account: AccountWithType,
+  type: string,
+): void {
+  const { category, supports_holdings } = account.account_type;
+
+  if (type === "buy" || type === "sell") {
+    if (!supports_holdings) {
+      throw new ServiceError(400, "이 계좌 유형은 매수·매도를 지원하지 않습니다.");
+    }
+    return;
+  }
+
+  if (type === "dividend") {
+    if (!supports_holdings) {
+      throw new ServiceError(400, "이 계좌 유형은 배당을 지원하지 않습니다.");
+    }
+    return;
+  }
+
+  if (type === "interest") {
+    if (category !== "deposit" && !supports_holdings) {
+      throw new ServiceError(
+        400,
+        "이자는 예적금 또는 보유 상품이 있는 계좌에서만 등록할 수 있습니다.",
+      );
+    }
+    return;
+  }
+}
 
 export async function resolveHolding(
   db: TxClient,
@@ -305,10 +338,16 @@ export async function updateInvestmentTransaction(
       throw new ServiceError(404, "거래를 찾을 수 없습니다.");
     }
 
-    const account = await db.account.findUnique({ where: { id: existing.account_id } });
+    const account = await db.account.findUnique({
+      where: { id: existing.account_id },
+      include: { account_type: true },
+    });
     if (!account) {
       throw new ServiceError(404, "계좌를 찾을 수 없습니다.");
     }
+
+    const effectiveType = payload.type ?? existing.type;
+    assertTransactionAllowedForAccount(account, effectiveType);
 
     const oldYear = existing.transaction_date.getFullYear();
 

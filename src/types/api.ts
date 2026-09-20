@@ -262,6 +262,11 @@ export interface DashboardOverview {
     total_liabilities: string;
     net_worth: string;
   };
+  net_worth_delta: {
+    previous_date: string;
+    change_amount: string;
+    change_rate: string;
+  } | null;
   asset_breakdown: {
     investment: string;
     cash: string;
@@ -275,6 +280,12 @@ export interface DashboardOverview {
     total_expense: string;
     net: string;
   };
+  cashflow_comparison: {
+    prev_month_income: string;
+    prev_month_expense: string;
+    income_change_rate?: string;
+    expense_change_rate: string;
+  } | null;
   accounts_summary: {
     account_id: number;
     name: string;
@@ -283,8 +294,22 @@ export interface DashboardOverview {
     total_value: string;
     ratio: string;
   }[];
+  budget_alerts: BudgetAlertItem[];
   budget_alerts_count: number;
   limit_alerts: { account_name: string; usage_rate: string; remaining: string }[];
+  insights: {
+    savings_rate: string | null;
+    emergency_months: string | null;
+    debt_ratio: string | null;
+  };
+}
+
+export interface BudgetAlertItem {
+  category_name: string;
+  budget: string;
+  spent: string;
+  over_amount?: string | null;
+  usage_rate?: string | null;
 }
 
 export interface TrendPoint {

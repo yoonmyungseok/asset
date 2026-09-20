@@ -9,6 +9,7 @@ import Modal from '@/components/common/Modal';
 interface Props {
   open: boolean;
   transaction?: LedgerTransaction | null;
+  presetAccountId?: number;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -49,7 +50,32 @@ function isReimbursementType(type: LedgerFormType | LedgerTransaction['type']) {
   return type === 'reimbursement_out' || type === 'reimbursement_in';
 }
 
-export default function TransactionFormModal({ open, transaction, onClose, onSaved }: Props) {
+function applyNewTransactionAccountPreset(
+  presetAccountId: number,
+  type: LedgerFormType,
+  transferMode: TransferMode,
+  setFromAccountId: (v: number | '') => void,
+) {
+  if (type === 'income' || type === 'reimbursement_in') {
+    setFromAccountId(presetAccountId);
+    return;
+  }
+  if (type === 'expense' && transferMode === 'internal') {
+    setFromAccountId(presetAccountId);
+    return;
+  }
+  if (type === 'expense' || type === 'reimbursement_out') {
+    setFromAccountId(presetAccountId);
+  }
+}
+
+export default function TransactionFormModal({
+  open,
+  transaction,
+  presetAccountId,
+  onClose,
+  onSaved,
+}: Props) {
   const [type, setType] = useState<LedgerFormType>('expense');
   const [date, setDate] = useState(todayISO());
   const [amount, setAmount] = useState('');
@@ -142,9 +168,12 @@ export default function TransactionFormModal({ open, transaction, onClose, onSav
         }
       } else {
         resetForm(setters);
+        if (presetAccountId != null) {
+          applyNewTransactionAccountPreset(presetAccountId, 'expense', 'external', setFromAccountId);
+        }
       }
     });
-  }, [open, transaction]);
+  }, [open, transaction, presetAccountId]);
 
   const filteredCategories = categories.filter((c) => c.type === type);
   const selectedPaymentMethod = paymentMethods.find((m) => m.id === paymentMethodId);

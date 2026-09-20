@@ -22,6 +22,7 @@ import {
   recentTransactionTypeLabel,
   type AccountRecentTransaction,
 } from '@/lib/utils/account-recent-transactions';
+import { resolveAccountTransactionUiMode } from '@/lib/utils/account-transaction-ui';
 import { dedupeByChartDate, formatAvgCostPrice, formatChartDate, formatMoney, formatPercent, formatQuantity, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, needsMarketPriceRefresh, toAvgCostPriceString, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
 import Modal from '@/components/common/Modal';
 
@@ -98,6 +99,12 @@ export default function AccountDetailPage() {
   const supportsHoldings = accountType?.supports_holdings ?? account.account_type?.supports_holdings ?? false;
   const supportsLimit = accountType?.supports_contribution_limit ?? false;
   const isDepositAccount = accountType?.category === 'deposit';
+  const txUiMode = resolveAccountTransactionUiMode(
+    accountType ?? {
+      category: account.account_type?.category ?? 'cash',
+      supports_holdings: account.account_type?.supports_holdings ?? false,
+    },
+  );
   const hasLimit = limit && Number(limit.contribution_limit) > 0;
 
   const depositPayload = (values: { interest_rate: string; start_date: string; maturity_date: string }) => ({
@@ -181,6 +188,11 @@ export default function AccountDetailPage() {
   const openCreateTxForm = () => {
     setEditingTransaction(null);
     setShowTxForm(true);
+  };
+
+  const openCreateLedgerForm = () => {
+    setEditingLedgerTransaction(null);
+    setShowLedgerForm(true);
   };
 
   const openEditTxForm = (tx: InvestmentTransaction) => {
@@ -318,7 +330,16 @@ export default function AccountDetailPage() {
             <Link href="/investment" className="btn btn-secondary">← 자산</Link>
             <button className="btn btn-secondary hidden lg:inline-flex" onClick={openEditForm}>계좌 수정</button>
             <button className="btn btn-danger hidden lg:inline-flex" onClick={handleRemoveAccount}>삭제</button>
-            <button className="btn btn-primary" onClick={openCreateTxForm}>거래 추가</button>
+            {txUiMode === 'cash' ? (
+              <>
+                <button className="btn btn-primary" onClick={openCreateTxForm}>잔고 조정</button>
+                <button className="btn btn-secondary" onClick={openCreateLedgerForm}>가계부 거래</button>
+              </>
+            ) : (
+              <button className="btn btn-primary" onClick={openCreateTxForm}>
+                {txUiMode === 'savings' ? '잔고·이자' : '거래 추가'}
+              </button>
+            )}
             <div className="relative lg:hidden">
               <button
                 className="btn btn-secondary"
@@ -597,12 +618,14 @@ export default function AccountDetailPage() {
         onClose={closeTxForm}
         onSaved={load}
         accountId={accountId}
+        accountMode={txUiMode}
         transaction={editingTransaction}
       />
 
       <TransactionFormModal
         open={showLedgerForm}
         transaction={editingLedgerTransaction}
+        presetAccountId={editingLedgerTransaction ? undefined : accountId}
         onClose={closeLedgerForm}
         onSaved={load}
       />

@@ -21,6 +21,7 @@ import { ServiceError } from "@/lib/service-error";
 import { updateContributedAmount } from "@/lib/services/core";
 import {
   applyTransactionEffects,
+  assertTransactionAllowedForAccount,
   resolveHolding,
   reverseTransactionEffects,
 } from "@/lib/services/investment-transactions";
@@ -87,10 +88,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const payload = parseJsonBody(investmentTransactionCreateSchema, await request.json());
-    const account = await prisma.account.findUnique({ where: { id: payload.account_id } });
+    const account = await prisma.account.findUnique({
+      where: { id: payload.account_id },
+      include: { account_type: true },
+    });
     if (!account) {
       return apiError(404, "계좌를 찾을 수 없습니다.");
     }
+
+    assertTransactionAllowedForAccount(account, payload.type);
 
     const tx = await prisma.$transaction(async (db) => {
       let holding = null;

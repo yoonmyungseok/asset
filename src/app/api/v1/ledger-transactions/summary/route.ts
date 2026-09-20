@@ -12,6 +12,7 @@ import {
   monthSqliteDateBounds,
 } from "@/lib/sqlite-date-filter";
 import { toDecimal } from "@/lib/decimal";
+import { getCashflowMonthComparison } from "@/lib/services/ledger-comparison";
 import { getCategoryDescendantIds } from "@/lib/services/core";
 
 export async function GET(request: NextRequest) {
@@ -123,22 +124,13 @@ export async function GET(request: NextRequest) {
       .filter((item): item is NonNullable<typeof item> => item != null)
       .sort((a, b) => b.amount.comparedTo(a.amount));
 
-    const prevMonth = month > 1 ? month - 1 : 12;
-    const prevYear = month > 1 ? year : year - 1;
-    const { from: prevFrom, to: prevTo } = monthSqliteDateBounds(prevYear, prevMonth);
-    const prevExpenseAgg = await prisma.ledgerTransaction.aggregate({
-      where: await applySqliteDateRange(
-        { type: "expense" },
-        "ledger_transactions",
-        prevFrom,
-        prevTo,
-      ),
-      _sum: { amount: true },
-    });
-    const prevExpense = toDecimal(prevExpenseAgg._sum.amount);
-    const changeRate = prevExpense.gt(0)
-      ? expenseTotal.minus(prevExpense).div(prevExpense).times(100)
-      : new Decimal(0);
+    const monthComparison = await getCashflowMonthComparison(
+      prisma,
+      year,
+      month,
+      incomeTotal,
+      expenseTotal,
+    );
 
     return jsonOk({
       period: { year, month },
@@ -148,8 +140,8 @@ export async function GET(request: NextRequest) {
       by_category: byCategory,
       by_card: byCard,
       comparison: {
-        prev_month_expense: prevExpense,
-        expense_change_rate: changeRate.toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
+        prev_month_expense: monthComparison.prev_month_expense,
+        expense_change_rate: monthComparison.expense_change_rate,
       },
     });
   } catch (error) {

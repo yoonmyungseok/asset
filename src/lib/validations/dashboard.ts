@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { dateSchema, decimalSchema } from "@/lib/validations/account";
+import { budgetAlertItemSchema } from "@/lib/validations/ledger";
 
 export const netWorthSummarySchema = z.object({
   total_assets: decimalSchema,
@@ -38,14 +39,37 @@ export const limitAlertSchema = z.object({
   remaining: decimalSchema,
 });
 
+export const netWorthDeltaSchema = z.object({
+  previous_date: dateSchema,
+  change_amount: decimalSchema,
+  change_rate: decimalSchema,
+});
+
+export const cashflowComparisonSchema = z.object({
+  prev_month_income: decimalSchema,
+  prev_month_expense: decimalSchema,
+  income_change_rate: decimalSchema.optional(),
+  expense_change_rate: decimalSchema,
+});
+
+export const dashboardInsightsSchema = z.object({
+  savings_rate: decimalSchema.nullable(),
+  emergency_months: decimalSchema.nullable(),
+  debt_ratio: decimalSchema.nullable(),
+});
+
 export const dashboardOverviewSchema = z.object({
   as_of: z.coerce.date(),
   net_worth: netWorthSummarySchema,
+  net_worth_delta: netWorthDeltaSchema.nullable(),
   asset_breakdown: assetBreakdownSchema,
   cashflow: cashflowSummarySchema,
+  cashflow_comparison: cashflowComparisonSchema.nullable(),
   accounts_summary: z.array(accountOverviewItemSchema),
+  budget_alerts: z.array(budgetAlertItemSchema),
   budget_alerts_count: z.number().int(),
   limit_alerts: z.array(limitAlertSchema),
+  insights: dashboardInsightsSchema,
 });
 
 export const trendPointSchema = z.object({

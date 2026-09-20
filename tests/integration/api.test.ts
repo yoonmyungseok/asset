@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
 
 import { apiClient } from "../helpers/api-client";
@@ -103,9 +103,112 @@ describe("API integration", () => {
       `/api/v1/ledger-transactions/summary?year=${year}&month=${month}&group_by=category`,
     );
     expect(summary.status).toBe(200);
-    const data = await summary.json<{ total_income: string; total_expense: string }>();
+    const data = await summary.json<{
+      total_income: string;
+      total_expense: string;
+      comparison: { expense_change_rate: string };
+    }>();
     expect(Number(data.total_income)).toBeGreaterThanOrEqual(3500000);
     expect(Number(data.total_expense)).toBeGreaterThanOrEqual(15000);
+
+    const overviewRes = await apiClient.get("/api/v1/dashboard/overview");
+    expect(overviewRes.status).toBe(200);
+    const perfRes = await apiClient.get("/api/v1/dashboard/account-performance");
+    expect(perfRes.status).toBe(200);
+    const performance = await perfRes.json<
+      Array<{
+        account_id: number;
+        name: string;
+        cost_basis: string;
+        market_value: string;
+        profit_loss: string;
+        profit_loss_rate: string;
+      }>
+    >();
+    expect(Array.isArray(performance)).toBe(true);
+
+    const overview = await overviewRes.json<{
+      cashflow_comparison: { expense_change_rate: string } | null;
+      net_worth_delta: unknown;
+    }>();
+    expect(overview.cashflow_comparison).toBeTruthy();
+    expect(overview.cashflow_comparison!.expense_change_rate).toBe(
+      data.comparison.expense_change_rate,
+    );
+    expect(overview.net_worth_delta).toBeNull();
+  });
+
+  it("test_dashboard_insights", async () => {
+    const checkingTypeId = await getAccountTypeId("CHECKING");
+    const depositTypeId = await getAccountTypeId("DEPOSIT");
+    const expenseCategoryId = await getCategoryId("외식", "식비");
+    const incomeCategoryId = await getCategoryId("본봉", "급여");
+    const cashPaymentId = await getPaymentMethodId("현금");
+
+    const checkingRes = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: checkingTypeId, name: "비상 통장", cash_balance: 300000 },
+    });
+    expect(checkingRes.status).toBe(201);
+
+    const depositRes = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: depositTypeId, name: "예금 적립", cash_balance: 500000 },
+    });
+    const { id: depositAccountId } = await depositRes.json<{ id: number }>();
+
+    await apiClient.post("/api/v1/liabilities", {
+      json: { type: "loan", name: "인사이트 테스트 대출", current_balance: 450000 },
+    });
+
+    const incomeRes = await apiClient.post("/api/v1/ledger-transactions", {
+      json: {
+        transaction_date: today,
+        type: "income",
+        amount: 1000000,
+        category_id: incomeCategoryId,
+        account_id: depositAccountId,
+      },
+    });
+    expect(incomeRes.status).toBe(201);
+
+    const expenseRes = await apiClient.post("/api/v1/ledger-transactions", {
+      json: {
+        transaction_date: today,
+        type: "expense",
+        amount: 600000,
+        category_id: expenseCategoryId,
+        payment_method_id: cashPaymentId,
+      },
+    });
+    expect(expenseRes.status).toBe(201);
+
+    const overview = await (
+      await apiClient.get("/api/v1/dashboard/overview")
+    ).json<{
+      insights: {
+        savings_rate: string | null;
+        emergency_months: string | null;
+        debt_ratio: string | null;
+      };
+    }>();
+
+    expect(overview.insights.savings_rate).toBe("40");
+    expect(overview.insights.emergency_months).toBe("3");
+    expect(overview.insights.debt_ratio).toBe("25");
+  });
+
+  it("test_dashboard_insights_emergency_months_when_no_expense", async () => {
+    const checkingTypeId = await getAccountTypeId("CHECKING");
+
+    await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: checkingTypeId, name: "유동성 통장", cash_balance: 100000 },
+    });
+
+    const overview = await (
+      await apiClient.get("/api/v1/dashboard/overview")
+    ).json<{ insights: { emergency_months: string | null; savings_rate: string | null } }>();
+
+    expect(overview.insights.emergency_months).toBeNull();
+    expect(overview.insights.savings_rate).toBeNull();
   });
 
   it("test_reimbursement_transactions", async () => {
@@ -161,6 +264,115 @@ describe("API integration", () => {
     ).json<{ total_income: string; total_expense: string }>();
     expect(Number(summary.total_income)).toBe(0);
     expect(Number(summary.total_expense)).toBe(0);
+  });
+
+  it("test_checking_account_investment_tx_policy", async () => {
+    const checkingTypeId = await getAccountTypeId("CHECKING");
+
+    const accountRes = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: checkingTypeId, name: "입출금 테스트", cash_balance: 1000000 },
+    });
+    expect(accountRes.status).toBe(201);
+    const { id: accountId } = await accountRes.json<{ id: number }>();
+
+    const buyRes = await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "buy",
+        transaction_date: today,
+        symbol: "005930.KS",
+        name: "삼성전자",
+        quantity: 1,
+        price: 70000,
+        amount: 70000,
+        fee: 0,
+      },
+    });
+    expect(buyRes.status).toBe(400);
+    const buyBody = await buyRes.json<{ detail?: string; message?: string }>();
+    const buyMessage = buyBody.detail ?? buyBody.message ?? "";
+    expect(buyMessage).toContain("매수·매도");
+
+    const depositRes = await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "deposit",
+        transaction_date: today,
+        amount: 250000,
+      },
+    });
+    expect(depositRes.status).toBe(201);
+
+    const withdrawRes = await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "withdraw",
+        transaction_date: today,
+        amount: 100000,
+      },
+    });
+    expect(withdrawRes.status).toBe(201);
+
+    const account = await (await apiClient.get(`/api/v1/accounts/${accountId}`)).json<{
+      cash_balance: string;
+    }>();
+    expect(Number(account.cash_balance)).toBe(1150000);
+  });
+
+  it("test_deposit_category_interest_without_holdings", async () => {
+    const depositTypeId = await getAccountTypeId("DEPOSIT");
+
+    const accountRes = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: depositTypeId, name: "예금 이자 테스트", cash_balance: 5000000 },
+    });
+    expect(accountRes.status).toBe(201);
+    const { id: accountId } = await accountRes.json<{ id: number }>();
+
+    const interestRes = await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "interest",
+        transaction_date: today,
+        amount: 125000,
+        memo: "만기 이자",
+      },
+    });
+    expect(interestRes.status).toBe(201);
+
+    const account = await (await apiClient.get(`/api/v1/accounts/${accountId}`)).json<{
+      cash_balance: string;
+    }>();
+    expect(Number(account.cash_balance)).toBe(5125000);
+  });
+
+  it("test_brokerage_buy_regression", async () => {
+    const brokerageTypeId = await getAccountTypeId("BROKERAGE");
+
+    const accountRes = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: brokerageTypeId, name: "증권 회귀 테스트", cash_balance: 1000000 },
+    });
+    expect(accountRes.status).toBe(201);
+    const { id: accountId } = await accountRes.json<{ id: number }>();
+
+    const buyRes = await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "buy",
+        transaction_date: today,
+        symbol: "005930.KS",
+        name: "삼성전자",
+        quantity: 2,
+        price: 70000,
+        amount: 140000,
+        fee: 500,
+      },
+    });
+    expect(buyRes.status).toBe(201);
+
+    const account = await (await apiClient.get(`/api/v1/accounts/${accountId}`)).json<{
+      cash_balance: string;
+    }>();
+    expect(Number(account.cash_balance)).toBe(859500);
   });
 
   it("test_investment_holding_and_transaction", async () => {
@@ -415,6 +627,12 @@ describe("API integration", () => {
     expect(alertsRes.status).toBe(200);
     const data = await alertsRes.json<{ over_budget: unknown[] }>();
     expect(data.over_budget.length).toBeGreaterThanOrEqual(1);
+
+    const overview = await (
+      await apiClient.get("/api/v1/dashboard/overview")
+    ).json<{ budget_alerts: unknown[]; budget_alerts_count: number }>();
+    expect(overview.budget_alerts.length).toBeGreaterThanOrEqual(1);
+    expect(overview.budget_alerts_count).toBe(overview.budget_alerts.length);
   });
 
   it("test_liability_and_dashboard", async () => {
@@ -428,10 +646,28 @@ describe("API integration", () => {
       net_worth: { total_liabilities: string };
       cashflow: unknown;
       accounts_summary: unknown;
+      net_worth_delta: {
+        previous_date: string;
+        change_amount: string;
+        change_rate: string;
+      } | null;
+      cashflow_comparison: { expense_change_rate: string } | null;
     }>();
     expect(Number(data.net_worth.total_liabilities)).toBeGreaterThanOrEqual(100000000);
     expect(data.cashflow).toBeTruthy();
     expect(data.accounts_summary).toBeTruthy();
+    expect(data.cashflow_comparison).toBeTruthy();
+
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    await apiClient.get(`/api/v1/dashboard/net-worth-trend?to_date=${yesterday}`);
+    await apiClient.get(`/api/v1/dashboard/net-worth-trend?to_date=${today}`);
+
+    const overviewWithDelta = await (
+      await apiClient.get("/api/v1/dashboard/overview")
+    ).json<{ net_worth_delta: { change_amount: string; change_rate: string } | null }>();
+    expect(overviewWithDelta.net_worth_delta).not.toBeNull();
+    expect(overviewWithDelta.net_worth_delta!.change_amount).toBeTruthy();
+    expect(overviewWithDelta.net_worth_delta!.change_rate).toBeTruthy();
   });
 
   it("test_account_limit", async () => {
@@ -474,6 +710,50 @@ describe("API integration", () => {
       await apiClient.get(`/api/v1/account-limits?account_id=${accountId}`)
     ).json<unknown[]>();
     expect(emptyLimits).toEqual([]);
+  });
+
+  it("test_dashboard_limit_alert_threshold", async () => {
+    const isaTypeId = await getAccountTypeId("ISA");
+
+    const accountRes = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: isaTypeId, name: "한도 79% ISA", cash_balance: 0 },
+    });
+    const { id: accountId } = await accountRes.json<{ id: number }>();
+
+    await apiClient.put("/api/v1/account-limits", {
+      json: { account_id: accountId, year, contribution_limit: 10000000 },
+    });
+    await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "deposit",
+        transaction_date: today,
+        amount: 7900000,
+      },
+    });
+
+    const belowThreshold = await (
+      await apiClient.get("/api/v1/dashboard/overview")
+    ).json<{ limit_alerts: Array<{ account_name: string }> }>();
+    expect(belowThreshold.limit_alerts.map((item) => item.account_name)).not.toContain(
+      "한도 79% ISA",
+    );
+
+    await apiClient.post("/api/v1/investment-transactions", {
+      json: {
+        account_id: accountId,
+        type: "deposit",
+        transaction_date: today,
+        amount: 100000,
+      },
+    });
+
+    const atThreshold = await (
+      await apiClient.get("/api/v1/dashboard/overview")
+    ).json<{ limit_alerts: Array<{ account_name: string; usage_rate: string }> }>();
+    const alert = atThreshold.limit_alerts.find((item) => item.account_name === "한도 79% ISA");
+    expect(alert).toBeTruthy();
+    expect(Number(alert!.usage_rate)).toBeGreaterThanOrEqual(80);
   });
 
   it("test_inactive_account_limit_hidden_from_dashboard", async () => {
@@ -538,6 +818,13 @@ describe("API integration", () => {
     expect(trendRes.status).toBe(200);
     const trend = await trendRes.json<{ data: unknown[] }>();
     expect(trend.data.length).toBeGreaterThanOrEqual(1);
+
+    const allRangeRes = await apiClient.get(
+      "/api/v1/dashboard/net-worth-trend?range=all",
+    );
+    expect(allRangeRes.status).toBe(200);
+    const allRange = await allRangeRes.json<{ data: unknown[] }>();
+    expect(allRange.data.length).toBeGreaterThanOrEqual(trend.data.length);
   });
 
   it("test_backup_download", async () => {

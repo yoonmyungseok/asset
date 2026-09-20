@@ -1,40 +1,56 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { api } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/AppLayout';
-import type { CashflowTrendPoint, DashboardOverview, TrendPoint } from '@/types/api';
-import { dedupeByChartDate, formatChartDate, formatMoney } from '@/lib/utils/format';
-
-const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#8b5cf6'];
+import { AssetAllocationChart } from '@/components/dashboard/AssetAllocationChart';
+import { DashboardKpiGrid } from '@/components/dashboard/DashboardKpiGrid';
+import { InsightCards } from '@/components/dashboard/InsightCards';
+import { InvestmentSnapshot } from '@/components/dashboard/InvestmentSnapshot';
+import { DashboardAlerts } from '@/components/dashboard/DashboardAlerts';
+import { NetWorthTrendChart } from '@/components/dashboard/NetWorthTrendChart';
+import type { AccountPerformance, CashflowTrendPoint, DashboardOverview } from '@/types/api';
+import { formatMoney } from '@/lib/utils/format';
 
 export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [cashflow, setCashflow] = useState<CashflowTrendPoint[]>([]);
   const [liabilities, setLiabilities] = useState<{ name: string; current_balance: string }[]>([]);
+  const [performance, setPerformance] = useState<AccountPerformance[] | null>(null);
+  const [performanceLoading, setPerformanceLoading] = useState(true);
+  const [performanceError, setPerformanceError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   const load = async () => {
     setLoading(true);
+    setPerformanceLoading(true);
+    setPerformanceError(null);
     try {
-      const [ov, tr, cf, liab] = await Promise.all([
+      const [ov, cf, liab, perf] = await Promise.all([
         api.getDashboardOverview(),
-        api.getNetWorthTrend(),
         api.getCashflowTrend(6),
         api.getLiabilities(),
+        api.getAccountPerformance().catch((e) => {
+          setPerformanceError(
+            e instanceof Error ? e.message : '투자 성과를 불러오지 못했습니다.',
+          );
+          setPerformance(null);
+          return null;
+        }),
       ]);
       setOverview(ov);
-      setTrend(dedupeByChartDate(tr.data, (point) => point.date));
       setCashflow(cf.data);
       setLiabilities(liab);
+      if (perf) setPerformance(perf);
     } finally {
       setLoading(false);
+      setPerformanceLoading(false);
     }
   };
 
@@ -55,82 +71,23 @@ export default function DashboardPage() {
 
   if (loading || !overview) return <div className="loading">로딩 중...</div>;
 
-  const donutData = [
-    { name: '투자', value: Number(overview.asset_breakdown.investment) },
-    { name: '현금', value: Number(overview.asset_breakdown.cash) },
-  ];
-
-  const renderAssetLabel = ({ name, value }: { name?: string; value?: number }) =>
-    `${name ?? ''} ${formatMoney(value ?? 0)}`;
-
   return (
     <>
       <PageHeader title="대시보드" />
 
-      {overview.budget_alerts_count > 0 && (
-        <div className="alert alert-warning">
-          ⚠ 예산 초과 {overview.budget_alerts_count}건 — 가계부 &gt; 예산에서 확인하세요
-        </div>
-      )}
-      {overview.limit_alerts.map((a) => (
-        <div key={a.account_name} className="alert alert-warning">
-          ⚠ {a.account_name} 한도 {a.usage_rate}% 사용 (잔여 {formatMoney(a.remaining)})
-        </div>
-      ))}
+      <DashboardAlerts overview={overview} />
 
-      <div className="stat-grid mb-4">
-        <div className="card stat-card">
-          <div className="stat-label">총 순자산</div>
-          <div className="stat-value">{formatMoney(overview.net_worth.net_worth)}</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-label">이번 달 수입</div>
-          <div className="stat-value text-success">{formatMoney(overview.cashflow.total_income)}</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-label">이번 달 지출</div>
-          <div className="stat-value text-danger">{formatMoney(overview.cashflow.total_expense)}</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-label">현금흐름</div>
-          <div className={`stat-value ${Number(overview.cashflow.net) >= 0 ? 'text-success' : 'text-danger'}`}>
-            {Number(overview.cashflow.net) >= 0 ? '+' : ''}{formatMoney(overview.cashflow.net)}
-          </div>
-        </div>
-      </div>
+      <DashboardKpiGrid overview={overview} />
+
+      <InsightCards overview={overview} />
 
       <div className="card-grid card-grid-2 mb-4">
-        <div className="card">
-          <h3 className="section-title mt-0">순자산 추이 (30일)</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={formatChartDate} />
-                <YAxis tickFormatter={(v) => `${(Number(v) / 10000).toFixed(0)}만`} />
-                <Tooltip formatter={(v) => formatMoney(v as number)} labelFormatter={formatChartDate} />
-                <Line type="monotone" dataKey="net_worth" name="순자산" stroke="#2563eb" dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="card">
-          <h3 className="section-title mt-0">자산 비중</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={isMobile ? 75 : 100} label={isMobile ? false : renderAssetLabel}>
-                  {donutData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
-                </Pie>
-                <Tooltip formatter={(v) => formatMoney(v as number)} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="text-muted text-center text-[13px]">
-            투자 {overview.asset_breakdown.investment_ratio}% / 현금 {overview.asset_breakdown.cash_ratio}%
-          </p>
-        </div>
+        <NetWorthTrendChart isMobile={isMobile} />
+        <AssetAllocationChart
+          accountsSummary={overview.accounts_summary}
+          totalAssets={overview.net_worth.total_assets}
+          isMobile={isMobile}
+        />
       </div>
 
       <div className="card-grid card-grid-2 mb-4">
@@ -160,7 +117,11 @@ export default function DashboardPage() {
               <tbody>
                 {overview.accounts_summary.map((a) => (
                   <tr key={a.account_id}>
-                    <td>{a.name}</td>
+                    <td>
+                      <Link href={`/investment/accounts/${a.account_id}`} className="font-medium text-primary">
+                        {a.name}
+                      </Link>
+                    </td>
                     <td className="text-muted">{a.type}</td>
                     <td>{formatMoney(a.total_value)}</td>
                     <td>{a.ratio}%</td>
@@ -170,6 +131,15 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <InvestmentSnapshot
+          items={performance}
+          loading={performanceLoading}
+          error={performanceError}
+          onRetry={load}
+        />
       </div>
 
       {liabilities.length > 0 && (

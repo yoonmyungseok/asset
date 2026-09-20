@@ -101,6 +101,11 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
     paramNames: [],
   },
   {
+    pattern: /^\/api\/v1\/dashboard\/account-performance$/,
+    importPath: "@/app/api/v1/dashboard/account-performance/route",
+    paramNames: [],
+  },
+  {
     pattern: /^\/api\/v1\/account-limits$/,
     importPath: "@/app/api/v1/account-limits/route",
     paramNames: [],

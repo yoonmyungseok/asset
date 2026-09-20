@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-import { handleRouteError, jsonOk } from "@/lib/api/route-utils";
+import { formatDateOnly, handleRouteError, jsonOk } from "@/lib/api/route-utils";
 import { prisma } from "@/lib/db";
 import {
   applySqliteDateRange,
@@ -8,6 +8,12 @@ import {
 } from "@/lib/sqlite-date-filter";
 import { toDecimal } from "@/lib/decimal";
 import { getBudgetAlerts } from "@/lib/services/budgets";
+import { getDashboardInsights } from "@/lib/services/dashboard-insights";
+import {
+  getDashboardCashflowComparison,
+  getDashboardLimitAlerts,
+  getNetWorthDelta,
+} from "@/lib/services/dashboard-overview";
 import { aggregateAssets, getAccountTotalValue } from "@/lib/services/core";
 
 export async function GET() {
@@ -27,6 +33,15 @@ export async function GET() {
 
     const income = toDecimal(incomeAgg._sum.amount);
     const expense = toDecimal(expenseAgg._sum.amount);
+    const asOf = new Date();
+    const netWorthDelta = await getNetWorthDelta(prisma, totals.net_worth, asOf);
+    const cashflowComparison = await getDashboardCashflowComparison(
+      prisma,
+      today.getFullYear(),
+      today.getMonth() + 1,
+      income,
+      expense,
+    );
     const totalAssets = totals.total_assets;
     const investmentRatio = totalAssets.gt(0)
       ? totals.investment_total.div(totalAssets).times(100)
@@ -56,37 +71,39 @@ export async function GET() {
     accountsSummary.sort((a, b) => b.ratio.comparedTo(a.ratio));
 
     const alerts = await getBudgetAlerts(today.getFullYear(), today.getMonth() + 1);
-    const limitRows = await prisma.accountYearlyLimit.findMany({
-      where: { year: today.getFullYear() },
-      include: { account: true },
+    const budgetAlerts = alerts.over_budget.map((item) => ({
+      category_name: item.category_name,
+      budget: item.budget,
+      spent: item.spent,
+      over_amount: item.over_amount,
+    }));
+    const limitAlerts = await getDashboardLimitAlerts(prisma, today.getFullYear());
+    const insights = await getDashboardInsights(prisma, {
+      income,
+      expense,
+      totalAssets,
+      totalLiabilities: totals.total_liabilities,
+      accountsSummary: accountsSummary.map((item) => ({
+        category: item.category,
+        total_value: item.total_value,
+      })),
+      asOf: asOf,
     });
 
-    const limitAlerts = [];
-    for (const row of limitRows) {
-      if (!row.account || !row.account.is_active) {
-        continue;
-      }
-      const limit = toDecimal(row.contribution_limit);
-      if (limit.lte(0)) {
-        continue;
-      }
-      const contributed = toDecimal(row.contributed_amount);
-      const remaining = limit.minus(contributed);
-      const usageRate = contributed.div(limit).times(100);
-      limitAlerts.push({
-        account_name: row.account.name,
-        usage_rate: usageRate.toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
-        remaining,
-      });
-    }
-
     return jsonOk({
-      as_of: new Date(),
+      as_of: asOf,
       net_worth: {
         total_assets: totals.total_assets,
         total_liabilities: totals.total_liabilities,
         net_worth: totals.net_worth,
       },
+      net_worth_delta: netWorthDelta
+        ? {
+            previous_date: formatDateOnly(netWorthDelta.previous_date),
+            change_amount: netWorthDelta.change_amount,
+            change_rate: netWorthDelta.change_rate,
+          }
+        : null,
       asset_breakdown: {
         investment: totals.investment_total,
         cash: totals.cash_total,
@@ -100,9 +117,17 @@ export async function GET() {
         total_expense: expense,
         net: income.minus(expense),
       },
+      cashflow_comparison: {
+        prev_month_income: cashflowComparison.prev_month_income,
+        prev_month_expense: cashflowComparison.prev_month_expense,
+        income_change_rate: cashflowComparison.income_change_rate,
+        expense_change_rate: cashflowComparison.expense_change_rate,
+      },
       accounts_summary: accountsSummary,
-      budget_alerts_count: alerts.over_budget.length,
+      budget_alerts: budgetAlerts,
+      budget_alerts_count: budgetAlerts.length,
       limit_alerts: limitAlerts,
+      insights,
     });
   } catch (error) {
     return handleRouteError(error);

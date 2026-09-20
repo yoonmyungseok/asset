@@ -5,6 +5,12 @@ import { api } from '@/lib/api/client';
 import type { Holding, InvestmentTransaction } from '@/types/api';
 import { holdingAccruedInterest, holdingMarketValue, type HoldingLike } from '@/lib/utils';
 import { formatMoney, formatQuantity, todayISO, INVESTMENT_TX_TYPES } from '@/lib/utils/format';
+import {
+  allowedInvestmentTxTypes,
+  cashOnlyHelpText,
+  investmentTxModalTitle,
+  type AccountTransactionUiMode,
+} from '@/lib/utils/account-transaction-ui';
 import Modal from '@/components/common/Modal';
 import SymbolInput from './SymbolInput';
 
@@ -23,12 +29,18 @@ interface Props {
   onClose: () => void;
   onSaved: () => void;
   accountId: number;
+  accountMode: AccountTransactionUiMode;
   transaction?: InvestmentTransaction | null;
 }
 
-const TX_TYPES = ['deposit', 'withdraw', 'buy', 'sell', 'dividend', 'interest', 'fee'];
-
-export default function InvestmentTxFormModal({ open, onClose, onSaved, accountId, transaction }: Props) {
+export default function InvestmentTxFormModal({
+  open,
+  onClose,
+  onSaved,
+  accountId,
+  accountMode,
+  transaction,
+}: Props) {
   const isEditing = Boolean(transaction);
   const [txType, setTxType] = useState('deposit');
   const [date, setDate] = useState(todayISO());
@@ -82,7 +94,16 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
     }
   }, [open, accountId, transaction]);
 
-  const needsStock = ['buy', 'sell'].includes(txType);
+  const isInvestmentMode = accountMode === 'investment';
+  const txTypeOptions = useMemo(() => {
+    const allowed = [...allowedInvestmentTxTypes(accountMode)];
+    if (isEditing && transaction && !allowed.includes(transaction.type)) {
+      return [...allowed, transaction.type];
+    }
+    return allowed;
+  }, [accountMode, isEditing, transaction]);
+
+  const needsStock = isInvestmentMode && ['buy', 'sell'].includes(txType);
   const needsStockBuy = txType === 'buy' && assetClass === 'stock';
   const needsStockSell = txType === 'sell' && assetClass === 'stock';
   const needsQtyPrice = needsStock && assetClass === 'stock';
@@ -92,8 +113,11 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
   const needsInterestHolding = txType === 'interest';
   const needsTax = (txType === 'sell' && !needsDepositSell)
     || (isEditing && transaction?.type === 'sell' && !transaction?.holding_symbol?.startsWith('DEP.'));
-  const cashOnlyType = ['dividend', 'deposit', 'withdraw', 'fee'].includes(txType)
-    || (txType === 'interest' && !holdingId);
+  const cashOnlyType = isInvestmentMode && (
+    ['dividend', 'deposit', 'withdraw', 'fee'].includes(txType)
+    || (txType === 'interest' && !holdingId)
+  );
+  const nonInvestmentHelp = !isInvestmentMode ? cashOnlyHelpText(accountMode, txType) : null;
 
   const stockHoldings = holdings.filter((holding) => holding.asset_class !== 'deposit');
   const depositHoldings = holdings.filter((holding) => holding.asset_class === 'deposit');
@@ -219,7 +243,7 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
     <Modal
       open={open}
       onClose={onClose}
-      title={isEditing ? '투자 거래 수정' : '투자 거래 추가'}
+      title={investmentTxModalTitle(accountMode, isEditing)}
       footer={
         <>
           <button className="btn btn-secondary" onClick={onClose}>취소</button>
@@ -247,7 +271,7 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
             resetTradeFields();
           }}
         >
-          {TX_TYPES.map((t) => (
+          {txTypeOptions.map((t) => (
             <option key={t} value={t}>{INVESTMENT_TX_TYPES[t]}</option>
           ))}
         </select>
@@ -277,7 +301,7 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
         </div>
       )}
 
-      {needsInterestHolding && depositHoldings.length > 0 && !isEditing && (
+      {isInvestmentMode && needsInterestHolding && depositHoldings.length > 0 && !isEditing && (
         <div className="form-group">
           <label>예금 상품 (선택)</label>
           <select
@@ -295,6 +319,11 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
         </div>
       )}
 
+      {nonInvestmentHelp && (
+        <p className="text-muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
+          {nonInvestmentHelp}
+        </p>
+      )}
       {cashOnlyType && (
         <p className="text-muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
           {txType === 'dividend'
@@ -408,7 +437,7 @@ export default function InvestmentTxFormModal({ open, onClose, onSaved, accountI
         />
       )}
 
-      {isEditing && (transaction?.holding_name || name) && (
+      {isInvestmentMode && isEditing && (transaction?.holding_name || name) && (
         <div className="form-group">
           <label>종목</label>
           <input value={transaction?.holding_name ?? name} disabled />

@@ -141,9 +141,9 @@ export const api = {
 
   getDashboardOverview: () =>
     request<import('@/types/api').DashboardOverview>('/dashboard/overview'),
-  getNetWorthTrend: (from?: string, to?: string) =>
+  getNetWorthTrend: (from?: string, to?: string, range?: 'all') =>
     request<{ data: import('@/types/api').TrendPoint[] }>(
-      `/dashboard/net-worth-trend${qs({ from_date: from, to_date: to })}`,
+      `/dashboard/net-worth-trend${qs({ from_date: from, to_date: to, range })}`,
     ),
   getCashflowTrend: (months = 6) =>
     request<{ data: import('@/types/api').CashflowTrendPoint[] }>(
