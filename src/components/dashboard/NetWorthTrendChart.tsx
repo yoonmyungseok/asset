@@ -1,19 +1,26 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  LineChart,
+  Area,
+  ComposedChart,
   Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { api } from '@/lib/api/client';
 import type { TrendPoint } from '@/types/api';
-import { dedupeByChartDate, formatChartDate, formatMoney } from '@/lib/utils/format';
+import { dedupeByChartDate } from '@/lib/utils/format';
+import {
+  CHART_MARGIN,
+  CHART_SERIES,
+  ChartCartesianGrid,
+  ChartLineTooltip,
+  ChartXAxis,
+  ChartYAxis,
+  LINE_ACTIVE_DOT,
+  LineAreaGradient,
+  lineGradientId,
+} from '@/components/charts/chart-ui';
 
 export type NetWorthTrendRange = '1M' | '3M' | '6M' | '1Y' | 'all';
 
@@ -33,9 +40,9 @@ const RANGE_DAYS: Record<Exclude<NetWorthTrendRange, 'all'>, number> = {
 };
 
 const SERIES = [
-  { key: 'net_worth' as const, label: '순자산', color: '#2563eb' },
-  { key: 'total_assets' as const, label: '총자산', color: '#16a34a' },
-  { key: 'total_liabilities' as const, label: '총부채', color: '#dc2626' },
+  { key: 'net_worth' as const, label: '순자산', color: CHART_SERIES.primary },
+  { key: 'total_assets' as const, label: '총자산', color: CHART_SERIES.success },
+  { key: 'total_liabilities' as const, label: '총부채', color: CHART_SERIES.danger },
 ];
 
 type SeriesKey = (typeof SERIES)[number]['key'];
@@ -57,11 +64,7 @@ function rangeToQuery(range: NetWorthTrendRange): { from?: string; to?: string; 
   return { from: toDateOnly(from), to: toDateOnly(to) };
 }
 
-type NetWorthTrendChartProps = {
-  isMobile: boolean;
-};
-
-export function NetWorthTrendChart({ isMobile }: NetWorthTrendChartProps) {
+export function NetWorthTrendChart() {
   const [period, setPeriod] = useState<NetWorthTrendRange>('1M');
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     net_worth: true,
@@ -96,6 +99,20 @@ export function NetWorthTrendChart({ isMobile }: NetWorthTrendChartProps) {
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const netWorthGradientId = lineGradientId('net-worth');
+
+  const chartData = useMemo(
+    () =>
+      trend.map((point) => ({
+        ...point,
+        date: String(point.date).slice(0, 10),
+        net_worth: Number(point.net_worth),
+        total_assets: Number(point.total_assets),
+        total_liabilities: Number(point.total_liabilities),
+      })),
+    [trend],
+  );
+
   return (
     <div className="card">
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -129,7 +146,7 @@ export function NetWorthTrendChart({ isMobile }: NetWorthTrendChartProps) {
               style={{ backgroundColor: color }}
               aria-hidden
             />
-            {!isMobile && <span>{label}</span>}
+            <span>{label}</span>
           </button>
         ))}
       </div>
@@ -143,13 +160,42 @@ export function NetWorthTrendChart({ isMobile }: NetWorthTrendChartProps) {
           />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tickFormatter={formatChartDate} />
-              <YAxis tickFormatter={(v) => `${(Number(v) / 10000).toFixed(0)}만`} />
-              <Tooltip formatter={(v) => formatMoney(v as number)} labelFormatter={formatChartDate} />
-              {isMobile && <Legend />}
-              {SERIES.map(({ key, label, color }) =>
+            <ComposedChart data={chartData} margin={CHART_MARGIN}>
+              <defs>
+                {visible.net_worth ? (
+                  <LineAreaGradient id={netWorthGradientId} color={CHART_SERIES.primary} />
+                ) : null}
+              </defs>
+              <ChartCartesianGrid />
+              <ChartXAxis dataKey="date" />
+              <ChartYAxis />
+              <ChartLineTooltip />
+              {visible.net_worth ? (
+                <>
+                  <Area
+                    type="monotone"
+                    dataKey="net_worth"
+                    fill={`url(#${netWorthGradientId})`}
+                    stroke="none"
+                    dot={false}
+                    activeDot={false}
+                    isAnimationActive={false}
+                    legendType="none"
+                    tooltipType="none"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="net_worth"
+                    name="순자산"
+                    stroke={CHART_SERIES.primary}
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ ...LINE_ACTIVE_DOT, fill: CHART_SERIES.primary }}
+                    isAnimationActive={false}
+                  />
+                </>
+              ) : null}
+              {SERIES.filter((s) => s.key !== 'net_worth').map(({ key, label, color }) =>
                 visible[key] ? (
                   <Line
                     key={key}
@@ -157,11 +203,14 @@ export function NetWorthTrendChart({ isMobile }: NetWorthTrendChartProps) {
                     dataKey={key}
                     name={label}
                     stroke={color}
+                    strokeWidth={2}
                     dot={false}
+                    activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff', fill: color }}
+                    isAnimationActive={false}
                   />
                 ) : null,
               )}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         )}
       </div>

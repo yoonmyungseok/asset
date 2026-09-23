@@ -181,6 +181,8 @@ export default function TransactionFormModal({
   const isBankTransfer = type === 'expense' && selectedPaymentMethod?.name === '계좌이체';
   const isInternalTransfer = isBankTransfer && transferMode === 'internal';
   const needsCategory = !isInternalTransfer && !isReimbursement;
+  const showCategory =
+    needsCategory && (type !== 'expense' || Boolean(paymentMethodId));
   const needsDepositAccount = type === 'income' || type === 'reimbursement_in';
   const needsWithdrawAccount = isBankTransfer || type === 'reimbursement_out';
 
@@ -308,7 +310,28 @@ export default function TransactionFormModal({
         <label>금액</label>
         <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
       </div>
-      {needsCategory && (
+      {type === 'expense' && (
+        <div className="form-group">
+          <label>결제 수단</label>
+          <select
+            value={paymentMethodId}
+            onChange={(e) => {
+              const nextId = Number(e.target.value) || '';
+              setPaymentMethodId(nextId);
+              setCardId('');
+              setFromAccountId('');
+              setToAccountId('');
+              setTransferMode('external');
+            }}
+          >
+            <option value="">선택</option>
+            {paymentMethods.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+      {showCategory && (
         <div className="form-group">
           <label>
             카테고리
@@ -324,32 +347,6 @@ export default function TransactionFormModal({
                   <option key={child.id} value={child.id}>{parent.name} › {child.name}</option>
                 ))}
               </optgroup>
-            ))}
-          </select>
-        </div>
-      )}
-      {type === 'expense' && (
-        <div className="form-group">
-          <label>결제 수단</label>
-          <select
-            value={paymentMethodId}
-            onChange={(e) => {
-              const nextId = Number(e.target.value) || '';
-              setPaymentMethodId(nextId);
-              setCardId('');
-              setFromAccountId('');
-              setToAccountId('');
-              setTransferMode('external');
-              const nextMethod = paymentMethods.find((m) => m.id === nextId);
-              if (nextMethod?.name === '계좌이체') {
-                setType('expense');
-                setCategoryId('');
-              }
-            }}
-          >
-            <option value="">선택</option>
-            {paymentMethods.map((m) => (
-              <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>
         </div>

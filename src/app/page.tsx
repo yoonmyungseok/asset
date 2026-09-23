@@ -2,10 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import {
-  BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from 'recharts';
 import { api } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/AppLayout';
 import { AssetAllocationChart } from '@/components/dashboard/AssetAllocationChart';
@@ -14,6 +10,7 @@ import { InsightCards } from '@/components/dashboard/InsightCards';
 import { InvestmentSnapshot } from '@/components/dashboard/InvestmentSnapshot';
 import { DashboardAlerts } from '@/components/dashboard/DashboardAlerts';
 import { NetWorthTrendChart } from '@/components/dashboard/NetWorthTrendChart';
+import { CashflowTrendChart } from '@/components/dashboard/CashflowTrendChart';
 import type { AccountPerformance, CashflowTrendPoint, DashboardOverview } from '@/types/api';
 import { formatMoney } from '@/lib/utils/format';
 
@@ -82,7 +79,7 @@ export default function DashboardPage() {
       <InsightCards overview={overview} />
 
       <div className="card-grid card-grid-2 mb-4">
-        <NetWorthTrendChart isMobile={isMobile} />
+        <NetWorthTrendChart />
         <AssetAllocationChart
           accountsSummary={overview.accounts_summary}
           totalAssets={overview.net_worth.total_assets}
@@ -93,19 +90,7 @@ export default function DashboardPage() {
       <div className="card-grid card-grid-2 mb-4">
         <div className="card">
           <h3 className="section-title mt-0">월별 현금흐름 (6개월)</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cashflow}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tickFormatter={(m, i) => `${cashflow[i]?.year}.${m}`} />
-                <YAxis tickFormatter={(v) => `${(Number(v) / 10000).toFixed(0)}만`} />
-                <Tooltip formatter={(v) => formatMoney(v as number)} />
-                <Legend />
-                <Bar dataKey="income" name="수입" fill="#16a34a" />
-                <Bar dataKey="expense" name="지출" fill="#dc2626" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <CashflowTrendChart data={cashflow} />
         </div>
         <div className="card">
           <h3 className="section-title mt-0">계좌별 breakdown</h3>

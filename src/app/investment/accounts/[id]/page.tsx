@@ -2,8 +2,19 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useEffect, useMemo, useState } from 'react';
+import { Area, ComposedChart, Line, ResponsiveContainer } from 'recharts';
+import {
+  CHART_MARGIN,
+  CHART_SERIES,
+  ChartCartesianGrid,
+  ChartLineTooltip,
+  ChartXAxis,
+  ChartYAxis,
+  LINE_ACTIVE_DOT,
+  LineAreaGradient,
+  lineGradientId,
+} from '@/components/charts/chart-ui';
 import { api } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/AppLayout';
 import InvestmentTxFormModal from '@/components/investment/InvestmentTxFormModal';
@@ -90,6 +101,18 @@ export default function AccountDetailPage() {
   };
 
   useEffect(() => { if (accountId) load(); }, [accountId]);
+
+  const balanceChartData = useMemo(
+    () =>
+      snapshots.map((snap) => ({
+        ...snap,
+        snapshot_date: String(snap.snapshot_date).slice(0, 10),
+        balance_value: Number(snap.balance_value),
+      })),
+    [snapshots],
+  );
+
+  const balanceGradientId = lineGradientId('balance');
 
   if (!account) return <div className="loading">로딩 중...</div>;
 
@@ -601,13 +624,36 @@ export default function AccountDetailPage() {
           <h3 className="section-title" style={{ marginTop: 0 }}>평가 추이</h3>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={snapshots}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="snapshot_date" tickFormatter={formatChartDate} />
-                <YAxis tickFormatter={(v) => `${(Number(v) / 10000).toFixed(0)}만`} />
-                <Tooltip formatter={(v) => formatMoney(v as number)} labelFormatter={formatChartDate} />
-                <Line type="monotone" dataKey="balance_value" name="평가금액" stroke="#2563eb" dot={false} />
-              </LineChart>
+              <ComposedChart data={balanceChartData} margin={CHART_MARGIN}>
+                <defs>
+                  <LineAreaGradient id={balanceGradientId} color={CHART_SERIES.primary} />
+                </defs>
+                <ChartCartesianGrid />
+                <ChartXAxis dataKey="snapshot_date" />
+                <ChartYAxis />
+                <ChartLineTooltip />
+                <Area
+                  type="monotone"
+                  dataKey="balance_value"
+                  fill={`url(#${balanceGradientId})`}
+                  stroke="none"
+                  dot={false}
+                  activeDot={false}
+                  isAnimationActive={false}
+                  legendType="none"
+                  tooltipType="none"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="balance_value"
+                  name="평가금액"
+                  stroke={CHART_SERIES.primary}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ ...LINE_ACTIVE_DOT, fill: CHART_SERIES.primary }}
+                  isAnimationActive={false}
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>

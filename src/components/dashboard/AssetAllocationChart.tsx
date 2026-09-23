@@ -1,19 +1,21 @@
 'use client';
 
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useState } from 'react';
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { DashboardOverview } from '@/types/api';
-import { CATEGORY_LABELS, formatMoney } from '@/lib/utils/format';
+import { CATEGORY_LABELS, formatMoney, formatMoneyCompact } from '@/lib/utils/format';
+import { ChartValueTooltip } from '@/components/charts/chart-ui';
 
 const CATEGORY_ORDER = ['investment', 'pension', 'deposit', 'cash'] as const;
 
 const CATEGORY_COLORS: Record<string, string> = {
   investment: '#2563eb',
-  pension: '#8b5cf6',
+  pension: '#7c3aed',
   deposit: '#d97706',
   cash: '#16a34a',
 };
 
-const FALLBACK_COLORS = ['#dc2626', '#0891b2', '#ca8a04', '#4b5563'];
+const FALLBACK_COLORS = ['#0891b2', '#db2777', '#ca8a04', '#64748b'];
 
 type AllocationSlice = {
   category: string;
@@ -79,40 +81,85 @@ export function AssetAllocationChart({
   totalAssets,
   isMobile,
 }: AssetAllocationChartProps) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const slices = aggregateAccountsByCategory(accountsSummary);
   const summaryText = buildCategorySummaryText(slices, totalAssets);
+  const total = Number(totalAssets);
 
-  const renderLabel = ({ name, value }: { name?: string; value?: number }) =>
-    `${name ?? ''} ${formatMoney(value ?? 0)}`;
+  const chartData = slices.map((slice, i) => ({
+    ...slice,
+    color: colorForCategory(slice.category, i),
+    ratio: total > 0 ? (slice.value / total) * 100 : 0,
+  }));
 
   return (
     <div className="card">
       <h3 className="section-title mt-0">자산 비중</h3>
-      <div className="chart-container">
+      <div className="allocation-chart-wrap">
         {slices.length === 0 ? (
           <div className="flex h-full items-center justify-center text-muted text-[13px]">
             계좌 데이터가 없습니다.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={slices}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={isMobile ? 75 : 100}
-                label={isMobile ? false : renderLabel}
-              >
-                {slices.map((slice, i) => (
-                  <Cell key={slice.category} fill={colorForCategory(slice.category, i)} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v) => formatMoney(v as number)} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <>
+            <div className="allocation-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={isMobile ? '52%' : '58%'}
+                    outerRadius={isMobile ? '78%' : '82%'}
+                    paddingAngle={3}
+                    stroke="none"
+                    onMouseEnter={(_, index) => setActiveCategory(chartData[index].category)}
+                    onMouseLeave={() => setActiveCategory(null)}
+                  >
+                    {chartData.map((slice) => (
+                      <Cell
+                        key={slice.category}
+                        fill={slice.color}
+                        opacity={
+                          activeCategory === null || activeCategory === slice.category ? 1 : 0.4
+                        }
+                        style={{ transition: 'opacity 0.2s ease' }}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<ChartValueTooltip />} />
+                  <text x="50%" y="46%" textAnchor="middle" className="allocation-donut-label">
+                    총 자산
+                  </text>
+                  <text x="50%" y="56%" textAnchor="middle" className="allocation-donut-value">
+                    {formatMoneyCompact(totalAssets)}
+                  </text>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <ul className="allocation-legend">
+              {chartData.map((slice) => {
+                const isActive = activeCategory === slice.category;
+                return (
+                  <li
+                    key={slice.category}
+                    className={`allocation-legend-item${isActive ? ' is-active' : ''}`}
+                    onMouseEnter={() => setActiveCategory(slice.category)}
+                    onMouseLeave={() => setActiveCategory(null)}
+                  >
+                    <span className="allocation-legend-dot" style={{ backgroundColor: slice.color }} />
+                    <span className="allocation-legend-name">{slice.name}</span>
+                    <span className="allocation-legend-meta">
+                      <span className="allocation-legend-pct">{slice.ratio.toFixed(1)}%</span>
+                      <span className="allocation-legend-amount">{formatMoney(slice.value)}</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </div>
       <p className="text-muted text-center text-[13px]">{summaryText}</p>
