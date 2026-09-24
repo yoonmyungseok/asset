@@ -1,0 +1,33 @@
+---
+description: Vitest 테스트 규칙 (통합 앱)
+globs: "**/*.{test,spec}.ts"
+alwaysApply: false
+---
+
+# 테스트
+
+## 실행
+
+```bash
+npm test
+npm run test:watch
+```
+
+- 설정: `vitest.config.ts` — `environment: node`, `include: ["src/**/*.test.ts", "tests/**/*.test.ts"]`, alias `@` → `src`.
+- `tests/setup.ts` setup 파일 사용.
+
+## 범위 (대표)
+
+- 자산: `tests/**/*.test.ts`
+- 건강: `src/lib/care/calculations/__tests__/`, `format/__tests__/`, `integrations/google-sheets/__tests__/`
+
+## 규칙
+
+- 테스트를 **임의로 삭제·skip·비활성화하지 않는다.**
+- 새 로직은 기존 `*.test.ts`, node 환경, 순수 함수 위주 패턴을 따른다.
+- UI/E2E는 저장소에 없음 — 추가는 사용자 요청 시에만.
+
+## 변경 후
+
+- 관련 `npm test` 실행.
+- 가능하면 `npm run lint`, `npm run build`.

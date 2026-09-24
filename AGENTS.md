@@ -12,4 +12,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - 자산 API: `/api/v1/*`, 건강 API: `/api/*` (체중·러닝·식단·dashboard)
 - 건강 코드: `src/lib/care/`, UI: `src/components/care/`
-- 설계 문서: `docs/care/`
+- 설계 문서: `docs/` ([README](docs/README.md))
+- Cursor 규칙: `.cursor/rules/` (`project-core`, `safety`, `architecture-asset` / `architecture-care`, `coding-standards-*`, `testing`)

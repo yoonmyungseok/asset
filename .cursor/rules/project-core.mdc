@@ -1,0 +1,38 @@
+---
+description: 통합 앱(자산+건강) 목적, 범위, 에이전트 기본 원칙
+alwaysApply: true
+---
+
+# 생활·자산 통합 앱 — 프로젝트 코어
+
+개인용 **자산·가계부·투자**와 **건강(체중·러닝·식단)** 을 하나의 Next.js App Router 앱에서 관리한다. SQLite + Prisma, REST API.
+
+## 도메인 경계
+
+| 도메인 | API | 코드 | UI·페이지 | 설계 문서 |
+|--------|-----|------|-----------|-----------|
+| 자산 | `/api/v1/*` | `src/lib/services`, `src/lib/api`, `src/lib/validations` | `/ledger`, `/investment`, `/settings` | `docs/API_V1.md`, `docs/MIGRATION.md` |
+| 건강 | `/api/*` (v1 아님) | `src/lib/care/**` | `/weight`, `/running`, `/diet`, `src/components/care/**`, `/settings/health` | `docs/API_CARE.md`, `docs/DATA_FLOW.md` |
+
+공유: `src/lib/db.ts`, `prisma/schema.prisma`, `src/components/layout/AppLayout.tsx`, 루트 `/` 대시보드.
+
+## 우선순위
+
+1. **해당 도메인의 기존 레이어를 따른다.** 건강: `app/api` → `lib/care/services` → `lib/care/calculations` / `integrations`. 자산: `app/api/v1` → `lib/services` → Prisma / `lib/external`.
+2. **요청 범위 밖 수정 금지.** 문서·규칙만 다룰 때는 코드를 건드리지 않는다.
+3. **대규모 리팩터링·임의 코드 개선 금지.** 두 도메인을 한 레이어로 합치지 않는다.
+
+## 의존성
+
+- 새 npm 패키지는 **사용자가 명시적으로 요청한 경우에만** 추가.
+- Prisma: `@prisma/client`, `npm run db:migrate` / `db:seed` (`scripts/run-prisma.ts`).
+
+## 실행
+
+- Dev/Start 포트 **4000** (`package.json` scripts).
+- `AGENTS.md` 상단 Next.js 블록은 `next dev`가 재생성할 수 있음 — diff에서 임의 삭제하지 않음.
+
+## 로케일
+
+- UI·API 오류 메시지 한국어 기본.
+- 건강 날짜 키: `yyyy-MM-dd` (`src/lib/care/utils.ts`).

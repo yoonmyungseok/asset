@@ -1,5 +1,8 @@
 # Big Bang 전환: FastAPI + Vite → Next.js 16 + Prisma + Tailwind
 
+> **현재 앱 구조**(건강 통합 포함)는 루트 [README.md](../README.md)와 [docs/README.md](README.md)를 본다. 이 파일은 **자산 앱 전환** 당시 체크리스트·아카이브다.
+
+
 **목표:** FastAPI + Vite + SQLAlchemy → Next.js 16 (App Router) + Prisma + Tailwind v4 단일 앱으로 **한 번에** 교체  
 **브랜치:** `feat/nextjs-migration`  
 **롤백 태그:** `pre-nextjs-migration`  

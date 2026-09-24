@@ -1,0 +1,38 @@
+---
+description: 건강 TypeScript/React/API 코딩 관례
+globs: "{src/app/api/dashboard/**,src/app/api/weight/**,src/app/api/running/**,src/app/api/diet/**,src/app/api/settings/**,src/app/api/integrations/**,src/app/weight/**,src/app/running/**,src/app/running-settings/**,src/app/diet/**,src/app/food-settings/**,src/lib/care/**,src/components/care/**}"
+alwaysApply: false
+---
+
+# 건강 코딩 표준
+
+## TypeScript
+
+- `@/` 경로 별칭.
+- API 입력: `src/lib/care/validations/schemas.ts` Zod 후 `lib/care/services` 호출.
+- API 응답: `jsonResponse` / `errorResponse` (`src/lib/care/utils.ts`).
+
+## React
+
+- 데이터 페이지: `"use client"` + `fetch('/api/...')` (기존 페이지 패턴 유지).
+- 공통 UI: `src/components/care/ui/*`, 차트 `components/care/charts/`.
+- Toast: `Providers` + `useToast` (`src/components/care`).
+
+## Prisma
+
+- `src/lib/db.ts` 공유 — 건강 전용 Prisma 클라이언트를 만들지 않음.
+- `UserSettings`: `getSettings` 등 `findFirst` → 없으면 생성.
+
+## Google Sheets
+
+- `src/lib/care/integrations/google-sheets/service-account.ts`
+- 라우트: `src/app/api/integrations/google-sheets/*`
+
+## 스타일
+
+- Tailwind CSS 4, 건강 컴포넌트는 `care/ui` 패턴 따름.
+
+## 금지
+
+- 건강 `/api/*` JSON 필드명·라우트 시그니처 임의 변경.
+- 자산 `jsonOk` / `/api/v1` 패턴을 건강 API에 섞지 않음.

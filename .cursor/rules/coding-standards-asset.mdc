@@ -1,0 +1,33 @@
+---
+description: 자산·가계부 TypeScript/API 코딩 관례
+globs: "{src/app/api/v1/**,src/app/ledger/**,src/app/investment/**,src/lib/services/**,src/lib/validations/**,src/lib/api/**,src/lib/external/**,src/lib/decimal.ts}"
+alwaysApply: false
+---
+
+# 자산 코딩 표준
+
+## TypeScript
+
+- `@/` 경로 별칭.
+- API 입력: `src/lib/validations/*` Zod 후 서비스 호출.
+- 성공 응답: `jsonOk` (`src/lib/api/route-utils.ts`). 오류: `apiError` (`src/lib/api-error.ts`) — FastAPI 호환 `detail` 형식 유지.
+
+## 금액
+
+- DB·연산: `Prisma.Decimal` / `decimal.js` (`src/lib/decimal.ts`).
+- JSON 직렬화 시 문자열로보내는 기존 패턴 유지.
+
+## React
+
+- 자산 페이지: `src/lib/api/client.ts`로 `/api/v1` 호출.
+- 레이아웃: `AppLayout` (`src/components/layout`).
+
+## Prisma
+
+- 싱글톤: `src/lib/db.ts`.
+- 마이그레이션: `npm run db:migrate` (`scripts/run-prisma.ts`).
+
+## 금지
+
+- `/api/v1` 경로·응답 필드명 임의 변경.
+- 건강 코드를 `src/lib/care` 밖으로 옮기지 않음 (요청 없이).

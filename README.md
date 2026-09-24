@@ -37,7 +37,7 @@ npm run dev
 | 건강 | `/weight`, `/running`, `/diet` | `/api/weight`, `/api/running`, `/api/diet` 등 |
 | 설정 | `/settings`, `/settings/health` | 자산 UI + 건강 `/api/settings` |
 
-건강 도메인 설계 문서: [`docs/care/`](docs/care/)
+설계 문서: [`docs/README.md`](docs/README.md) · Cursor Agent 규칙: [`.cursor/rules/`](.cursor/rules/)
 
 ## self-care DB 이관
 

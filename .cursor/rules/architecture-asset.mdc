@@ -1,0 +1,33 @@
+---
+description: 자산·가계부 레이어와 변경 시 확인 위치
+globs: "{src/app/api/v1/**,src/app/ledger/**,src/app/investment/**,src/lib/services/**,src/lib/validations/**,src/lib/api/**,src/lib/external/**,src/lib/decimal.ts,src/lib/api-error.ts,src/lib/service-error.ts,src/components/layout/**}"
+alwaysApply: false
+---
+
+# 자산 도메인 아키텍처
+
+## 레이어
+
+| 레이어 | 경로 | 역할 |
+|--------|------|------|
+| UI | `src/app/ledger/**`, `investment/**`, `settings/**` | 화면, `api` 클라이언트 |
+| API | `src/app/api/v1/**/route.ts` | HTTP, Zod, 서비스 |
+| 클라이언트 | `src/lib/api/client.ts` | `fetch('/api/v1/...')` |
+| 응답 헬퍼 | `src/lib/api/route-utils.ts`, `api-error.ts` | `jsonOk`, 에러 형식 |
+| 서비스 | `src/lib/services/**` | Prisma, 도메인 로직 |
+| 금액 | `src/lib/decimal.ts` | `Decimal`, API 문자열 직렬화 |
+| 검증 | `src/lib/validations/**` | Zod |
+| DB | `prisma/schema.prisma` (자산 모델), `src/lib/db.ts` | SQLite |
+
+## 코드 수정 전 확인
+
+- API 변경: `route.ts` + `lib/api/client.ts` 호출부 + `validations/*` + `services/*`.
+- 가계부·카드: `bank-transfers.ts`, `card-payments.ts` (잔액·정산).
+- 대시보드 자산: `/api/v1/dashboard/*`, `dashboard-overview.ts` 등.
+
+## 건강과 구분
+
+- 자산 라우트는 **`/api/v1`만** 사용. `/api/weight` 등 건강 경로에 손대지 않는다.
+- 통합 홈 `src/app/page.tsx`는 자산+건강 UI가 섞여 있음 — 건강 섹션만 바꿀 때 `CareDashboardSection`·`/api/dashboard`를 본다.
+
+API 목록: `docs/API_V1.md`. 전환 이력: `docs/MIGRATION.md`.
