@@ -119,7 +119,7 @@ export async function findIdsInDateRange(
   return rows.map((row) => row.id);
 }
 
-export async function applySqliteDateRange<T extends { id?: Prisma.IntFilter }>(
+export async function applySqliteDateRange<T extends Record<string, unknown>>(
   where: T,
   table: DateRangeTable,
   from?: string,

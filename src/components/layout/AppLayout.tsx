@@ -25,12 +25,16 @@ const NAV_ITEMS = [
   { href: '/ledger', label: '가계부' },
   { href: '/ledger/budget', label: '예산' },
   { href: '/investment', label: '자산' },
+  { href: '/weight', label: '체중' },
+  { href: '/running', label: '러닝' },
+  { href: '/diet', label: '식단' },
   { href: '/settings', label: '설정' },
 ];
 
 const MOBILE_NAV_ITEMS = [
   { href: '/', label: '대시보드', exact: true },
   { href: '/ledger', label: '가계부' },
+  { href: '/diet', label: '식단' },
   { href: '/investment', label: '자산' },
   { href: '/settings', label: '설정' },
 ];
@@ -84,7 +88,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="fixed bottom-0 left-0 top-0 hidden w-sidebar flex-col border-r border-gray-200 bg-white px-4 py-6 lg:flex">
-        <div className="mb-8 px-2 text-lg font-bold">💰 내 자산 관리</div>
+        <div className="mb-8 px-2 text-lg font-bold">생활·자산</div>
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const active = getActiveNavHref(pathname) === item.href;

@@ -10,6 +10,7 @@ import { formatMoney, CARD_TYPES, LIABILITY_TYPES } from '@/lib/utils/format';
 import { formatRecurringItemLabel, formatRecurringPayment, sumRecurringTotals } from '@/lib/utils/ledger';
 import Modal from '@/components/common/Modal';
 import InstitutionSelect from '@/components/common/InstitutionSelect';
+import { HealthSettingsPanel } from '@/components/care/HealthSettingsPanel';
 
 function CategoriesPanel() {
   const [categories, setCategories] = useState<CategoryTree[]>([]);
@@ -884,6 +885,7 @@ function BackupPanel() {
 
 const SETTINGS_NAV = [
   { href: '/settings', label: '카테고리', exact: true },
+  { href: '/settings/health', label: '건강' },
   { href: '/settings/recurring', label: '정기 항목' },
   { href: '/settings/cards', label: '내 카드' },
   { href: '/settings/liabilities', label: '부채' },
@@ -893,6 +895,7 @@ const SETTINGS_NAV = [
 
 function SettingsContent() {
   const pathname = usePathname();
+  if (pathname === '/settings/health') return <HealthSettingsPanel />;
   if (pathname === '/settings/recurring') return <RecurringPanel />;
   if (pathname === '/settings/cards') return <CardsPanel />;
   if (pathname === '/settings/liabilities') return <LiabilitiesPanel />;

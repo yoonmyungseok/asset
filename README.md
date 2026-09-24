@@ -1,6 +1,6 @@
-# Asset Manager
+# 생활·자산 관리 (Asset + Self Care)
 
-개인 자산·가계부·투자 통합 관리 앱. Next.js 단일 스택으로 프론트엔드와 API를 함께 제공합니다.
+개인 **자산·가계부·투자**와 **건강(체중·러닝·식단)** 을 하나의 Next.js 앱에서 관리합니다.
 
 ## Tech Stack
 
@@ -14,84 +14,70 @@
 | Testing | Vitest |
 | Validation | Zod |
 | 금액 연산 | decimal.js + Prisma.Decimal |
+| 건강 연동 | googleapis (Google Sheets 러닝 동기화, 선택) |
 
 ## Quick Start
 
 ```bash
-# 1. 의존성 설치
 npm install
-
-# 2. 환경 변수 설정
 cp .env.example .env
-
-# 3. DB 마이그레이션 + 시드
 npm run db:migrate
 npm run db:seed
-
-# 4. 개발 서버 시작
 npm run dev
 ```
 
-브라우저에서 http://localhost:4000 을 엽니다.
+브라우저: http://localhost:4000
 
-## 기존 DB 이관
+## 주요 경로
 
-레거시 Python/FastAPI 앱의 `data/asset.db`를 Prisma DB로 이관할 때:
+| 영역 | 페이지 | API |
+|------|--------|-----|
+| 통합 대시보드 | `/` | 자산 `/api/v1/dashboard/*`, 건강 `/api/dashboard` |
+| 가계부·예산·자산 | `/ledger`, `/investment` | `/api/v1/*` |
+| 건강 | `/weight`, `/running`, `/diet` | `/api/weight`, `/api/running`, `/api/diet` 등 |
+| 설정 | `/settings`, `/settings/health` | 자산 UI + 건강 `/api/settings` |
+
+건강 도메인 설계 문서: [`docs/care/`](docs/care/)
+
+## self-care DB 이관
+
+기존 `self-care` SQLite(`prisma/dev.db`) 데이터를 통합 DB로 복사:
+
+```bash
+npm run db:migrate-care
+# dry-run
+npx tsx scripts/migrate-self-care-db.ts --dry-run --source ../self-care/prisma/dev.db
+```
+
+## 레거시 자산 DB 이관
 
 ```bash
 npm run db:import
-# 또는 dry-run으로 row count 확인
-npx tsx scripts/migrate-db.ts --dry-run
 ```
 
-## 테스트
+## 테스트·빌드
 
 ```bash
-# 전체 테스트 (1회 실행)
 npm test -- --run
-
-# watch 모드
-npm run test:watch
-```
-
-## 프로덕션 빌드
-
-```bash
+npm run lint
 npm run build
-npm run start
 ```
-
-헬스체크:
-
-```bash
-curl http://localhost:4000/api/v1/health
-# → { "status": "ok" }
-```
-
-## 주요 npm scripts
-
-| Script | 설명 |
-|--------|------|
-| `dev` | 개발 서버 (Turbopack) |
-| `build` | 프로덕션 빌드 |
-| `start` | 프로덕션 서버 |
-| `test` | Vitest 테스트 |
-| `test:watch` | Vitest watch 모드 |
-| `db:migrate` | Prisma migrate dev |
-| `db:seed` | 기본 데이터 시드 |
-| `db:import` | 레거시 DB 이관 |
-| `db:studio` | Prisma Studio |
-| `lint` | ESLint |
 
 ## 환경 변수
 
 `.env.example` 참고:
 
-- `PORT` — 개발/프로덕션 서버 포트 (기본: `4000`)
-- `DATABASE_URL` — SQLite 경로 (기본: `file:./data/asset.db`)
-- `TOSS_CLIENT_ID`, `TOSS_CLIENT_SECRET`, `TOSS_BASE_URL` — Toss Invest API (선택)
+- `DATABASE_URL` — 기본 `file:./data/asset.db`
+- `TOSS_*` — Toss Invest (선택)
+- `GOOGLE_*` — Google Sheets 서비스 계정 (선택)
 
-## 데이터
+## npm scripts
 
-- `data/asset.db` — SQLite 데이터베이스
-- `data/toss_credentials.json` — Toss API 인증 정보 (gitignore)
+| Script | 설명 |
+|--------|------|
+| `dev` / `start` | 포트 4000 |
+| `build` | `prisma generate` + Next 빌드 |
+| `db:migrate` | Prisma migrate |
+| `db:seed` | 자산 + 건강 시드 |
+| `db:migrate-care` | self-care DB → 통합 DB |
+| `db:import` | 레거시 자산 DB 이관 |

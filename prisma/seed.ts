@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
+import { runCareSeed } from "../src/lib/care/seed";
+
 const prisma = new PrismaClient();
 
 const ACCOUNT_TYPE_SEEDS = [
@@ -104,6 +106,7 @@ export async function runSeed(client: PrismaClient = prisma) {
 
 async function main() {
   await runSeed();
+  await runCareSeed(prisma);
 
   const [accountTypes, categories, paymentMethods] = await Promise.all([
     prisma.accountType.count(),

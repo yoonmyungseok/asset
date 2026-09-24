@@ -70,7 +70,7 @@ export const paymentMethodBriefSchema = z.object({
 
 export const ledgerTransactionResponseSchema = z.object({
   id: z.number().int(),
-  transaction_date: dateSchema,
+  transaction_date: z.string(),
   type: z.string(),
   amount: decimalSchema,
   category: categoryBriefSchema,

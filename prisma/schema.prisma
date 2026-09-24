@@ -321,3 +321,132 @@ model LiabilitySnapshot {
   @@unique([snapshot_date, liability_id], name: "uq_liability_snapshot")
   @@map("liability_snapshots")
 }
+
+// --- Self Care (health) domain ---
+
+model UserSettings {
+  id             Int      @id @default(autoincrement())
+  targetWeight   Float    @default(70.0)
+  birthYear      Int      @default(1993)
+  gender         String   @default("male")
+  heightCm       Float    @default(176.0)
+  activityLevel  String   @default("moderate")
+  targetCalories Float    @default(2000.0)
+  targetCarbs    Float    @default(250.0)
+  targetProtein  Float    @default(120.0)
+  targetFat      Float    @default(65.0)
+  googleSpreadsheetId          String?
+  googleRunningSheetName       String   @default("러닝")
+  googleRunningSplitSheetName  String   @default("러닝_스플릿")
+  googleRunningHeaderMap       String?
+  googleRunningSplitHeaderMap  String?
+  googleRunningUpsertKey       String   @default("record_id")
+  googleRunningSplitUpsertKey  String   @default("record_id_split")
+  googleSheetsLastSyncedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model WeightRecord {
+  id            Int      @id @default(autoincrement())
+  date          String   @unique
+  weight        Float
+  steps         Int?
+  water         Float?
+  sleep         Float?
+  condition     String?
+  bowelMovement String?
+  memo          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([date])
+}
+
+model RunningType {
+  id               Int      @id @default(autoincrement())
+  value            String   @unique
+  label            String
+  excludeFromStats Boolean  @default(false)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model RunningRecord {
+  id              Int             @id @default(autoincrement())
+  date            String
+  type            String
+  distance        Float
+  durationSeconds Int
+  avgPaceSeconds  Float?
+  avgHeartRate    Int?
+  maxHeartRate    Int?
+  cadence         Int?
+  memo            String?
+  splits          RunningSplit[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([date])
+}
+
+model RunningSplit {
+  id              Int           @id @default(autoincrement())
+  runningRecordId Int
+  splitNumber     Int
+  distance        Float
+  durationSeconds Int
+  paceSeconds     Float?
+  heartRate       Int?
+  cadence         Int?
+  runningRecord   RunningRecord @relation(fields: [runningRecordId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([runningRecordId])
+}
+
+model Meal {
+  id          Int         @id @default(autoincrement())
+  date        String
+  mealType    String
+  foodEntries FoodEntry[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([date, mealType])
+  @@index([date])
+}
+
+model FoodEntry {
+  id        Int      @id @default(autoincrement())
+  mealId    Int
+  foodName  String
+  amount    Float
+  unit      String
+  calories  Float
+  carbs     Float
+  protein   Float
+  fat       Float
+  sodium    Float?
+  memo      String?
+  meal      Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mealId])
+}
+
+model FoodItem {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  standardAmount String
+  calories       Float
+  carbs          Float
+  protein        Float
+  fat            Float
+  sodium         Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

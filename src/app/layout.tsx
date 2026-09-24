@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import AppInitializer from '@/components/layout/AppInitializer';
 import AppLayout from '@/components/layout/AppLayout';
+import { Providers } from '@/components/care/Providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '내 자산 관리',
-  description: 'Personal asset and ledger management',
+  title: '생활·자산 관리',
+  description: '건강 기록과 자산·가계부 통합 관리',
   icons: {
     icon: '/favicon.svg',
   },
@@ -24,9 +25,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <AppInitializer>
-          <AppLayout>{children}</AppLayout>
-        </AppInitializer>
+        <Providers>
+          <AppInitializer>
+            <AppLayout>{children}</AppLayout>
+          </AppInitializer>
+        </Providers>
       </body>
     </html>
   );
