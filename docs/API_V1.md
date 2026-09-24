@@ -93,6 +93,8 @@
 | GET | `/api/v1/snapshots/accounts/[accountId]` |
 | GET | `/api/v1/institutions` |
 
+`institutions`는 DB가 아니라 `src/lib/data/institutions.ts` 정적 목록을 반환한다.
+
 ## Market (Toss)
 
 | Method | Path |
@@ -103,3 +105,5 @@
 | PUT, DELETE | `/api/v1/market/credentials` |
 
 쿼리 파라미터·body 스키마는 각 `route.ts`와 `src/lib/validations`를 참고한다.
+
+라우트 목록은 `src/app/api/v1/**/route.ts` 기준 — **2026-09-24** 검증.

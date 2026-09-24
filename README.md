@@ -33,8 +33,8 @@ npm run dev
 | 영역 | 페이지 | API |
 |------|--------|-----|
 | 통합 대시보드 | `/` | 자산 `/api/v1/dashboard/*`, 건강 `/api/dashboard` |
-| 가계부·예산·자산 | `/ledger`, `/investment` | `/api/v1/*` |
-| 건강 | `/weight`, `/running`, `/diet` | `/api/weight`, `/api/running`, `/api/diet` 등 |
+| 가계부·예산·자산 | `/ledger`, `/ledger/budget`, `/ledger/analysis`, `/investment`, `/investment/accounts/[id]` | `/api/v1/*` |
+| 건강 | `/weight`, `/running`, `/running-settings`, `/diet`, `/food-settings` | `/api/weight`, `/api/running`, `/api/diet` 등 |
 | 설정 | `/settings`, `/settings/health` | 자산 UI + 건강 `/api/settings` |
 
 설계 문서: [`docs/README.md`](docs/README.md) · Cursor Agent 규칙: [`.cursor/rules/`](.cursor/rules/)
@@ -58,7 +58,8 @@ npm run db:import
 ## 테스트·빌드
 
 ```bash
-npm test -- --run
+npm test
+npm run test:watch
 npm run lint
 npm run build
 ```
@@ -67,6 +68,7 @@ npm run build
 
 `.env.example` 참고:
 
+- `PORT` — 기본 4000 (`dev` / `start` 스크립트와 동일)
 - `DATABASE_URL` — 기본 `file:./data/asset.db`
 - `TOSS_*` — Toss Invest (선택)
 - `GOOGLE_*` — Google Sheets 서비스 계정 (선택)
@@ -75,9 +77,16 @@ npm run build
 
 | Script | 설명 |
 |--------|------|
-| `dev` / `start` | 포트 4000 |
+| `dev` | Next dev, 포트 4000 |
+| `start` | Next start, 포트 4000 |
 | `build` | `prisma generate` + Next 빌드 |
-| `db:migrate` | Prisma migrate |
+| `test` | Vitest 1회 실행 |
+| `test:watch` | Vitest watch |
+| `lint` | ESLint |
+| `postinstall` | `prisma generate` |
+| `db:migrate` | Prisma migrate dev (`scripts/run-prisma.ts`) |
+| `db:push` | Prisma db push |
 | `db:seed` | 자산 + 건강 시드 |
-| `db:migrate-care` | self-care DB → 통합 DB |
+| `db:studio` | Prisma Studio |
 | `db:import` | 레거시 자산 DB 이관 |
+| `db:migrate-care` | self-care DB → 통합 DB |

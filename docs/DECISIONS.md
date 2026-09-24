@@ -38,4 +38,7 @@
 ## 문서
 
 - 현재 구조: `docs/` (본 디렉터리, [README.md](README.md)).
-- 역사: `docs/MIGRATION.md`, `migration-api-samples/`.
+- 역사: `docs/MIGRATION.md`, `migration-api-samples/` — **현행 앱 설명은 docs/README·PROJECT_OVERVIEW를 본다.**
+- 에이전트 진입: `AGENTS.md` + `.cursor/rules/` — 상세 설계는 `docs/`에만 두고 rules에는 경계·경로만 유지.
+- 코드 변경 시 문서 매트릭스: [DEVELOPMENT_GUIDE.md §문서 수정](DEVELOPMENT_GUIDE.md#문서-수정).
+- API 표는 `src/app/api/**/route.ts`와 `API_V1` / `API_CARE`를 동기화한다 (`scripts/doc-audit.ts`로 목록 추출 가능).

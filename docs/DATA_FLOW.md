@@ -38,25 +38,40 @@ GET /api/v1/dashboard/account-performance?…
 
 ```
 GET/POST /api/v1/ledger-transactions
-PATCH/DELETE /api/v1/ledger-transactions/[id]
+PATCH/DELETE /api/v1/ledger-transactions/[transactionId]
 GET /api/v1/ledger-transactions/summary
 ```
 
 생성·수정 시 `bank-transfers`, `card-payments` 등이 잔액·카드 정산과 연동된다.
 
+### 가계부 분석 `/ledger/analysis`
+
+```
+ledger/analysis/page.tsx
+  → GET /api/v1/ledger-transactions/summary?year=&month=
+```
+
 ## 투자·계좌
 
 ```
-GET/POST /api/v1/accounts
-GET/PATCH/DELETE /api/v1/accounts/[accountId]
-GET/POST /api/v1/holdings
-POST /api/v1/holdings/refresh-prices
-GET/POST /api/v1/investment-transactions
+/investment/page.tsx
+  → GET /api/v1/accounts (목록)
+
+/investment/accounts/[id]/page.tsx
+  → GET /api/v1/accounts/[id]
+  → GET /api/v1/account-types
+  → GET /api/v1/investment-transactions?account_id=
+  → GET /api/v1/ledger-transactions?account_id=
+  → GET /api/v1/account-limits
+  → GET /api/v1/snapshots/accounts/[id]
+  → GET /api/v1/holdings (보유 지원 계좌)
+  → POST /api/v1/holdings/refresh-prices (필요 시)
+  → PATCH/POST/DELETE holdings, transactions, account, limits …
 ```
 
 ## 예산·카드·부채
 
-- `/api/v1/budgets`, `budgets/alerts`
+- `/ledger/budget` → `/api/v1/budgets`, `budgets/alerts`
 - `/api/v1/cards`, `cards/process-settlements`
 - `/api/v1/liabilities`, `…/transactions`
 
@@ -74,25 +89,32 @@ GET /api/dashboard
 ## 체중·러닝·식단
 
 ```
-/api/weight, /api/running, /api/running/types
-/api/diet, /api/diet/entries, /api/diet/food-items
+/weight        → /api/weight
+/running       → /api/running, /api/running/types
+/running-settings → /api/running/types (CRUD)
+/diet          → /api/diet, /api/diet/entries
+/food-settings → /api/diet/food-items
 ```
 
-각 `src/app/*/page.tsx`가 동일 prefix API를 호출한다.
+각 페이지는 Client Component에서 `fetch('/api/...')` (공용 API client 없음).
 
 ## 건강 설정
 
 ```
 GET/PUT /api/settings  → UserSettings
-UI: /settings/health → HealthSettingsPanel
+/settings/health → HealthSettingsPanel
 ```
 
 ## Google Sheets (러닝)
 
 ```
-PUT /api/integrations/google-sheets/settings
+GET  /api/integrations/google-sheets/status
+GET  /api/integrations/google-sheets/settings
+PUT  /api/integrations/google-sheets/settings
+GET  /api/integrations/google-sheets/inspect
+GET  /api/integrations/google-sheets/presets/daily-log-ko
 POST /api/integrations/google-sheets/running/sync
-  → running-sync: Prisma → 시트 upsert → googleSheetsLastSyncedAt
+  → running-sync: Prisma → 시트 upsert → UserSettings.googleSheetsLastSyncedAt
 ```
 
 자격 증명: `.env` 서비스 계정 + `UserSettings` 스프레드시트·헤더 매핑.

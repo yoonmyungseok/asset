@@ -204,7 +204,7 @@ cp data/toss_credentials.json.bak data/toss_credentials.json
 
 - [x] Python 코드(`app/`, `frontend/`, `requirements.txt`) 전부 제거
 - [x] `npm run build && npm run start` 단일 명령으로 앱 실행
-- [x] Vitest 44개 테스트 100% pass (`npm test -- --run`)
+- [x] Vitest 전체 pass (`npm test` — 당시·현재 개수는 실행 결과에 따름, 2026-09 기준 129 tests)
 - [x] 기존 `data/asset.db` 이관 후 모든 페이지 정상 동작
 - [x] 카드 정산, 환급, 이체, 투자 매수/매도 등 핵심 금융 로직 검증
 - [x] DB 백업/복구 동작

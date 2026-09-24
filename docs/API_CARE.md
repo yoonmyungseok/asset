@@ -64,3 +64,5 @@
 | POST | `/api/integrations/google-sheets/running/sync` | DB → 시트 동기화 |
 
 미설정 시 sync는 **503** + 한국어 메시지.
+
+라우트 목록은 `src/app/api/{dashboard,weight,running,diet,settings,integrations}/**/route.ts` 기준 — **2026-09-24** 검증.

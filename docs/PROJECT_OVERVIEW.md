@@ -21,31 +21,48 @@
 | 테스트 | Vitest 3 |
 | 자산 금액 | `decimal.js` + `Prisma.Decimal` |
 | 건강 연동 | `googleapis` (서비스 계정, 선택) |
-| 시장 데이터 | Toss Invest Open API (선택, env) |
+| 시장 데이터 | Toss Invest Open API + Yahoo chart (`src/lib/external/market-data.ts`, 선택·env) |
 
-## npm scripts (주요)
+## npm scripts
 
 | script | 설명 |
 |--------|------|
 | `dev` / `start` | 포트 **4000** |
 | `build` | `prisma generate` + `next build` |
-| `test` | Vitest |
-| `db:migrate` | Prisma migrate (`scripts/run-prisma.ts`) |
+| `test` / `test:watch` | Vitest |
+| `lint` | ESLint |
+| `postinstall` | `prisma generate` |
+| `db:migrate` | Prisma migrate dev (`scripts/run-prisma.ts`) |
+| `db:push` | Prisma db push |
 | `db:seed` | 자산 + 건강 시드 |
+| `db:studio` | Prisma Studio |
 | `db:import` | 레거시 자산 DB 이관 |
 | `db:migrate-care` | 레거시 self-care SQLite → 통합 DB |
 
 ## 화면
 
+### 사이드바 (`AppLayout` NAV_ITEMS)
+
 | 경로 | 영역 |
 |------|------|
 | `/` | 통합 대시보드 (자산 요약 + 건강 `CareDashboardSection`) |
-| `/ledger`, `/ledger/budget`, `/ledger/analysis` | 가계부·예산·분석 |
-| `/investment` | 자산·투자 |
-| `/weight`, `/running`, `/running-settings` | 건강 |
-| `/diet`, `/food-settings` | 식단 |
-| `/settings` | 자산·앱 설정 |
-| `/settings/health` | 건강 프로필·목표·Google Sheets |
+| `/ledger` | 가계부 |
+| `/ledger/budget` | 예산 |
+| `/investment` | 자산·투자 목록 |
+| `/weight` | 체중 |
+| `/running` | 러닝 |
+| `/diet` | 식단 |
+| `/settings` | 자산·앱 설정 (catch-all) |
+
+### 서브 페이지 (직접 URL·링크)
+
+| 경로 | 영역 |
+|------|------|
+| `/ledger/analysis` | 가계부 분석 |
+| `/investment/accounts/[id]` | 계좌 상세 |
+| `/running-settings` | 러닝 타입 등 |
+| `/food-settings` | 음식 DB 관리 |
+| `/settings/health` | 건강 프로필·목표·Google Sheets (`HealthSettingsPanel`) |
 
 ## HTTP API (요약)
 
@@ -60,7 +77,7 @@
 
 | 영역 | 라이브러리 | UI |
 |------|------------|-----|
-| 자산 | `src/lib/services`, `src/lib/api`, `src/lib/validations` | `src/app/ledger`, `investment`, `components/layout` |
+| 자산 | `src/lib/services`, `src/lib/api`, `src/lib/validations`, `src/lib/external`, `src/lib/data` | `src/app/ledger`, `investment`, `components/layout` |
 | 건강 | `src/lib/care/**` | `src/components/care/**`, `src/app/weight` 등 |
 
 공유: `src/lib/db.ts`, `prisma/schema.prisma`, `AppLayout`.

@@ -31,3 +31,5 @@
 ## 금액 직렬화 (자산)
 
 `Decimal` / `Prisma.Decimal`은 JSON에서 **문자열**로 직렬화된다 (`src/lib/decimal.ts`, `route-utils` replacer).
+
+라우트 상세 목록: [API_V1.md](API_V1.md), [API_CARE.md](API_CARE.md) — **2026-09-24** 검증.

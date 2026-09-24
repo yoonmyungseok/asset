@@ -12,5 +12,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - 자산 API: `/api/v1/*`, 건강 API: `/api/*` (체중·러닝·식단·dashboard)
 - 건강 코드: `src/lib/care/`, UI: `src/components/care/`
-- 설계 문서: `docs/` ([README](docs/README.md))
-- Cursor 규칙: `.cursor/rules/` (`project-core`, `safety`, `architecture-asset` / `architecture-care`, `coding-standards-*`, `testing`)
+- 설계 문서 읽는 순서: [docs/README.md](docs/README.md) → `PROJECT_OVERVIEW` → `ARCHITECTURE` / `API_*` / `DATABASE` / `DATA_FLOW`
+- 코드 변경 시 문서: [DEVELOPMENT_GUIDE.md §문서 수정](docs/DEVELOPMENT_GUIDE.md#문서-수정)
+- Cursor 규칙 (`.cursor/rules/`): `project-core`, `safety`, `architecture-asset`, `architecture-care`, `coding-standards-asset`, `coding-standards-care`, `testing`
