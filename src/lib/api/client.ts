@@ -1,10 +1,20 @@
 const BASE = '/api/v1';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      ...options,
+    });
+  } catch (e) {
+    if (e instanceof TypeError) {
+      throw new Error(
+        '서버에 연결할 수 없습니다. 개발 서버가 실행 중인지 확인하세요. (포트 4000)',
+      );
+    }
+    throw e;
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     const detail = err.detail;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/care/ui/Card";
 import { Button } from "@/components/care/ui/Button";
@@ -317,8 +318,13 @@ export default function DietPage() {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="w-full"
           />
+          <Link href="/food-settings" className="w-full shrink-0 sm:w-auto">
+            <Button type="button" variant="secondary" className="w-full">
+              음식 DB
+            </Button>
+          </Link>
           <Button onClick={() => openCreate()} className="w-full shrink-0 sm:w-auto">
-            + 음식 추가
+            + 기록 추가
           </Button>
         </div>
       </div>

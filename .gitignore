@@ -5,9 +5,12 @@ __pycache__/
 venv/
 data/*.db
 data/*.db.bak
+data/*.bak
 data/*.db-journal
 data/test_*.db
 data/toss_credentials.json
+google-service-account.json
+secrets/
 .env
 *.egg-info/
 dist/

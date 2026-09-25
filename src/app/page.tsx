@@ -23,11 +23,13 @@ export default function DashboardPage() {
   const [performanceLoading, setPerformanceLoading] = useState(true);
   const [performanceError, setPerformanceError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   const load = async () => {
     setLoading(true);
     setPerformanceLoading(true);
+    setError(null);
     setPerformanceError(null);
     try {
       const [ov, cf, liab, perf] = await Promise.all([
@@ -46,6 +48,9 @@ export default function DashboardPage() {
       setCashflow(cf.data);
       setLiabilities(liab);
       if (perf) setPerformance(perf);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '대시보드 데이터를 불러오지 못했습니다.');
+      setOverview(null);
     } finally {
       setLoading(false);
       setPerformanceLoading(false);
@@ -67,7 +72,22 @@ export default function DashboardPage() {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  if (loading || !overview) return <div className="loading">로딩 중...</div>;
+  if (loading) return <div className="loading">로딩 중...</div>;
+
+  if (error || !overview) {
+    return (
+      <>
+        <PageHeader title="대시보드" />
+        <div className="empty-state card">
+          <h3>데이터를 불러오지 못했습니다</h3>
+          <p>{error ?? '대시보드 데이터를 불러오지 못했습니다.'}</p>
+          <button type="button" className="btn btn-primary" onClick={load}>
+            다시 시도
+          </button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

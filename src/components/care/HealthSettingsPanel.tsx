@@ -359,7 +359,7 @@ export function HealthSettingsPanel() {
           </div>
         </Card>
 
-        <Card title="데이터 관리" className="lg:hidden">
+        <Card title="데이터 관리">
           <div className="divide-y divide-slate-100">
             <Link
               href="/running-settings"

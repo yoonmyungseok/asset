@@ -15,9 +15,6 @@ asset/
 │   ├── run-prisma.ts           # DATABASE_URL 정규화, db CLI
 │   ├── migrate-db.ts           # 레거시 자산 DB
 │   ├── migrate-self-care-db.ts # self-care → 통합 DB
-│   ├── fix-decimal-schema.ts   # 개발용 스키마 수정
-│   ├── fix-datetime.ts         # 개발용 datetime 수정
-│   ├── port-self-care.mjs      # 일회성 self-care 소스 포팅
 │   ├── doc-audit.ts            # API route·page 목록 (문서 동기화 점검)
 │   └── restart-launch.ps1      # dev 서버 재시작 (Windows)
 ├── src/

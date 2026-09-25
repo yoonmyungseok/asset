@@ -50,8 +50,6 @@ npm run db:migrate-care
 npx tsx scripts/migrate-self-care-db.ts --dry-run --source ../self-care/prisma/dev.db
 ```
 
-`scripts/port-self-care.mjs` — **일회성** self-care 소스를 이 저장소로 복사할 때만 사용. 일반 개발·운영에는 필요 없음.
-
 ## Windows dev 서버 재시작
 
 `restart.bat` → `scripts/restart-launch.ps1` (포트 4000~).
