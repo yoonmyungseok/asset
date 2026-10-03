@@ -10,8 +10,6 @@ import {
   resolveSplitHeaderAliases,
   resolveSplitUpsertKey,
   sheetRowWidth,
-  type RunningUpsertKey,
-  type SplitUpsertKey,
 } from "@/lib/care/integrations/google-sheets/header-map";
 import {
   pickRecordsForDailySheet,
@@ -26,6 +24,11 @@ import {
   splitToFields,
 } from "@/lib/care/integrations/google-sheets/running-rows";
 import { normalizeDateKey, normalizeSplitKey } from "@/lib/care/integrations/google-sheets/sheet-date";
+import { buildRunningRowIndex, buildSplitRowIndex } from "@/lib/care/integrations/google-sheets/sheet-row-index";
+import {
+  inferDailyLogDateSample,
+  upsertDailyLogPastRows,
+} from "@/lib/care/integrations/google-sheets/sheet-daily-log-order";
 import { pinTodayDailyLogRow, pinTodaySplitRows } from "@/lib/care/integrations/google-sheets/sheet-today-pin";
 import { upsertSheetRows } from "@/lib/care/integrations/google-sheets/sheet-upsert";
 import { todayString } from "@/lib/care/utils";
@@ -91,67 +94,6 @@ function resolveSplitSheetName(runningSheetName: string, configuredSplitName: st
     return "러닝_구간_기록";
   }
   return configuredSplitName;
-}
-
-function buildRunningRowIndex(
-  values: (string | number | boolean | null | undefined)[][] | null | undefined,
-  upsertKey: RunningUpsertKey,
-  columns: Map<string, number>,
-): Map<string, number> {
-  const map = new Map<string, number>();
-  if (!values) return map;
-
-  const keyCol =
-    upsertKey === "record_id" ? columns.get("record_id") : columns.get("date");
-  if (keyCol == null) return map;
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-    if (!row?.length) continue;
-    const raw = row[keyCol];
-    const key =
-      upsertKey === "record_id"
-        ? String(raw ?? "")
-        : normalizeDateKey(raw);
-    if (!key) continue;
-    map.set(key, i + 2);
-  }
-  return map;
-}
-
-function buildSplitRowIndex(
-  values: (string | number | boolean | null | undefined)[][] | null | undefined,
-  upsertKey: SplitUpsertKey,
-  columns: Map<string, number>,
-): Map<string, number> {
-  const map = new Map<string, number>();
-  if (!values) return map;
-
-  const dateCol = columns.get("date");
-  const splitCol = columns.get("split_number");
-  const recordIdCol = columns.get("record_id");
-  if (dateCol == null || splitCol == null) return map;
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-    if (!row?.length) continue;
-    const splitPart = normalizeSplitKey(row[splitCol]);
-    if (!splitPart) continue;
-
-    let key: string;
-    if (upsertKey === "record_id_split") {
-      if (recordIdCol == null) continue;
-      const recordId = row[recordIdCol];
-      if (recordId == null || recordId === "") continue;
-      key = `${recordId}:${splitPart}`;
-    } else {
-      const datePart = normalizeDateKey(row[dateCol]);
-      if (!datePart) continue;
-      key = `${datePart}:${splitPart}`;
-    }
-    map.set(key, i + 2);
-  }
-  return map;
 }
 
 export function resolveSpreadsheetId(storedId: string | null | undefined): string | null {
@@ -265,10 +207,33 @@ export async function syncRunningToGoogleSheets(): Promise<RunningSheetsSyncResu
       ? pickRecordsForDailySheet(records, restDayTypeValues)
       : records;
 
+  const headers = runningHeaderRow.map((h) => String(h).trim());
+  const isDailyLog =
+    runningUpsertKey === "date" &&
+    (runningSheetName === "Daily_Log" ||
+      (headers.includes("날짜") && headers.includes("종류")));
+  const todayKey = todayString();
+  const dateCol = runningColumns.get("date");
+  const dailyLogFormat =
+    isDailyLog && dateCol != null
+      ? {
+          dateSample: inferDailyLogDateSample(
+            runningExisting.data.values,
+            dateCol,
+            todayKey,
+          ),
+        }
+      : undefined;
+
   const runningRows = runningSource.map((record) => {
     const fields =
       runningUpsertKey === "date"
-        ? recordToRunningFieldsForSheet(record, typeOptions, restDayTypeValues)
+        ? recordToRunningFieldsForSheet(
+            record,
+            typeOptions,
+            restDayTypeValues,
+            dailyLogFormat,
+          )
         : recordToRunningFields(record, typeOptions, syncedAt);
     const key =
       runningUpsertKey === "date"
@@ -291,7 +256,7 @@ export async function syncRunningToGoogleSheets(): Promise<RunningSheetsSyncResu
     for (const split of record.splits) {
       const fields =
         splitUpsertKey === "date_split"
-          ? splitToFieldsForSheet(record, split)
+          ? splitToFieldsForSheet(record, split, dailyLogFormat)
           : splitToFields(record, split);
       const key =
         splitUpsertKey === "date_split"
@@ -304,26 +269,36 @@ export async function syncRunningToGoogleSheets(): Promise<RunningSheetsSyncResu
     }
   }
 
-  const headers = runningHeaderRow.map((h) => String(h).trim());
-  const isDailyLog =
-    runningUpsertKey === "date" &&
-    (runningSheetName === "Daily_Log" ||
-      (headers.includes("날짜") && headers.includes("종류")));
-  const todayKey = todayString();
-
   let running: { inserted: number; updated: number };
   let splits: { inserted: number; updated: number };
 
   if (isDailyLog) {
+    const dailyLogIndexOpts = { excludeDateKey: todayKey };
+    const pastRunningRows = runningRows.filter((row) => row.key !== todayKey);
+    const runningRowByKeyPast = buildRunningRowIndex(
+      runningExisting.data.values,
+      runningUpsertKey,
+      runningColumns,
+      dailyLogIndexOpts,
+    );
+    const historyRunning = await upsertDailyLogPastRows(
+      spreadsheetId,
+      runningSheetName,
+      runningWidth,
+      pastRunningRows,
+      runningRowByKeyPast,
+      dateCol!,
+      runningExisting.data.values,
+    );
+
     const todayRecord = runningSource.find((r) => r.date === todayKey);
-    const dateCol = runningColumns.get("date");
-    if (!todayRecord || dateCol == null) {
-      running = { inserted: 0, updated: 0 };
-    } else {
+    let pinRunning = { inserted: 0, updated: 0 };
+    if (todayRecord && dateCol != null) {
       const fields = recordToRunningFieldsForSheet(
         todayRecord,
         typeOptions,
         restDayTypeValues,
+        dailyLogFormat,
       );
       const todayValues = buildSheetRow(fields, runningColumns, runningWidth);
       const pin = await pinTodayDailyLogRow(
@@ -335,19 +310,47 @@ export async function syncRunningToGoogleSheets(): Promise<RunningSheetsSyncResu
         runningExisting.data.values,
         dateCol,
       );
-      running = {
+      pinRunning = {
         inserted: pin.inserted ? 1 : 0,
         updated: pin.updated ? 1 : 0,
       };
     }
 
-    const todaySplitRecord = pickRecordsForSplitSheet(records, new Set([todayKey]))[0];
+    running = {
+      inserted: historyRunning.inserted + pinRunning.inserted,
+      updated: historyRunning.updated + pinRunning.updated,
+    };
+
+    const pastSplitRows = splitRows.filter((row) => !row.key.startsWith(`${todayKey}:`));
+    const splitRowByKeyPast = buildSplitRowIndex(
+      splitExisting.data.values,
+      splitUpsertKey,
+      splitColumns,
+      dailyLogIndexOpts,
+    );
     const splitDateCol = splitColumns.get("date");
-    if (!todaySplitRecord || splitDateCol == null || todaySplitRecord.splits.length === 0) {
-      splits = { inserted: 0, updated: 0 };
-    } else {
+    const historySplits =
+      splitDateCol != null
+        ? await upsertDailyLogPastRows(
+            spreadsheetId,
+            splitSheetName,
+            splitWidth,
+            pastSplitRows,
+            splitRowByKeyPast,
+            splitDateCol,
+            splitExisting.data.values,
+          )
+        : { inserted: 0, updated: 0 };
+
+    const todaySplitRecord = pickRecordsForSplitSheet(records, new Set([todayKey]))[0];
+    let pinSplitInserted = 0;
+    if (
+      todaySplitRecord &&
+      splitDateCol != null &&
+      todaySplitRecord.splits.length > 0
+    ) {
       const splitValueRows = todaySplitRecord.splits.map((split) => {
-        const fields = splitToFieldsForSheet(todaySplitRecord, split);
+        const fields = splitToFieldsForSheet(todaySplitRecord, split, dailyLogFormat);
         return buildSheetRow(fields, splitColumns, splitWidth);
       });
       const pinSplits = await pinTodaySplitRows(
@@ -359,8 +362,13 @@ export async function syncRunningToGoogleSheets(): Promise<RunningSheetsSyncResu
         splitExisting.data.values,
         splitDateCol,
       );
-      splits = { inserted: pinSplits.rowCount, updated: 0 };
+      pinSplitInserted = pinSplits.rowCount;
     }
+
+    splits = {
+      inserted: historySplits.inserted + pinSplitInserted,
+      updated: historySplits.updated,
+    };
   } else {
     running = await upsertSheetRows(
       spreadsheetId,

@@ -61,7 +61,7 @@
 | PUT | `/api/integrations/google-sheets/settings` | 설정 저장 |
 | GET | `/api/integrations/google-sheets/inspect` | 시트 구조 점검 |
 | GET | `/api/integrations/google-sheets/presets/daily-log-ko` | 헤더 프리셋 |
-| POST | `/api/integrations/google-sheets/running/sync` | DB → 시트 동기화 |
+| POST | `/api/integrations/google-sheets/running/sync` | DB → 시트 동기화 (Daily_Log: 전 날짜 upsert + 오늘 2행 pin) |
 
 미설정 시 sync는 **503** + 한국어 메시지.
 

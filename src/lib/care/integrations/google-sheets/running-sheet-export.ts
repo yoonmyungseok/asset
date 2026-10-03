@@ -2,6 +2,7 @@ import type { RunningRecord, RunningSplit } from "@prisma/client";
 import { isActiveRun } from "@/lib/care/calculations/running";
 import { formatPaceColon } from "@/lib/care/calculations/running";
 import { getRunningTypeLabel } from "@/lib/care/constants";
+import { formatDateForDailyLogSheet } from "@/lib/care/integrations/google-sheets/sheet-daily-log-order";
 import { formatDuration } from "@/lib/care/utils";
 
 type RunningTypeOption = { value: string; label: string };
@@ -39,18 +40,22 @@ export function pickRecordsForSplitSheet(
   return picked.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
 }
 
+export type DailyLogSheetFormat = { dateSample?: string };
+
 export function recordToRunningFieldsForSheet(
   record: RecordWithSplits,
   types: RunningTypeOption[],
   restDayTypeValues: string[],
+  dailyLogFormat?: DailyLogSheetFormat,
 ): Record<string, string | number> {
   const typeOptions = types.map(({ value, label }) => ({ value, label }));
   const restSet = new Set(restDayTypeValues);
   const label = getRunningTypeLabel(record.type, typeOptions);
+  const sheetDate = formatDateForDailyLogSheet(record.date, dailyLogFormat?.dateSample);
 
   if (!isActiveRun(record, restSet)) {
     return {
-      date: record.date,
+      date: sheetDate,
       type_label: label,
       distance_km: "",
       duration_sec: "",
@@ -63,7 +68,7 @@ export function recordToRunningFieldsForSheet(
   }
 
   return {
-    date: record.date,
+    date: sheetDate,
     type_label: label,
     distance_km: record.distance,
     duration_sec: formatDuration(record.durationSeconds),
@@ -78,9 +83,10 @@ export function recordToRunningFieldsForSheet(
 export function splitToFieldsForSheet(
   record: RecordWithSplits,
   split: RunningSplit,
+  dailyLogFormat?: DailyLogSheetFormat,
 ): Record<string, string | number> {
   return {
-    date: record.date,
+    date: formatDateForDailyLogSheet(record.date, dailyLogFormat?.dateSample),
     split_number: split.splitNumber,
     pace: formatPaceColon(split.paceSeconds),
     heart_rate: split.heartRate ?? "",

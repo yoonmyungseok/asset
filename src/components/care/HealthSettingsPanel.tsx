@@ -244,9 +244,10 @@ export function HealthSettingsPanel() {
         <Card title="Google 스프레드시트 (러닝)">
           <p className="mb-4 text-sm text-slate-500">
             앱은 시트 모양을 미리 알 수 없습니다. <strong>보내기 전에</strong> 지정한 탭의{" "}
-            <strong>1행을 읽어</strong> 열 이름을 맞춥니다. upsert에는 최소{" "}
-            <code className="text-xs">record_id</code> 열(또는 매핑)이 필요합니다. 서비스 계정을
-            시트 <strong>편집자</strong>로 공유하세요.
+            <strong>1행을 읽어</strong> 열 이름을 맞춥니다. Daily_Log 형식이면 앱 DB의{" "}
+            <strong>모든 날짜</strong>를 시트에 맞추고, 오늘만 2행에 고정합니다. upsert에는
+            최소 <code className="text-xs">record_id</code> 열(또는 매핑)이 필요합니다. 서비스
+            계정을 시트 <strong>편집자</strong>로 공유하세요.
           </p>
           {!sheetsStatus?.serviceAccountConfigured && (
             <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">

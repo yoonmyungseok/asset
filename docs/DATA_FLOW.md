@@ -115,6 +115,7 @@ GET  /api/integrations/google-sheets/inspect
 GET  /api/integrations/google-sheets/presets/daily-log-ko
 POST /api/integrations/google-sheets/running/sync
   → running-sync: Prisma → 시트 upsert → UserSettings.googleSheetsLastSyncedAt
+  → Daily_Log(날짜 upsert): DB 전 날짜 upsert + 오늘 행·오늘 구간은 2행 pin
 ```
 
 자격 증명: `.env` 서비스 계정 + `UserSettings` 스프레드시트·헤더 매핑.
