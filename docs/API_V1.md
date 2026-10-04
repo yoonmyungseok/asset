@@ -74,13 +74,10 @@
 | PATCH, DELETE | `/api/v1/liabilities/[liabilityId]` |
 | GET, POST | `/api/v1/liabilities/[liabilityId]/transactions` |
 
-## Budgets & recurring
+## Recurring items
 
 | Method | Path |
 |--------|------|
-| GET, PUT | `/api/v1/budgets` |
-| DELETE | `/api/v1/budgets/[budgetId]` |
-| GET | `/api/v1/budgets/alerts` |
 | GET, POST | `/api/v1/recurring-items` |
 | PATCH, DELETE | `/api/v1/recurring-items/[itemId]` |
 | POST | `/api/v1/recurring-items/generate` |

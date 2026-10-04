@@ -39,7 +39,6 @@ export default function LedgerAnalysisPage() {
       <CategorySpendingBreakdown
         categories={summary.by_category}
         totalExpense={summary.total_expense}
-        monthQuery={monthQuery}
       />
 
       {summary.comparison && (

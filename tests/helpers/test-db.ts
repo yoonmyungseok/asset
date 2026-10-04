@@ -16,7 +16,6 @@ const USER_TABLES = [
   "card_settlements",
   "cards",
   "recurring_items",
-  "budgets",
   "liability_transactions",
   "liability_snapshots",
   "daily_snapshots",

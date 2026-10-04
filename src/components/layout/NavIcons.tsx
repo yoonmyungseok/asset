@@ -120,27 +120,6 @@ export function SettingsIcon({ active, className = '', ...props }: IconProps) {
   );
 }
 
-// 6. 예산 아이콘
-export function BudgetIcon({ active, className = '', ...props }: IconProps) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? '2.2' : '1.8'}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      {...props}
-    >
-      <rect x="2" y="5" width="20" height="14" rx="3" />
-      <line x1="2" y1="10" x2="22" y2="10" />
-    </svg>
-  );
-}
-
 // 7. 체중 아이콘
 export function WeightIcon({ active, className = '', ...props }: IconProps) {
   return (

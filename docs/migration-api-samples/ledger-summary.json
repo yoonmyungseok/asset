@@ -1,4 +1,4 @@
-﻿{
+{
     "period":  {
                    "year":  2026,
                    "month":  9
@@ -12,63 +12,49 @@
                             "category_name":  "ìë¹",
                             "parent_name":  null,
                             "amount":  "81421.00",
-                            "ratio":  "15.27",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "15.27"
                         },
                         {
                             "category_id":  5,
                             "category_name":  "êµíµ",
                             "parent_name":  null,
                             "amount":  "0.00",
-                            "ratio":  "0.00",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "0.00"
                         },
                         {
                             "category_id":  13,
                             "category_name":  "ìí",
                             "parent_name":  null,
                             "amount":  "271040.00",
-                            "ratio":  "50.83",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "50.83"
                         },
                         {
                             "category_id":  17,
                             "category_name":  "ë¬¸í",
                             "parent_name":  null,
                             "amount":  "28990.00",
-                            "ratio":  "5.44",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "5.44"
                         },
                         {
                             "category_id":  30,
                             "category_name":  "ë°ì´í¸",
                             "parent_name":  null,
                             "amount":  "151800.00",
-                            "ratio":  "28.47",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "28.47"
                         },
                         {
                             "category_id":  53,
                             "category_name":  "ë´ë¶ì´ì²´",
                             "parent_name":  null,
                             "amount":  "0.00",
-                            "ratio":  "0.00",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "0.00"
                         },
                         {
                             "category_id":  54,
                             "category_name":  "ë°íìì ",
                             "parent_name":  null,
                             "amount":  "0.00",
-                            "ratio":  "0.00",
-                            "budget":  null,
-                            "over_budget":  false
+                            "ratio":  "0.00"
                         }
                     ],
     "by_card":  [

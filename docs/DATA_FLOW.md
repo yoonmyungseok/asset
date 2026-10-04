@@ -69,9 +69,8 @@ ledger/analysis/page.tsx
   → PATCH/POST/DELETE holdings, transactions, account, limits …
 ```
 
-## 예산·카드·부채
+## 카드·부채
 
-- `/ledger/budget` → `/api/v1/budgets`, `budgets/alerts`
 - `/api/v1/cards`, `cards/process-settlements`
 - `/api/v1/liabilities`, `…/transactions`
 

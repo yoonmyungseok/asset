@@ -33,7 +33,6 @@
 | `Liability` | 부채 |
 | `LiabilityTransaction` | 부채 거래 |
 | `RecurringItem` | 반복 항목 |
-| `Budget` | 월별 예산 |
 | `DailySnapshot` | 일별 순자산 스냅샷 |
 | `AccountSnapshot` | 계좌별 일 스냅샷 |
 | `LiabilitySnapshot` | 부채별 일 스냅샷 |

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { LedgerSummary } from '@/types/api';
@@ -13,7 +12,6 @@ type CategoryItem = LedgerSummary['by_category'][number];
 interface Props {
   categories: CategoryItem[];
   totalExpense: string;
-  monthQuery: string;
 }
 
 function ChartTooltip({ active, payload }: { active?: boolean; payload?: { payload: { name: string; value: number; ratio: number } }[] }) {
@@ -28,7 +26,7 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   );
 }
 
-export default function CategorySpendingBreakdown({ categories, totalExpense, monthQuery }: Props) {
+export default function CategorySpendingBreakdown({ categories, totalExpense }: Props) {
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const sorted = [...categories]
@@ -47,8 +45,6 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
     ratio: total > 0 ? (Number(c.amount) / total) * 100 : 0,
     color: categoryColors[c.category_id],
   }));
-
-  const hasBudget = sorted.some((c) => c.budget);
 
   if (sorted.length === 0) {
     return (
@@ -118,7 +114,6 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
           {sorted.map((c, index) => {
             const color = categoryColors[c.category_id];
             const ratio = Number(c.ratio);
-            const budgetRate = c.budget ? (Number(c.amount) / Number(c.budget) * 100) : 0;
             const isActive = activeId === c.category_id;
 
             return (
@@ -144,14 +139,6 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
                   </div>
                   <div className="spending-row-meta">
                     <span>{ratio.toFixed(1)}%</span>
-                    {c.budget ? (
-                      <span className={c.over_budget ? 'text-danger' : budgetRate >= 90 ? 'text-warning' : ''}>
-                        예산 {budgetRate.toFixed(0)}%
-                        {c.over_budget ? ' · 초과' : ''}
-                      </span>
-                    ) : (
-                      <span className="text-muted">예산 미설정</span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -159,13 +146,6 @@ export default function CategorySpendingBreakdown({ categories, totalExpense, mo
           })}
         </div>
       </div>
-
-      {hasBudget && (
-        <div className="spending-budget-note">
-          예산 사용률은 해당 월·카테고리에 설정한 예산 대비 지출 비율입니다.
-          {' '}<Link href={`/ledger/budget${monthQuery}`}>예산 관리</Link>
-        </div>
-      )}
     </div>
   );
 }

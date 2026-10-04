@@ -71,16 +71,6 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
     paramNames: ["transactionId"],
   },
   {
-    pattern: /^\/api\/v1\/budgets$/,
-    importPath: "@/app/api/v1/budgets/route",
-    paramNames: [],
-  },
-  {
-    pattern: /^\/api\/v1\/budgets\/alerts$/,
-    importPath: "@/app/api/v1/budgets/alerts/route",
-    paramNames: [],
-  },
-  {
     pattern: /^\/api\/v1\/liabilities$/,
     importPath: "@/app/api/v1/liabilities/route",
     paramNames: [],

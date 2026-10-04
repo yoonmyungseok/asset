@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import type { DashboardOverview } from '@/types/api';
 import { formatMoney } from '@/lib/utils/format';
@@ -32,19 +31,14 @@ function ExpandToggle({
 }
 
 export function DashboardAlerts({ overview }: { overview: DashboardOverview }) {
-  const { budget_alerts, limit_alerts, cashflow } = overview;
-  const budgetHref = `/ledger/budget?year=${cashflow.year}&month=${cashflow.month}`;
+  const { limit_alerts } = overview;
 
-  const hasBudget = budget_alerts.length > 0;
-  const hasLimits = limit_alerts.length > 0;
-  if (!hasBudget && !hasLimits) return null;
+  if (limit_alerts.length === 0) return null;
 
-  const alertCount = budget_alerts.length + limit_alerts.length;
+  const alertCount = limit_alerts.length;
   const [panelOpen, setPanelOpen] = useState(true);
-  const [budgetExpanded, setBudgetExpanded] = useState(false);
   const [limitExpanded, setLimitExpanded] = useState(false);
 
-  const visibleBudget = budgetExpanded ? budget_alerts : budget_alerts.slice(0, VISIBLE_MAX);
   const visibleLimits = limitExpanded ? limit_alerts : limit_alerts.slice(0, VISIBLE_MAX);
 
   return (
@@ -61,76 +55,40 @@ export function DashboardAlerts({ overview }: { overview: DashboardOverview }) {
 
       {panelOpen && (
         <div className="mt-3 space-y-4 border-t border-amber-200/80 pt-3">
-          {hasBudget && (
-            <section>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-[13px] font-semibold m-0">
-                  예산 초과 ({budget_alerts.length}건)
-                </h3>
-                <Link href={budgetHref} className="text-[13px] underline underline-offset-2">
-                  예산 관리
-                </Link>
-              </div>
-              <ul className="m-0 list-none space-y-2 p-0">
-                {visibleBudget.map((item) => (
-                  <li key={item.category_name} className="text-[13px] leading-snug">
-                    <span className="font-medium">{item.category_name}</span>
-                    <span className="text-amber-900/90">
-                      {' '}
-                      — 예산 {formatMoney(item.budget)}, 사용 {formatMoney(item.spent)}
-                      {item.over_amount != null && (
-                        <span className="text-danger"> (초과 {formatMoney(item.over_amount)})</span>
-                      )}
+          <section>
+            <h3 className="mb-2 text-[13px] font-semibold m-0">
+              연간 한도 ({limit_alerts.length}건)
+            </h3>
+            <ul className="m-0 list-none space-y-3 p-0">
+              {visibleLimits.map((item) => (
+                <li key={item.account_name}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[13px]">
+                    <span className="font-medium">{item.account_name}</span>
+                    <span>
+                      {item.usage_rate}% · 잔여 {formatMoney(item.remaining)}
                     </span>
-                  </li>
-                ))}
-              </ul>
-              <ExpandToggle
-                total={budget_alerts.length}
-                expanded={budgetExpanded}
-                onToggle={() => setBudgetExpanded((v) => !v)}
-              />
-            </section>
-          )}
-
-          {hasLimits && (
-            <section>
-              <h3 className="mb-2 text-[13px] font-semibold m-0">
-                연간 한도 ({limit_alerts.length}건)
-              </h3>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {visibleLimits.map((item) => (
-                  <li key={item.account_name}>
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[13px]">
-                      <span className="font-medium">{item.account_name}</span>
-                      <span>
-                        {item.usage_rate}% · 잔여 {formatMoney(item.remaining)}
-                      </span>
-                    </div>
-                    <div className="progress-bar mt-1">
-                      <div
-                        className={`progress-bar-fill${limitFillClass(item.usage_rate)}`}
-                        style={{ width: `${Math.min(Number(item.usage_rate), 100)}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <ExpandToggle
-                total={limit_alerts.length}
-                expanded={limitExpanded}
-                onToggle={() => setLimitExpanded((v) => !v)}
-              />
-            </section>
-          )}
+                  </div>
+                  <div className="progress-bar mt-1">
+                    <div
+                      className={`progress-bar-fill${limitFillClass(item.usage_rate)}`}
+                      style={{ width: `${Math.min(Number(item.usage_rate), 100)}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <ExpandToggle
+              total={limit_alerts.length}
+              expanded={limitExpanded}
+              onToggle={() => setLimitExpanded((v) => !v)}
+            />
+          </section>
         </div>
       )}
 
       {!panelOpen && alertCount > 0 && (
         <p className="mt-2 mb-0 text-[13px] text-amber-900/80">
-          {hasBudget && `예산 초과 ${budget_alerts.length}건`}
-          {hasBudget && hasLimits && ' · '}
-          {hasLimits && `한도 알림 ${limit_alerts.length}건`}
+          한도 알림 {limit_alerts.length}건
         </p>
       )}
     </div>

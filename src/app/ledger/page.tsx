@@ -6,7 +6,7 @@ import { api } from '@/lib/api/client';
 import LedgerCalendar from '@/components/ledger/LedgerCalendar';
 import TransactionFormModal from '@/components/ledger/TransactionFormModal';
 import { useLedgerMonth } from '@/hooks/useLedgerMonth';
-import type { Budget, LedgerSummary, LedgerTransaction } from '@/types/api';
+import type { LedgerSummary, LedgerTransaction } from '@/types/api';
 import { formatMoney, monthDateRange, todayISO } from '@/lib/utils/format';
 import { aggregateDailyTotals } from '@/lib/utils/ledger';
 
@@ -199,7 +199,6 @@ export default function LedgerPage() {
   const [transactions, setTransactions] = useState<LedgerTransaction[]>([]);
   const [summary, setSummary] = useState({ income: '0', expense: '0', net: '0' });
   const [comparisonSummary, setComparisonSummary] = useState<LedgerSummary | null>(null);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<LedgerTransaction | null>(null);
   const [search, setSearch] = useState('');
@@ -216,15 +215,13 @@ export default function LedgerPage() {
       const params: Record<string, string | number> = { from_date, to_date, page_size: 500 };
       if (search) params.q = search;
 
-      const [txRes, summaryRes, budgetRes] = await Promise.all([
+      const [txRes, summaryRes] = await Promise.all([
         api.getLedgerTransactions(params),
         api.getLedgerSummary(year, month).catch(() => null),
-        api.getBudgets(year, month).catch(() => []),
       ]);
 
       setTransactions(txRes.items);
       setComparisonSummary(summaryRes);
-      setBudgets(budgetRes);
 
       const income = txRes.items
         .filter((t) => t.type === 'income' || t.type === 'reimbursement_in')
@@ -273,11 +270,6 @@ export default function LedgerPage() {
     : null;
   const currentExpenseNum = Number(summary.expense);
   const comparisonText = getComparisonDiffText(currentExpenseNum, prevMonthExpense);
-
-  const totalRemainingBudget = useMemo(() => {
-    if (!budgets || budgets.length === 0) return null;
-    return budgets.reduce((acc, b) => acc + Number(b.remaining), 0);
-  }, [budgets]);
 
   const handleDelete = async (id: number) => {
     await api.deleteLedgerTransaction(id);
@@ -383,7 +375,7 @@ export default function LedgerPage() {
           </div>
         </div>
 
-        {/* 스마트 인사이트 & 예산 카드 */}
+        {/* 스마트 인사이트 카드 */}
         <div className="mb-5 rounded-2xl border border-[#262932] bg-[#1c1e24] p-4 shadow-sm">
           {/* 전월 대비 분석 row */}
           <div className="flex items-center justify-between gap-3">
@@ -401,21 +393,6 @@ export default function LedgerPage() {
             </Link>
           </div>
 
-          <div className="my-3 border-t border-[#262932]" />
-
-          {/* 남은 예산 row */}
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-medium text-gray-400">남은 예산</span>
-            <Link
-              href={`/ledger/budget${monthQuery}`}
-              className="flex items-center gap-1 text-[13px] font-bold text-white transition-colors hover:text-gray-200"
-            >
-              <span>
-                {totalRemainingBudget !== null ? formatMoney(totalRemainingBudget) : '예산 설정하기'}
-              </span>
-              <span className="text-xs text-gray-500">›</span>
-            </Link>
-          </div>
         </div>
 
         {/* 툴바: 뷰 전환 (목록 / 달력), 필터, 검색, 추가 */}

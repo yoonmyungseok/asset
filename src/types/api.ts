@@ -183,8 +183,6 @@ export interface LedgerSummary {
     parent_name: string | null;
     amount: string;
     ratio: string;
-    budget: string | null;
-    over_budget: boolean;
   }[];
   by_card: {
     card_id: number;
@@ -199,19 +197,6 @@ export interface LedgerSummary {
     prev_month_expense: string;
     expense_change_rate: string;
   } | null;
-}
-
-export interface Budget {
-  id: number;
-  category_id: number;
-  category_name: string;
-  year: number;
-  month: number;
-  amount: string;
-  spent: string;
-  remaining: string;
-  usage_rate: string;
-  over_budget: boolean;
 }
 
 export interface RecurringItem {
@@ -294,22 +279,12 @@ export interface DashboardOverview {
     total_value: string;
     ratio: string;
   }[];
-  budget_alerts: BudgetAlertItem[];
-  budget_alerts_count: number;
   limit_alerts: { account_name: string; usage_rate: string; remaining: string }[];
   insights: {
     savings_rate: string | null;
     emergency_months: string | null;
     debt_ratio: string | null;
   };
-}
-
-export interface BudgetAlertItem {
-  category_name: string;
-  budget: string;
-  spent: string;
-  over_amount?: string | null;
-  usage_rate?: string | null;
 }
 
 export interface TrendPoint {

@@ -33,7 +33,6 @@ export function useRefresh() {
 const NAV_ITEMS = [
   { href: '/', label: '대시보드', exact: true },
   { href: '/ledger', label: '가계부' },
-  { href: '/ledger/budget', label: '예산' },
   { href: '/investment', label: '자산' },
   { href: '/running', label: '러닝' },
   { href: '/weight', label: '체중' },

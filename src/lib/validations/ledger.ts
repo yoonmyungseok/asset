@@ -122,8 +122,6 @@ export const ledgerSummaryCategorySchema = z.object({
   parent_name: z.string().nullable(),
   amount: decimalSchema,
   ratio: decimalSchema,
-  budget: decimalSchema.nullable().optional(),
-  over_budget: z.boolean().default(false),
 });
 
 export const ledgerSummaryComparisonSchema = z.object({
@@ -225,42 +223,6 @@ export const recurringGenerateResponseSchema = z.object({
   items: z.array(recurringGenerateItemSchema),
 });
 
-export const budgetResponseSchema = z.object({
-  id: z.number().int(),
-  category_id: z.number().int(),
-  category_name: z.string(),
-  year: z.number().int(),
-  month: z.number().int(),
-  amount: decimalSchema,
-  spent: decimalSchema,
-  remaining: decimalSchema,
-  usage_rate: decimalSchema,
-  over_budget: z.boolean(),
-});
-
-export const budgetUpsertSchema = z.object({
-  category_id: z.number().int(),
-  year: z.number().int(),
-  month: z.number().int(),
-  amount: decimalSchema,
-});
-
-export const budgetAlertItemSchema = z.object({
-  category_name: z.string(),
-  budget: decimalSchema,
-  spent: decimalSchema,
-  over_amount: decimalSchema.nullable().optional(),
-  usage_rate: decimalSchema.nullable().optional(),
-});
-
-export const budgetAlertsResponseSchema = z.object({
-  over_budget: z.array(budgetAlertItemSchema),
-  near_limit: z.array(budgetAlertItemSchema),
-});
-
-export type BudgetAlertsResponse = z.infer<typeof budgetAlertsResponseSchema>;
-export type BudgetAlertItem = z.infer<typeof budgetAlertItemSchema>;
-export type BudgetResponse = z.infer<typeof budgetResponseSchema>;
 export type CategoryBrief = z.infer<typeof categoryBriefSchema>;
 export type LedgerTransactionResponse = z.infer<typeof ledgerTransactionResponseSchema>;
 export type RecurringItemResponse = z.infer<typeof recurringItemResponseSchema>;

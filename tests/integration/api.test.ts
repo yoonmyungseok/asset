@@ -603,38 +603,6 @@ describe("API integration", () => {
     expect(account.summary.holdings_count).toBe(0);
   });
 
-  it("test_budget_and_alerts", async () => {
-    const foodCategoryId = await getCategoryId("식비");
-    const expenseCategoryId = await getCategoryId("외식", "식비");
-    const cashPaymentId = await getPaymentMethodId("현금");
-
-    const budgetRes = await apiClient.put("/api/v1/budgets", {
-      json: { category_id: foodCategoryId, year, month, amount: 10000 },
-    });
-    expect(budgetRes.status).toBe(200);
-
-    await apiClient.post("/api/v1/ledger-transactions", {
-      json: {
-        transaction_date: today,
-        type: "expense",
-        amount: 50000,
-        category_id: expenseCategoryId,
-        payment_method_id: cashPaymentId,
-      },
-    });
-
-    const alertsRes = await apiClient.get(`/api/v1/budgets/alerts?year=${year}&month=${month}`);
-    expect(alertsRes.status).toBe(200);
-    const data = await alertsRes.json<{ over_budget: unknown[] }>();
-    expect(data.over_budget.length).toBeGreaterThanOrEqual(1);
-
-    const overview = await (
-      await apiClient.get("/api/v1/dashboard/overview")
-    ).json<{ budget_alerts: unknown[]; budget_alerts_count: number }>();
-    expect(overview.budget_alerts.length).toBeGreaterThanOrEqual(1);
-    expect(overview.budget_alerts_count).toBe(overview.budget_alerts.length);
-  });
-
   it("test_liability_and_dashboard", async () => {
     await apiClient.post("/api/v1/liabilities", {
       json: { type: "loan", name: "테스트 대출", current_balance: 100000000 },

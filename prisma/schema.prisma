@@ -115,7 +115,6 @@ model Category {
   parent              Category?           @relation("CategoryTree", fields: [parent_id], references: [id])
   children            Category[]          @relation("CategoryTree")
   ledger_transactions LedgerTransaction[]
-  budgets             Budget[]
   recurring_items     RecurringItem[]
 
   @@map("categories")
@@ -257,19 +256,6 @@ model RecurringItem {
   card           Card?          @relation(fields: [card_id], references: [id])
 
   @@map("recurring_items")
-}
-
-model Budget {
-  id          Int     @id @default(autoincrement())
-  category_id Int
-  year        Int
-  month       Int
-  amount      Decimal
-
-  category Category @relation(fields: [category_id], references: [id])
-
-  @@unique([category_id, year, month], name: "uq_budget_period")
-  @@map("budgets")
 }
 
 model LiabilityTransaction {

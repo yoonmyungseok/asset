@@ -7,7 +7,6 @@ import {
   monthSqliteDateBounds,
 } from "@/lib/sqlite-date-filter";
 import { toDecimal } from "@/lib/decimal";
-import { getBudgetAlerts } from "@/lib/services/budgets";
 import { getDashboardInsights } from "@/lib/services/dashboard-insights";
 import {
   getDashboardCashflowComparison,
@@ -70,13 +69,6 @@ export async function GET() {
     }
     accountsSummary.sort((a, b) => b.ratio.comparedTo(a.ratio));
 
-    const alerts = await getBudgetAlerts(today.getFullYear(), today.getMonth() + 1);
-    const budgetAlerts = alerts.over_budget.map((item) => ({
-      category_name: item.category_name,
-      budget: item.budget,
-      spent: item.spent,
-      over_amount: item.over_amount,
-    }));
     const limitAlerts = await getDashboardLimitAlerts(prisma, today.getFullYear());
     const insights = await getDashboardInsights(prisma, {
       income,
@@ -124,8 +116,6 @@ export async function GET() {
         expense_change_rate: cashflowComparison.expense_change_rate,
       },
       accounts_summary: accountsSummary,
-      budget_alerts: budgetAlerts,
-      budget_alerts_count: budgetAlerts.length,
       limit_alerts: limitAlerts,
       insights,
     });

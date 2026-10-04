@@ -33,7 +33,7 @@ npm run dev
 | 영역 | 페이지 | API |
 |------|--------|-----|
 | 통합 대시보드 | `/` | 자산 `/api/v1/dashboard/*`, 건강 `/api/dashboard` |
-| 가계부·예산·자산 | `/ledger`, `/ledger/budget`, `/ledger/analysis`, `/investment`, `/investment/accounts/[id]` | `/api/v1/*` |
+| 가계부·자산 | `/ledger`, `/ledger/analysis`, `/investment`, `/investment/accounts/[id]` | `/api/v1/*` |
 | 건강 | `/weight`, `/running`, `/running-settings`, `/diet`, `/food-settings` | `/api/weight`, `/api/running`, `/api/diet` 등 |
 | 설정 | `/settings`, `/settings/health` | 자산 UI + 건강 `/api/settings` |
 

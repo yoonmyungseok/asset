@@ -1,4 +1,4 @@
-﻿{
+{
     "as_of":  "2026-09-10T10:41:55.169474",
     "net_worth":  {
                       "total_assets":  "59553497.9500000000",
@@ -188,7 +188,6 @@
                                  "ratio":  "0.00"
                              }
                          ],
-    "budget_alerts_count":  0,
     "limit_alerts":  [
 
                      ]

@@ -25,7 +25,7 @@ asset/
 │   │   │   ├── weight/, running/, diet/, settings/
 │   │   │   └── integrations/google-sheets/
 │   │   ├── page.tsx            # 통합 홈
-│   │   ├── ledger/             # page, budget/, analysis/
+│   │   ├── ledger/             # page, analysis/
 │   │   ├── investment/         # page, accounts/[id]/
 │   │   ├── weight/, running/, running-settings/
 │   │   ├── diet/, food-settings/

@@ -7,10 +7,7 @@ import type {
 } from "@prisma/client";
 import Decimal from "decimal.js";
 import { prisma } from "@/lib/db";
-import {
-  applySqliteDateRange,
-  monthSqliteDateBounds,
-} from "@/lib/sqlite-date-filter";
+import { applySqliteDateRange } from "@/lib/sqlite-date-filter";
 import { toDecimal } from "@/lib/decimal";
 import type { AccountResponse, AccountSummary, HoldingResponse } from "@/lib/validations/account";
 import {
@@ -260,30 +257,6 @@ export async function getCategoryDescendantIds(db: DbClient, categoryId: number)
     ids.push(...childIds);
   }
   return ids;
-}
-
-export async function calculateBudgetSpent(
-  db: DbClient,
-  categoryId: number,
-  year: number,
-  month: number,
-): Promise<Decimal> {
-  const categoryIds = await getCategoryDescendantIds(db, categoryId);
-  const { from, to } = monthSqliteDateBounds(year, month);
-  const aggregate = await db.ledgerTransaction.aggregate({
-    where: await applySqliteDateRange(
-      {
-        type: "expense",
-        category_id: { in: categoryIds },
-      },
-      "ledger_transactions",
-      from,
-      to,
-      db,
-    ),
-    _sum: { amount: true },
-  });
-  return toDecimal(aggregate._sum.amount);
 }
 
 export type AssetAggregate = {

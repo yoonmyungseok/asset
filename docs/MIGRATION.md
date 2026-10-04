@@ -76,7 +76,7 @@
 ## Phase 3: 서비스 레이어 포팅 (Week 2)
 
 - [x] `lib/decimal.ts` + `lib/utils.ts` (`app/utils.py` 포팅)
-- [x] `lib/services/core.ts` — 계좌 평가, 매수/매도, 스냅샷, 예산
+- [x] `lib/services/core.ts` — 계좌 평가, 매수/매도, 스냅샷
 - [x] `lib/services/bank-transfers.ts` — 가계부 잔액 반영, 이체, 환급 (**최우선**)
 - [x] `lib/services/card-payments.ts` — 카드 지출, 자동 정산 (**최우선**)
 - [x] `lib/external/market-data.ts`, `toss-invest.ts`
@@ -95,7 +95,7 @@
 | D1 | health, setup, account-types, institutions, categories, payment-methods, tags |
 | D2 | accounts, account-limits, holdings, investment-transactions |
 | D3 | cards, ledger-transactions |
-| D4 | recurring-items, budgets, liabilities, snapshots |
+| D4 | recurring-items, liabilities, snapshots |
 | D5 | dashboard, market, backup |
 
 **완료 기준:** 40+ 엔드포인트 smoke test, 기존 `api/client.ts`로 동작 확인 ✅

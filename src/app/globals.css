@@ -433,38 +433,6 @@ textarea:focus-visible {
     @apply bg-warning;
   }
 
-  .budget-list {
-    @apply flex flex-col gap-3;
-  }
-
-  .budget-card {
-    @apply p-4;
-  }
-
-  .budget-card--over {
-    @apply border-l-4 border-l-danger;
-  }
-
-  .budget-card-header {
-    @apply mb-3 flex items-center justify-between gap-2;
-  }
-
-  .budget-card-name {
-    @apply font-semibold;
-  }
-
-  .budget-card-stats {
-    @apply mb-3 grid grid-cols-3 gap-2 text-sm;
-  }
-
-  .budget-card-stat-label {
-    @apply mb-0.5 text-[13px] text-gray-500;
-  }
-
-  .budget-card-usage {
-    @apply flex flex-col gap-1.5;
-  }
-
   .holding-list {
     @apply mt-4 flex flex-col gap-3;
   }
@@ -1001,14 +969,6 @@ textarea:focus-visible {
 
   .spending-row-meta {
     @apply flex justify-between text-xs text-gray-500;
-  }
-
-  .spending-budget-note {
-    @apply mt-5 border-t border-gray-200 pt-4 text-[13px] text-gray-500;
-  }
-
-  .spending-budget-note a {
-    @apply font-medium text-primary;
   }
 
   .spending-tooltip {

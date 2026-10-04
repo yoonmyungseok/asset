@@ -1,5 +1,4 @@
 import type {
-  Budget,
   Card,
   CardSettlement,
   Category,
@@ -28,7 +27,6 @@ import type {
   CardSettlementResponse,
 } from "@/lib/validations/card";
 import type {
-  BudgetResponse,
   CategoryBrief,
   LedgerTransactionResponse,
   RecurringItemResponse,
@@ -59,7 +57,6 @@ type RecurringItemWithRelations = RecurringItem & {
   to_account?: { name: string } | null;
   card?: Card | null;
 };
-type BudgetWithCategory = Budget & { category?: Category | null };
 
 export function serializeCategoryBrief(category: CategoryWithParent): CategoryBrief {
   return {
@@ -154,27 +151,6 @@ export function serializeRecurringItem(item: RecurringItemWithRelations): Recurr
     frequency: item.frequency,
     day_of_month: item.day_of_month,
     is_active: item.is_active,
-  };
-}
-
-export function serializeBudgetResponse(
-  budget: BudgetWithCategory,
-  spent: Decimal,
-): BudgetResponse {
-  const amount = toDecimal(budget.amount);
-  const remaining = amount.minus(spent);
-  const usageRate = amount.gt(0) ? spent.div(amount).times(100) : new Decimal(0);
-  return {
-    id: budget.id,
-    category_id: budget.category_id,
-    category_name: budget.category?.name ?? "",
-    year: budget.year,
-    month: budget.month,
-    amount,
-    spent,
-    remaining,
-    usage_rate: usageRate.toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
-    over_budget: spent.gt(amount),
   };
 }
 

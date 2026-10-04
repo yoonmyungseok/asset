@@ -45,7 +45,7 @@
   - `bank-transfers.ts`, `card-payments.ts` — 이체·카드 정산
   - `ledger-transactions.ts`, `ledger-comparison.ts` — 가계부
   - `holdings.ts`, `investment-transactions.ts` — 투자
-  - `budgets.ts`, `recurring-items.ts` — 예산·반복
+  - `recurring-items.ts` — 반복 항목
   - `dashboard-overview.ts`, `dashboard-insights.ts` — 대시보드 집계·인사이트
 - **시세**: `src/lib/external/market-data.ts` (Yahoo chart 등), `toss-invest.ts` (Toss Open API).
 - **정적 참조**: `src/lib/data/institutions.ts` → `GET /api/v1/institutions` (DB 모델 없음).

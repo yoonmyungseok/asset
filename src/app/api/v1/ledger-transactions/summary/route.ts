@@ -60,20 +60,12 @@ export async function GET(request: NextRequest) {
           ? amount.div(expenseTotal).times(100)
           : new Decimal(0);
 
-        const budget = await prisma.budget.findFirst({
-          where: { category_id: parent.id, year, month },
-        });
-        const budgetAmount = budget ? toDecimal(budget.amount) : null;
-        const overBudget = budgetAmount != null && amount.gt(budgetAmount);
-
         byCategory.push({
           category_id: parent.id,
           category_name: parent.name,
           parent_name: null,
           amount,
           ratio: ratio.toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
-          budget: budgetAmount,
-          over_budget: overBudget,
         });
       }
     }

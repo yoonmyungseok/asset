@@ -127,12 +127,6 @@ export const api = {
       `/ledger-transactions/summary${qs({ year, month, group_by: 'category' })}`,
     ),
 
-  getBudgets: (year: number, month: number) =>
-    request<import('@/types/api').Budget[]>(`/budgets${qs({ year, month })}`),
-  upsertBudget: (data: object) =>
-    request('/budgets', { method: 'PUT', body: JSON.stringify(data) }),
-  getBudgetAlerts: (year: number, month: number) =>
-    request(`/budgets/alerts${qs({ year, month })}`),
 
   getRecurringItems: () =>
     request<import('@/types/api').RecurringItem[]>('/recurring-items'),

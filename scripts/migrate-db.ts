@@ -18,7 +18,6 @@ const TABLES = [
   "tags",
   "ledger_transaction_tags",
   "recurring_items",
-  "budgets",
   "daily_snapshots",
   "account_snapshots",
   "liability_snapshots",
@@ -140,7 +139,6 @@ async function countPrismaTables(prisma: PrismaClient): Promise<Record<string, n
     tags,
     ledger_transaction_tags,
     recurring_items,
-    budgets,
     daily_snapshots,
     account_snapshots,
     liability_snapshots,
@@ -160,7 +158,6 @@ async function countPrismaTables(prisma: PrismaClient): Promise<Record<string, n
     prisma.tag.count(),
     prisma.ledgerTransactionTag.count(),
     prisma.recurringItem.count(),
-    prisma.budget.count(),
     prisma.dailySnapshot.count(),
     prisma.accountSnapshot.count(),
     prisma.liabilitySnapshot.count(),
@@ -182,7 +179,6 @@ async function countPrismaTables(prisma: PrismaClient): Promise<Record<string, n
     tags,
     ledger_transaction_tags,
     recurring_items,
-    budgets,
     daily_snapshots,
     account_snapshots,
     liability_snapshots,
@@ -199,7 +195,6 @@ async function clearTargetTables(prisma: PrismaClient) {
     prisma.liabilitySnapshot.deleteMany(),
     prisma.accountSnapshot.deleteMany(),
     prisma.dailySnapshot.deleteMany(),
-    prisma.budget.deleteMany(),
     prisma.recurringItem.deleteMany(),
     prisma.ledgerTransaction.deleteMany(),
     prisma.cardSettlement.deleteMany(),
@@ -441,19 +436,6 @@ async function importData(sourcePath: string, prisma: PrismaClient) {
         frequency: row.frequency == null ? "monthly" : String(row.frequency),
         day_of_month: Number(row.day_of_month),
         is_active: toBool(row.is_active),
-      })),
-    });
-  }
-
-  const budgets = source.prepare("SELECT * FROM budgets ORDER BY id").all();
-  if (budgets.length > 0) {
-    await prisma.budget.createMany({
-      data: budgets.map((row) => ({
-        id: Number(row.id),
-        category_id: Number(row.category_id),
-        year: Number(row.year),
-        month: Number(row.month),
-        amount: toRequiredDecimal(row.amount),
       })),
     });
   }
