@@ -367,15 +367,19 @@ export default function LedgerPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-[auto_auto] items-baseline gap-x-3 gap-y-0.5 text-right shrink-0 whitespace-nowrap">
-            <span className="text-left text-[13px] font-medium text-[#8e95a3] whitespace-nowrap">지출</span>
-            <span className="text-[20px] font-bold leading-tight tracking-tight text-white whitespace-nowrap">
-              {formatMoney(summary.expense)}
-            </span>
-            <span className="text-left text-[13px] font-medium text-[#8e95a3] whitespace-nowrap">수입</span>
-            <span className="text-[17px] font-bold leading-tight tracking-tight text-[#00d282] whitespace-nowrap">
-              {formatMoney(summary.income)}
-            </span>
+          <div className="flex flex-col gap-1 shrink-0 text-right">
+            <div className="flex items-baseline justify-between gap-3.5">
+              <span className="text-[13px] font-medium text-[#8e95a3] whitespace-nowrap">지출</span>
+              <span className="text-[19px] font-bold leading-tight tracking-tight text-white whitespace-nowrap">
+                {formatMoney(summary.expense)}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-3.5">
+              <span className="text-[13px] font-medium text-[#8e95a3] whitespace-nowrap">수입</span>
+              <span className="text-[16px] font-bold leading-tight tracking-tight text-[#00d282] whitespace-nowrap">
+                {formatMoney(summary.income)}
+              </span>
+            </div>
           </div>
         </div>
 
