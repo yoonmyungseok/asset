@@ -533,15 +533,21 @@ textarea:focus-visible {
   }
 
   .settings-layout {
-    @apply flex flex-col gap-4 lg:flex-row lg:gap-6;
+    @apply flex min-w-0 max-w-full w-full flex-col gap-4 lg:flex-row lg:gap-6;
   }
 
   .settings-nav {
-    @apply flex w-full flex-row gap-1 overflow-x-auto border-b border-gray-200 pb-2 lg:w-40 lg:shrink-0 lg:flex-col lg:overflow-visible lg:border-0 lg:pb-0;
+    @apply flex w-full min-w-0 max-w-full flex-row gap-1 overflow-x-auto border-b border-gray-200 pb-2 lg:w-40 lg:shrink-0 lg:flex-col lg:overflow-visible lg:border-0 lg:pb-0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .settings-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .settings-nav a {
-    @apply shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-gray-500;
+    @apply shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors;
   }
 
   .settings-nav a.active {
@@ -549,15 +555,15 @@ textarea:focus-visible {
   }
 
   .settings-content {
-    @apply min-w-0 flex-1;
+    @apply min-w-0 max-w-full flex-1;
   }
 
   .category-panels {
-    @apply flex flex-col gap-5;
+    @apply flex min-w-0 max-w-full flex-col gap-5;
   }
 
   .category-group {
-    @apply overflow-hidden rounded-xl border border-gray-200;
+    @apply min-w-0 max-w-full overflow-hidden rounded-xl border border-gray-200;
   }
 
   .category-group--income {

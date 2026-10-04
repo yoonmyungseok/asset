@@ -150,7 +150,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
-      <main className="ml-0 min-h-screen flex-1 p-4 pb-[calc(7.2rem+max(12px,env(safe-area-inset-bottom,0px)))] lg:ml-sidebar lg:p-6 lg:pb-6">
+      <main className="ml-0 min-h-screen flex-1 min-w-0 max-w-full p-4 pb-[calc(7.2rem+max(12px,env(safe-area-inset-bottom,0px)))] lg:ml-sidebar lg:p-6 lg:pb-6">
         <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
           {children}
         </RefreshContext.Provider>
