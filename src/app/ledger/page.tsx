@@ -293,7 +293,7 @@ export default function LedgerPage() {
 
   return (
     <div className="w-full min-h-screen bg-[#121316] px-4 pt-[max(12px,env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] font-sans text-gray-200 select-none overflow-x-hidden lg:p-6 lg:pb-12">
-      <div className="mx-auto w-full max-w-md">
+      <div className="mx-auto w-full max-w-md lg:max-w-none">
         {/* 상단 헤더: 타이틀 & 우측 아이콘 버튼들 */}
         <header className="mb-4 flex items-center justify-between pt-1">
           <h1 className="text-xl font-bold tracking-tight text-white">가계부</h1>
