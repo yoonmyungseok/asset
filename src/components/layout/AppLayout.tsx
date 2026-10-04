@@ -113,6 +113,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const isLedger = pathname.startsWith('/ledger');
 
+  useEffect(() => {
+    // Dynamic theme color and html/body background to prevent iOS Safari top blur band
+    const themeBg = isLedger ? '#121316' : '#f8fafc';
+    document.documentElement.style.backgroundColor = themeBg;
+    document.body.style.backgroundColor = themeBg;
+
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', themeBg);
+  }, [isLedger]);
+
   return (
     <div className={`flex min-h-screen overflow-x-hidden ${isLedger ? 'bg-[#121316]' : 'bg-[#f8fafc]'}`}>
       <aside className="fixed bottom-0 left-0 top-0 hidden w-sidebar flex-col border-r border-gray-200 bg-white px-4 py-6 lg:flex">
