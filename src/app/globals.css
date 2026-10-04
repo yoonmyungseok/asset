@@ -1041,16 +1041,16 @@ textarea:focus-visible {
   }
 
   .mobile-nav-items {
-    @apply flex items-center justify-around px-1 pt-1;
+    @apply flex items-center justify-around px-0.5 pt-1;
   }
 
   .mobile-nav-item {
-    @apply flex min-h-[54px] flex-1 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium text-gray-400 transition-all active:scale-95 select-none;
+    @apply flex min-h-[50px] flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-gray-400 transition-all active:scale-95 select-none;
     -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-nav-icon-wrap {
-    @apply flex items-center justify-center w-7 h-7 transition-colors;
+    @apply flex items-center justify-center w-6 h-6 transition-colors;
   }
 
   .mobile-nav-item.active {
@@ -1062,6 +1062,6 @@ textarea:focus-visible {
   }
 
   .mobile-nav-label {
-    @apply tracking-tight leading-none text-[11px];
+    @apply tracking-tighter leading-none text-[10px] whitespace-nowrap;
   }
 }

@@ -120,6 +120,18 @@ export default function RunningPage() {
       .catch(() => setSheetsReady(false));
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("add") === "1" || params.get("create") === "1") {
+        setEditingId(null);
+        setForm(emptyForm);
+        setSplits([]);
+        setModalOpen(true);
+      }
+    }
+  }, []);
+
   const exportToGoogleSheets = async () => {
     if (sheetsReady === false) {
       showToast(
@@ -351,6 +363,9 @@ export default function RunningPage() {
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={openCreate} className="w-full sm:w-auto">
+              + 기록 추가
+            </Button>
             <Button
               type="button"
               variant="secondary"
@@ -359,9 +374,6 @@ export default function RunningPage() {
               disabled={exportingSheets}
             >
               {exportingSheets ? "보내는 중..." : "구글 스프레드시트로보내기"}
-            </Button>
-            <Button onClick={openCreate} className="w-full sm:w-auto">
-              + 기록 추가
             </Button>
           </div>
           {sheetsReady === false && (
@@ -404,7 +416,10 @@ export default function RunningPage() {
 
       <Card title="기록 목록">
         {records.length === 0 ? (
-          <EmptyState message="아직 러닝 기록이 없습니다." />
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="mb-3 text-sm text-slate-500">아직 러닝 기록이 없습니다.</p>
+            <Button onClick={openCreate}>+ 첫 러닝 기록 추가하기</Button>
+          </div>
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">

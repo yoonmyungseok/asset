@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/care/ui/Card";
 import { StatCard } from "@/components/care/ui/StatCard";
@@ -114,9 +115,37 @@ export function CareDashboardSection() {
 
   return (
     <div className="mb-8 border-t border-gray-200 pt-8">
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-slate-900 sm:text-xl">건강</h2>
-        <p className="text-sm text-slate-500">체중·러닝·식단 요약</p>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 sm:text-xl">건강</h2>
+          <p className="text-sm text-slate-500">체중·러닝·식단 요약</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/running?add=1"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+          >
+            <span className="text-sm leading-none font-bold">+</span> 러닝 기록 추가
+          </Link>
+          <Link
+            href="/running"
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            러닝 목록
+          </Link>
+          <Link
+            href="/weight"
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            체중 관리
+          </Link>
+          <Link
+            href="/diet"
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            식단 관리
+          </Link>
+        </div>
       </div>
 
       <section className="mb-6">
@@ -173,12 +202,26 @@ export function CareDashboardSection() {
       </section>
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="체중 변화 (최근 30일)">
+        <Card
+          title="체중 변화 (최근 30일)"
+          action={
+            <Link href="/weight" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+              상세 →
+            </Link>
+          }
+        >
           <div className="h-[220px] sm:h-[280px] [&_.recharts-responsive-container]:!h-full">
             <WeightChart data={data.weightChartData} />
           </div>
         </Card>
-        <Card title="러닝 거리 (최근 30일)">
+        <Card
+          title="러닝 거리 (최근 30일)"
+          action={
+            <Link href="/running" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+              상세 →
+            </Link>
+          }
+        >
           <div className="h-[220px] sm:h-[280px] [&_.recharts-responsive-container]:!h-full">
             <RunningDistanceChart data={data.running.chartData} />
           </div>
@@ -220,7 +263,14 @@ export function CareDashboardSection() {
           최근 기록
         </h2>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Card title="최근 체중">
+          <Card
+            title="최근 체중"
+            action={
+              <Link href="/weight" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                체중 관리 →
+              </Link>
+            }
+          >
             {data.recentWeightRecords.length === 0 ? (
               <p className="text-sm text-slate-500">기록이 없습니다</p>
             ) : (
@@ -246,7 +296,26 @@ export function CareDashboardSection() {
               </ul>
             )}
           </Card>
-          <Card title="최근 러닝">
+          <Card
+            title="최근 러닝"
+            action={
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/running?add=1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  + 기록 추가
+                </Link>
+                <span className="text-slate-300">·</span>
+                <Link
+                  href="/running"
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 hover:underline"
+                >
+                  목록 →
+                </Link>
+              </div>
+            }
+          >
             {data.running.recentRecords.length === 0 ? (
               <p className="text-sm text-slate-500">기록이 없습니다</p>
             ) : (
@@ -272,7 +341,14 @@ export function CareDashboardSection() {
               </ul>
             )}
           </Card>
-          <Card title="오늘 식단">
+          <Card
+            title="오늘 식단"
+            action={
+              <Link href="/diet" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                식단 관리 →
+              </Link>
+            }
+          >
             {data.todayMeals.length === 0 ? (
               <p className="text-sm text-slate-500">오늘 기록된 식단이 없습니다</p>
             ) : (

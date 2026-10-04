@@ -11,6 +11,8 @@ import {
   DietIcon,
   InvestmentIcon,
   SettingsIcon,
+  RunningIcon,
+  WeightIcon,
 } from '@/components/layout/NavIcons';
 
 interface RefreshContextType {
@@ -32,8 +34,8 @@ const NAV_ITEMS = [
   { href: '/ledger', label: '가계부' },
   { href: '/ledger/budget', label: '예산' },
   { href: '/investment', label: '자산' },
-  { href: '/weight', label: '체중' },
   { href: '/running', label: '러닝' },
+  { href: '/weight', label: '체중' },
   { href: '/diet', label: '식단' },
   { href: '/settings', label: '설정' },
 ];
@@ -41,8 +43,10 @@ const NAV_ITEMS = [
 const MOBILE_NAV_ITEMS = [
   { href: '/', label: '대시보드', exact: true, icon: HomeIcon },
   { href: '/ledger', label: '가계부', icon: LedgerIcon },
-  { href: '/diet', label: '식단', icon: DietIcon },
   { href: '/investment', label: '자산', icon: InvestmentIcon },
+  { href: '/running', label: '러닝', icon: RunningIcon },
+  { href: '/weight', label: '체중', icon: WeightIcon },
+  { href: '/diet', label: '식단', icon: DietIcon },
   { href: '/settings', label: '설정', icon: SettingsIcon },
 ];
 
