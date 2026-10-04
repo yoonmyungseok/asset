@@ -300,8 +300,8 @@ export default function LedgerPage() {
   };
 
   return (
-    <div className="-m-4 min-h-[calc(100vh+20px)] bg-[#121316] p-4 font-sans text-gray-200 select-none pb-28 lg:-m-6 lg:p-6 lg:pb-12">
-      <div className="mx-auto w-full max-w-xl">
+    <div className="w-full min-h-screen bg-[#121316] px-4 pt-[max(12px,env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] font-sans text-gray-200 select-none overflow-x-hidden lg:p-6 lg:pb-12">
+      <div className="mx-auto w-full max-w-md">
         {/* 상단 헤더: 타이틀 & 우측 아이콘 버튼들 */}
         <header className="mb-4 flex items-center justify-between pt-1">
           <h1 className="text-xl font-bold tracking-tight text-white">가계부</h1>
@@ -346,34 +346,34 @@ export default function LedgerPage() {
         </header>
 
         {/* 월 네비게이션 & 지출/수입 요약 */}
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={goPrev}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1c1e24] text-lg text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#1c1e24] text-base text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
               aria-label="이전 달"
             >
               ‹
             </button>
-            <span className="px-1.5 text-2xl font-bold tracking-tight text-white">{month}월</span>
+            <span className="px-1 text-xl font-bold tracking-tight text-white whitespace-nowrap">{month}월</span>
             <button
               type="button"
               onClick={goNext}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1c1e24] text-lg text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#1c1e24] text-base text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
               aria-label="다음 달"
             >
               ›
             </button>
           </div>
 
-          <div className="grid grid-cols-[auto_auto] items-baseline gap-x-5 gap-y-1 text-right">
-            <span className="text-left text-[13px] font-medium text-[#8e95a3]">지출</span>
-            <span className="text-[22px] font-bold leading-tight tracking-tight text-white">
+          <div className="grid grid-cols-[auto_auto] items-baseline gap-x-3 gap-y-0.5 text-right shrink-0 whitespace-nowrap">
+            <span className="text-left text-[13px] font-medium text-[#8e95a3] whitespace-nowrap">지출</span>
+            <span className="text-[20px] font-bold leading-tight tracking-tight text-white whitespace-nowrap">
               {formatMoney(summary.expense)}
             </span>
-            <span className="text-left text-[13px] font-medium text-[#8e95a3]">수입</span>
-            <span className="text-[18px] font-bold leading-tight tracking-tight text-[#00d282]">
+            <span className="text-left text-[13px] font-medium text-[#8e95a3] whitespace-nowrap">수입</span>
+            <span className="text-[17px] font-bold leading-tight tracking-tight text-[#00d282] whitespace-nowrap">
               {formatMoney(summary.income)}
             </span>
           </div>

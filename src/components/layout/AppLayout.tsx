@@ -111,8 +111,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
   };
 
+  const isLedger = pathname.startsWith('/ledger');
+
   return (
-    <div className="flex min-h-screen">
+    <div className={`flex min-h-screen overflow-x-hidden ${isLedger ? 'bg-[#121316]' : 'bg-[#f8fafc]'}`}>
       <aside className="fixed bottom-0 left-0 top-0 hidden w-sidebar flex-col border-r border-gray-200 bg-white px-4 py-6 lg:flex">
         <div className="mb-8 px-2 text-lg font-bold">생활·자산</div>
         <nav className="flex flex-1 flex-col gap-1">
@@ -140,7 +142,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <nav className="mobile-nav lg:hidden">
-        {!pathname.startsWith('/ledger') && (
+        {!isLedger && (
           <div className="mobile-net-worth">
             <span className="mobile-net-worth-label">순자산</span>
             <span className="mobile-net-worth-value">{formatMoney(netWorth)}</span>
@@ -167,7 +169,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
-      <main className="ml-0 min-h-screen flex-1 min-w-0 max-w-full p-4 pb-[calc(7.2rem+max(12px,env(safe-area-inset-bottom,0px)))] lg:ml-sidebar lg:p-6 lg:pb-6">
+      <main
+        className={`ml-0 min-h-screen flex-1 min-w-0 max-w-full lg:ml-sidebar ${
+          isLedger
+            ? 'bg-[#121316] p-0 text-[#e5e7eb] overflow-x-hidden'
+            : 'bg-[#f8fafc] text-[#0f172a] p-4 pb-[calc(7.2rem+max(12px,env(safe-area-inset-bottom,0px)))] lg:p-6 lg:pb-6'
+        }`}
+      >
         <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
           {children}
         </RefreshContext.Provider>
