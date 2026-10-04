@@ -16,6 +16,7 @@ import { formatPace, calculatePaceSeconds, formatDistanceChange } from "@/lib/ca
 import { formatDisplayDate, formatDuration, parseDurationToSeconds, todayString } from "@/lib/care/utils";
 import { getRunningTypeLabel, isRestDay } from "@/lib/care/constants";
 import { formatRunningRecordText } from "@/lib/care/format/running-text";
+import { HealthNav } from "@/components/care/ui/HealthNav";
 
 interface RunningType {
   id: number;
@@ -356,7 +357,8 @@ export default function RunningPage() {
 
   return (
     <>
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <HealthNav />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">러닝 기록</h1>
           <p className="text-sm text-slate-500">러닝 활동을 기록하고 분석하세요</p>

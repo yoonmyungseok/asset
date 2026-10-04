@@ -8,6 +8,7 @@ import { Modal, ConfirmDialog } from "@/components/care/ui/Modal";
 import { LoadingSpinner, EmptyState } from "@/components/care/ui/Loading";
 import { RecordCard, MobileRecordList } from "@/components/care/ui/RecordCard";
 import { useToast } from "@/components/care/ui/Toast";
+import { HealthNav } from "@/components/care/ui/HealthNav";
 
 interface FoodItem {
   id: number;
@@ -132,7 +133,8 @@ export default function FoodSettingsPage() {
 
   return (
     <>
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <HealthNav />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">음식 설정</h1>
           <p className="text-sm text-slate-500">식단 기록에 사용할 음식 DB를 관리하세요</p>

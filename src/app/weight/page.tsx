@@ -19,6 +19,7 @@ import {
 } from "@/lib/care/calculations/weight";
 import { formatDisplayDate, todayString } from "@/lib/care/utils";
 import { CONDITION_OPTIONS, BOWEL_OPTIONS } from "@/lib/care/constants";
+import { HealthNav } from "@/components/care/ui/HealthNav";
 
 interface WeightRecord {
   id: number;
@@ -160,7 +161,8 @@ export default function WeightPage() {
 
   return (
     <>
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <HealthNav />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">체중 관리</h1>
           <p className="text-sm text-slate-500">체중과 건강 지표를 기록하세요</p>

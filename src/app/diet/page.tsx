@@ -14,6 +14,7 @@ import { RecordCard, MobileRecordList } from "@/components/care/ui/RecordCard";
 import { useToast } from "@/components/care/ui/Toast";
 import { MEAL_TYPES } from "@/lib/care/constants";
 import { todayString } from "@/lib/care/utils";
+import { HealthNav } from "@/components/care/ui/HealthNav";
 import {
   scaleNutrition,
   formatConsumptionDisplay,
@@ -306,7 +307,8 @@ export default function DietPage() {
 
   return (
     <>
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <HealthNav />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">식단 관리</h1>
           <p className="text-sm text-slate-500">하루 식사와 영양소를 기록하세요</p>
