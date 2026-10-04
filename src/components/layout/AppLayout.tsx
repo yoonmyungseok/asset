@@ -5,6 +5,13 @@ import { usePathname } from 'next/navigation';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api/client';
 import { formatMoney } from '@/lib/utils/format';
+import {
+  HomeIcon,
+  LedgerIcon,
+  DietIcon,
+  InvestmentIcon,
+  SettingsIcon,
+} from '@/components/layout/NavIcons';
 
 interface RefreshContextType {
   refresh: () => Promise<void>;
@@ -32,11 +39,11 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_NAV_ITEMS = [
-  { href: '/', label: '대시보드', exact: true },
-  { href: '/ledger', label: '가계부' },
-  { href: '/diet', label: '식단' },
-  { href: '/investment', label: '자산' },
-  { href: '/settings', label: '설정' },
+  { href: '/', label: '대시보드', exact: true, icon: HomeIcon },
+  { href: '/ledger', label: '가계부', icon: LedgerIcon },
+  { href: '/diet', label: '식단', icon: DietIcon },
+  { href: '/investment', label: '자산', icon: InvestmentIcon },
+  { href: '/settings', label: '설정', icon: SettingsIcon },
 ];
 
 function isActive(pathname: string, href: string, exact?: boolean) {
@@ -121,6 +128,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="mobile-nav-items">
           {MOBILE_NAV_ITEMS.map((item) => {
             const active = isMobileNavActive(pathname, item.href, item.exact);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
@@ -128,14 +136,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 className={`mobile-nav-item${active ? ' active' : ''}`}
                 aria-current={active ? 'page' : undefined}
               >
-                {item.label}
+                <div className="mobile-nav-icon-wrap">
+                  <Icon active={active} />
+                </div>
+                <span className="mobile-nav-label">{item.label}</span>
               </Link>
             );
           })}
         </div>
       </nav>
 
-      <main className="ml-0 min-h-screen flex-1 p-4 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:ml-sidebar lg:p-6 lg:pb-6">
+      <main className="ml-0 min-h-screen flex-1 p-4 pb-[calc(7.2rem+max(12px,env(safe-area-inset-bottom,0px)))] lg:ml-sidebar lg:p-6 lg:pb-6">
         <RefreshContext.Provider value={{ refresh: handleRefresh, refreshing }}>
           {children}
         </RefreshContext.Provider>
