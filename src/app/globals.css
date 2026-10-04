@@ -1031,11 +1031,11 @@ textarea:focus-visible {
   }
 
   .mobile-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/80 bg-white/95 backdrop-blur-md pb-[max(10px,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.04)];
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-[#22242a] bg-[#141519]/95 backdrop-blur-md pb-[max(10px,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_25px_rgba(0,0,0,0.6)];
   }
 
   .mobile-net-worth {
-    @apply flex items-center justify-between border-b border-gray-100/80 px-4 py-1.5 bg-gray-50/60;
+    @apply flex items-center justify-between border-b border-[#22242a]/80 px-4 py-1.5 bg-[#181a20];
   }
 
   .mobile-net-worth-label {
@@ -1043,28 +1043,28 @@ textarea:focus-visible {
   }
 
   .mobile-net-worth-value {
-    @apply text-xs font-bold text-gray-800 tracking-tight;
+    @apply text-xs font-bold text-gray-200 tracking-tight;
   }
 
   .mobile-nav-items {
-    @apply flex items-center justify-around px-0.5 pt-1;
+    @apply flex items-center justify-around px-0.5 pt-1.5;
   }
 
   .mobile-nav-item {
-    @apply flex min-h-[50px] flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-gray-400 transition-all active:scale-95 select-none;
+    @apply flex min-h-[50px] flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium text-[#7e8494] transition-all active:scale-95 select-none;
     -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-nav-icon-wrap {
-    @apply flex items-center justify-center w-6 h-6 transition-colors;
+    @apply flex items-center justify-center w-6 h-6 transition-colors text-[#7e8494];
   }
 
   .mobile-nav-item.active {
-    @apply text-primary font-bold;
+    @apply text-white font-bold;
   }
 
   .mobile-nav-item.active .mobile-nav-icon-wrap {
-    @apply text-primary scale-105 transition-transform;
+    @apply text-white scale-105 transition-transform;
   }
 
   .mobile-nav-label {

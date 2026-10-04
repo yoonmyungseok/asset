@@ -13,6 +13,7 @@ import {
   SettingsIcon,
   RunningIcon,
   WeightIcon,
+  HealthIcon,
 } from '@/components/layout/NavIcons';
 
 interface RefreshContextType {
@@ -40,13 +41,24 @@ const NAV_ITEMS = [
   { href: '/settings', label: '설정' },
 ];
 
-const MOBILE_NAV_ITEMS = [
-  { href: '/', label: '대시보드', exact: true, icon: HomeIcon },
-  { href: '/ledger', label: '가계부', icon: LedgerIcon },
+interface MobileNavItem {
+  href: string;
+  label: string;
+  exact?: boolean;
+  matchPrefixes?: string[];
+  icon: typeof HomeIcon;
+}
+
+const MOBILE_NAV_ITEMS: MobileNavItem[] = [
+  { href: '/', label: '홈', exact: true, icon: HomeIcon },
   { href: '/investment', label: '자산', icon: InvestmentIcon },
-  { href: '/running', label: '러닝', icon: RunningIcon },
-  { href: '/weight', label: '체중', icon: WeightIcon },
-  { href: '/diet', label: '식단', icon: DietIcon },
+  { href: '/ledger', label: '가계부', icon: LedgerIcon },
+  {
+    href: '/running',
+    label: '건강',
+    matchPrefixes: ['/running', '/weight', '/diet', '/running-settings', '/food-settings'],
+    icon: HealthIcon,
+  },
   { href: '/settings', label: '설정', icon: SettingsIcon },
 ];
 
@@ -56,9 +68,12 @@ function isActive(pathname: string, href: string, exact?: boolean) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function isMobileNavActive(pathname: string, href: string, exact?: boolean) {
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isMobileNavActive(pathname: string, item: MobileNavItem) {
+  if (item.exact) return pathname === item.href;
+  if (item.matchPrefixes) {
+    return item.matchPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  }
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
 function getActiveNavHref(pathname: string): string | null {
@@ -125,13 +140,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <nav className="mobile-nav lg:hidden">
-        <div className="mobile-net-worth">
-          <span className="mobile-net-worth-label">순자산</span>
-          <span className="mobile-net-worth-value">{formatMoney(netWorth)}</span>
-        </div>
+        {!pathname.startsWith('/ledger') && (
+          <div className="mobile-net-worth">
+            <span className="mobile-net-worth-label">순자산</span>
+            <span className="mobile-net-worth-value">{formatMoney(netWorth)}</span>
+          </div>
+        )}
         <div className="mobile-nav-items">
           {MOBILE_NAV_ITEMS.map((item) => {
-            const active = isMobileNavActive(pathname, item.href, item.exact);
+            const active = isMobileNavActive(pathname, item);
             const Icon = item.icon;
             return (
               <Link

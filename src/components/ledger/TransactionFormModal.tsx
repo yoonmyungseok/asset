@@ -12,6 +12,7 @@ interface Props {
   presetAccountId?: number;
   onClose: () => void;
   onSaved: () => void;
+  onDelete?: (id: number) => void;
 }
 
 type TransferMode = 'internal' | 'external';
@@ -75,6 +76,7 @@ export default function TransactionFormModal({
   presetAccountId,
   onClose,
   onSaved,
+  onDelete,
 }: Props) {
   const [type, setType] = useState<LedgerFormType>('expense');
   const [date, setDate] = useState(todayISO());
@@ -263,6 +265,20 @@ export default function TransactionFormModal({
       title={isEditing ? '거래 수정' : '거래 추가'}
       footer={
         <>
+          {isEditing && onDelete && (
+            <button
+              type="button"
+              className="btn btn-danger mr-auto"
+              onClick={() => {
+                if (confirm('정말 삭제하시겠습니까?')) {
+                  onDelete(transaction!.id);
+                  onClose();
+                }
+              }}
+            >
+              삭제
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={onClose}>취소</button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? '저장 중...' : '저장'}
