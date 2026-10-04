@@ -329,18 +329,6 @@ export default function LedgerPage() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </Link>
-            {/* 알림 / 예산 아이콘 */}
-            <Link
-              href={`/ledger/budget${monthQuery}`}
-              className="transition-colors hover:text-white"
-              title="예산 및 알림"
-              aria-label="예산 및 알림"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-            </Link>
             {/* 전체 메뉴 아이콘 */}
             <Link
               href={`/ledger/analysis${monthQuery}`}
@@ -363,31 +351,31 @@ export default function LedgerPage() {
             <button
               type="button"
               onClick={goPrev}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1a1c22] text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1c1e24] text-lg text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
               aria-label="이전 달"
             >
               ‹
             </button>
-            <span className="px-1 text-2xl font-bold tracking-tight text-white">{month}월</span>
+            <span className="px-1.5 text-2xl font-bold tracking-tight text-white">{month}월</span>
             <button
               type="button"
               onClick={goNext}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1a1c22] text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1c1e24] text-lg text-gray-300 transition-colors hover:bg-[#252832] hover:text-white"
               aria-label="다음 달"
             >
               ›
             </button>
           </div>
 
-          <div className="flex flex-col items-end gap-0.5">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xs font-medium text-gray-400">지출</span>
-              <span className="text-xl font-bold tracking-tight text-white">{formatMoney(summary.expense)}</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xs font-medium text-gray-400">수입</span>
-              <span className="text-sm font-bold tracking-tight text-[#00d282]">{formatMoney(summary.income)}</span>
-            </div>
+          <div className="grid grid-cols-[auto_auto] items-baseline gap-x-5 gap-y-1 text-right">
+            <span className="text-left text-[13px] font-medium text-[#8e95a3]">지출</span>
+            <span className="text-[22px] font-bold leading-tight tracking-tight text-white">
+              {formatMoney(summary.expense)}
+            </span>
+            <span className="text-left text-[13px] font-medium text-[#8e95a3]">수입</span>
+            <span className="text-[18px] font-bold leading-tight tracking-tight text-[#00d282]">
+              {formatMoney(summary.income)}
+            </span>
           </div>
         </div>
 
