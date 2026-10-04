@@ -36,9 +36,10 @@ export function HealthNav() {
           <Link
             key={tab.href}
             href={tab.href}
+            style={active ? { color: '#ffffff' } : undefined}
             className={`flex-1 rounded-xl py-2.5 text-center text-sm font-semibold transition-colors sm:flex-none sm:px-6 ${
               active
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-blue-600 !text-white shadow-sm'
                 : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900'
             }`}
             aria-current={active ? 'page' : undefined}
