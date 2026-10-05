@@ -25,10 +25,10 @@ function amountPrefix(type: LedgerTransaction['type']) {
 
 export default function LedgerTransactionGroup({ date, transactions, showHeader = true, onEdit, onDelete }: Props) {
   const dayIncome = transactions
-    .filter((t) => t.type === 'income')
+    .filter((t) => t.type === 'income' || t.type === 'reimbursement_in')
     .reduce((s, t) => s + Number(t.amount), 0);
   const dayExpense = transactions
-    .filter((t) => t.type === 'expense')
+    .filter((t) => t.type === 'expense' || t.type === 'reimbursement_out')
     .reduce((s, t) => s + Number(t.amount), 0);
   const dayNet = dayIncome - dayExpense;
 

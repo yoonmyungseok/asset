@@ -15,8 +15,8 @@ export function aggregateDailyTotals(transactions: LedgerTransaction[]): Record<
     const dateKey = toDateKey(tx.transaction_date);
     const day = acc[dateKey] ?? { income: 0, expense: 0, transactions: [] };
     day.transactions.push(tx);
-    if (tx.type === 'income') day.income += Number(tx.amount);
-    else if (tx.type === 'expense') day.expense += Number(tx.amount);
+    if (tx.type === 'income' || tx.type === 'reimbursement_in') day.income += Number(tx.amount);
+    else if (tx.type === 'expense' || tx.type === 'reimbursement_out') day.expense += Number(tx.amount);
     acc[dateKey] = day;
     return acc;
   }, {});

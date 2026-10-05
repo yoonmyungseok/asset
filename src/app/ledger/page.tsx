@@ -527,16 +527,26 @@ export default function LedgerPage() {
                     {formatGroupDateHeader(selectedDate)}
                   </h3>
                   {dailyTotals[selectedDate] && (() => {
-                    const net = dailyTotals[selectedDate].income - dailyTotals[selectedDate].expense;
+                    const selIncome = dailyTotals[selectedDate].income;
+                    const selExpense = dailyTotals[selectedDate].expense;
+                    const selTransfer = dailyTotals[selectedDate].transactions
+                      .filter((t) => t.type === 'transfer')
+                      .reduce((s, t) => s + Number(t.amount), 0);
+
                     return (
-                      <span
-                        className={`text-sm font-bold ${
-                          net >= 0 ? 'text-[#00d282]' : 'text-gray-400'
-                        }`}
-                      >
-                        {net >= 0 ? '+' : ''}
-                        {formatMoney(net)}
-                      </span>
+                      <div className="flex items-center gap-2.5 text-xs sm:text-[13px] font-semibold">
+                        {selIncome > 0 && (
+                          <span className="text-[#00d282]">수입 {formatMoney(selIncome)}</span>
+                        )}
+                        {selExpense > 0 && (
+                          <span className="text-gray-300">지출 {formatMoney(selExpense)}</span>
+                        )}
+                        {selIncome === 0 && selExpense === 0 && (
+                          <span className="text-gray-500">
+                            {selTransfer > 0 ? `이체 ${formatMoney(selTransfer)}` : '0원'}
+                          </span>
+                        )}
+                      </div>
                     );
                   })()}
                 </div>
@@ -626,22 +636,30 @@ export default function LedgerPage() {
               const dayExpense = transactionsForDate
                 .filter((t) => t.type === 'expense' || t.type === 'reimbursement_out')
                 .reduce((s, t) => s + Number(t.amount), 0);
-              const dayNet = dayIncome - dayExpense;
+              const dayTransfer = transactionsForDate
+                .filter((t) => t.type === 'transfer')
+                .reduce((s, t) => s + Number(t.amount), 0);
 
               return (
                 <div key={date}>
-                  {/* 날짜 헤더 & 일별 합계 */}
+                  {/* 날짜 헤더 & 일별 수입/지출 */}
                   <div className="flex items-center justify-between pb-1.5 pt-1">
                     <span className="text-[13px] font-semibold text-gray-400">
                       {formatGroupDateHeader(date)}
                     </span>
-                    <span
-                      className={`text-[13px] font-semibold ${
-                        dayNet > 0 ? 'text-[#00d282]' : 'text-gray-400'
-                      }`}
-                    >
-                      {dayNet > 0 ? `+${formatMoney(dayNet)}` : dayNet < 0 ? `-${formatMoney(Math.abs(dayNet))}` : `${formatMoney(0)}`}
-                    </span>
+                    <div className="flex items-center gap-2.5 text-xs sm:text-[13px] font-semibold">
+                      {dayIncome > 0 && (
+                        <span className="text-[#00d282]">수입 {formatMoney(dayIncome)}</span>
+                      )}
+                      {dayExpense > 0 && (
+                        <span className="text-gray-300">지출 {formatMoney(dayExpense)}</span>
+                      )}
+                      {dayIncome === 0 && dayExpense === 0 && (
+                        <span className="text-gray-500">
+                          {dayTransfer > 0 ? `이체 ${formatMoney(dayTransfer)}` : '0원'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* 해당 일자의 거래 목록 */}
