@@ -443,7 +443,7 @@ export default function LedgerPage() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as FilterType)}
-                className="cursor-pointer appearance-none rounded-xl border border-[#272a33] bg-[#1a1c22] px-3 py-1.5 pr-6 text-xs font-semibold text-gray-200 transition-colors focus:border-gray-500 focus:outline-none"
+                className="cursor-pointer appearance-none rounded-xl border border-[#272a33] bg-[#1a1c22] px-3 py-1.5 pr-6 text-base sm:text-xs font-semibold text-gray-200 transition-colors focus:border-gray-500 focus:outline-none min-h-[36px]"
               >
                 <option value="all">필터 ∨</option>
                 <option value="expense">지출만</option>
@@ -488,7 +488,7 @@ export default function LedgerPage() {
 
         {/* 펼침 검색 바 */}
         {showSearch && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#272a33] bg-[#1a1c22] px-3 py-1.5">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#272a33] bg-[#1a1c22] px-3 py-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -498,7 +498,7 @@ export default function LedgerPage() {
               placeholder="내역, 가맹점, 메모 검색..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-transparent text-xs text-white placeholder-gray-500 focus:outline-none"
+              className="w-full bg-transparent text-base sm:text-xs text-white placeholder-gray-500 focus:outline-none"
               autoFocus
             />
             {search && (

@@ -45,6 +45,17 @@ input,
 select,
 textarea {
   font: inherit;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+/* 모바일(iOS Safari 등)에서 16px 미만 폰트 터치 시 화면 자동 확대(Zoom-in) 및 위아래좌우 흔들림 원천 방지 */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 button:focus-visible,
@@ -92,7 +103,8 @@ textarea:focus-visible {
   .form-group input,
   .form-group select,
   .form-group textarea {
-    @apply w-full rounded-lg border border-gray-200 px-3 py-2 text-base;
+    @apply w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-base min-h-[44px] transition-colors focus:border-blue-500 focus:outline-none;
+    box-sizing: border-box;
   }
 
   .btn {
@@ -334,7 +346,7 @@ textarea:focus-visible {
   }
 
   .modal-body {
-    @apply min-h-0 overflow-y-auto p-6;
+    @apply min-h-0 overflow-y-auto overflow-x-hidden p-6 overscroll-y-contain touch-pan-y;
   }
 
   .modal-footer {
