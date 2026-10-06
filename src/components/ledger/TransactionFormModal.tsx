@@ -394,10 +394,10 @@ export default function TransactionFormModal({
 
         {/* 금액 입력 영역 (Hero Input) */}
         <div className="rounded-2xl border border-[#272b36] bg-[#13151a] p-3.5 sm:p-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-semibold text-gray-400 tracking-wider">금액</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-semibold text-gray-400">금액</span>
             {koreanAmountText && (
-              <span className="text-xs font-bold text-blue-400 animate-fadeIn">
+              <span className="text-xs font-bold text-blue-400">
                 {koreanAmountText}
               </span>
             )}
@@ -416,48 +416,47 @@ export default function TransactionFormModal({
               className="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-white placeholder-gray-600 focus:outline-none pr-8 tracking-tight"
               autoFocus={!isEditing}
             />
-            <span className="absolute right-0 text-base sm:text-lg font-bold text-gray-400">원</span>
+            <span className="pointer-events-none absolute right-0 text-base sm:text-lg font-bold text-gray-400">원</span>
           </div>
 
-          {/* 모바일 퀵 금액 증액 칩 */}
-          <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#1f222b]">
+          {/* 모바일 5열 균등 퀵 금액 증액 칩 */}
+          <div className="mt-3 grid grid-cols-5 gap-1.5 pt-2.5 border-t border-[#1f222b]">
             <button
               type="button"
               onClick={() => handleAddQuickAmount(10000)}
-              className="rounded-lg bg-[#20232c] px-2.5 py-1.5 text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-90 touch-manipulation transition-all"
+              className="flex h-8 items-center justify-center rounded-lg bg-[#20232c] text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-95 touch-manipulation transition-all"
             >
               +1만
             </button>
             <button
               type="button"
               onClick={() => handleAddQuickAmount(50000)}
-              className="rounded-lg bg-[#20232c] px-2.5 py-1.5 text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-90 touch-manipulation transition-all"
+              className="flex h-8 items-center justify-center rounded-lg bg-[#20232c] text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-95 touch-manipulation transition-all"
             >
               +5만
             </button>
             <button
               type="button"
               onClick={() => handleAddQuickAmount(100000)}
-              className="rounded-lg bg-[#20232c] px-2.5 py-1.5 text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-90 touch-manipulation transition-all"
+              className="flex h-8 items-center justify-center rounded-lg bg-[#20232c] text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-95 touch-manipulation transition-all"
             >
               +10만
             </button>
             <button
               type="button"
               onClick={() => handleAddQuickAmount(500000)}
-              className="rounded-lg bg-[#20232c] px-2.5 py-1.5 text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-90 touch-manipulation transition-all"
+              className="flex h-8 items-center justify-center rounded-lg bg-[#20232c] text-xs font-medium text-gray-300 hover:bg-[#2b303d] hover:text-white active:scale-95 touch-manipulation transition-all"
             >
               +50만
             </button>
-            {amount && (
-              <button
-                type="button"
-                onClick={handleClearAmount}
-                className="ml-auto rounded-lg bg-red-950/40 border border-red-500/20 px-2 py-1.5 text-xs font-medium text-red-400 hover:bg-red-900/50 active:scale-90 touch-manipulation transition-all"
-              >
-                지우기
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleClearAmount}
+              disabled={!amount}
+              className="flex h-8 items-center justify-center rounded-lg bg-red-950/40 border border-red-500/20 text-xs font-medium text-red-400 hover:bg-red-900/50 active:scale-95 touch-manipulation transition-all disabled:opacity-30 disabled:border-transparent"
+            >
+              지우기
+            </button>
           </div>
         </div>
 
@@ -468,7 +467,7 @@ export default function TransactionFormModal({
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors"
+            className="flex h-12 w-full items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 text-base text-white focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
 
@@ -487,7 +486,7 @@ export default function TransactionFormModal({
                   setToAccountId('');
                   setTransferMode('external');
                 }}
-                className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
               >
                 <option value="">결제 수단 선택</option>
                 {paymentMethods.map((m) => (
@@ -496,8 +495,8 @@ export default function TransactionFormModal({
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                ▾
+              <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                ▼
               </div>
             </div>
           </div>
@@ -522,7 +521,7 @@ export default function TransactionFormModal({
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(Number(e.target.value) || '')}
-                className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
               >
                 <option value="">카테고리 선택</option>
                 {filteredCategories.map((parent) => (
@@ -535,8 +534,8 @@ export default function TransactionFormModal({
                   </optgroup>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                ▾
+              <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                ▼
               </div>
             </div>
           </div>
@@ -556,13 +555,13 @@ export default function TransactionFormModal({
                     setToAccountId('');
                     if (mode === 'internal') setCategoryId('');
                   }}
-                  className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                  className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                 >
                   <option value="external">외부 계좌 (지출)</option>
                   <option value="internal">내 계좌 간 이체</option>
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                  ▾
+                <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                  ▼
                 </div>
               </div>
             </div>
@@ -578,7 +577,7 @@ export default function TransactionFormModal({
                   <select
                     value={fromAccountId}
                     onChange={(e) => setFromAccountId(Number(e.target.value) || '')}
-                    className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                    className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                   >
                     <option value="">출금 계좌 선택</option>
                     {accounts.map((account) => (
@@ -588,8 +587,8 @@ export default function TransactionFormModal({
                       </option>
                     ))}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                    ▾
+                  <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                    ▼
                   </div>
                 </div>
               )}
@@ -602,7 +601,7 @@ export default function TransactionFormModal({
                   <select
                     value={toAccountId}
                     onChange={(e) => setToAccountId(Number(e.target.value) || '')}
-                    className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                    className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                   >
                     <option value="">입금 계좌 선택</option>
                     {accounts
@@ -614,8 +613,8 @@ export default function TransactionFormModal({
                         </option>
                       ))}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                    ▾
+                  <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                    ▼
                   </div>
                 </div>
               </div>
@@ -636,7 +635,7 @@ export default function TransactionFormModal({
                 <select
                   value={fromAccountId}
                   onChange={(e) => setFromAccountId(Number(e.target.value) || '')}
-                  className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                  className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                 >
                   <option value="">출금 계좌 선택</option>
                   {accounts.map((account) => (
@@ -646,8 +645,8 @@ export default function TransactionFormModal({
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                  ▾
+                <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                  ▼
                 </div>
               </div>
             )}
@@ -667,7 +666,7 @@ export default function TransactionFormModal({
                 <select
                   value={fromAccountId}
                   onChange={(e) => setFromAccountId(Number(e.target.value) || '')}
-                  className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                  className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                 >
                   <option value="">입금 계좌 선택</option>
                   {accounts.map((account) => (
@@ -677,8 +676,8 @@ export default function TransactionFormModal({
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                  ▾
+                <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                  ▼
                 </div>
               </div>
             )}
@@ -698,7 +697,7 @@ export default function TransactionFormModal({
                 <select
                   value={cardId}
                   onChange={(e) => setCardId(Number(e.target.value) || '')}
-                  className="w-full appearance-none rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 pr-8 text-sm sm:text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
+                  className="flex h-12 w-full appearance-none items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 pr-9 text-base text-white focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                 >
                   <option value="">카드 선택</option>
                   {cards.map((card) => (
@@ -707,8 +706,8 @@ export default function TransactionFormModal({
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                  ▾
+                <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                  ▼
                 </div>
               </div>
             )}
@@ -731,7 +730,7 @@ export default function TransactionFormModal({
                   ? '예: 회식비 1/N 정산 환급'
                   : '예: 스타벅스, 쿠팡, 배달의민족'
             }
-            className="w-full rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 text-sm sm:text-base text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-colors"
+            className="flex h-12 w-full items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 text-base text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
 
@@ -743,13 +742,13 @@ export default function TransactionFormModal({
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
             placeholder="추가 메모 입력"
-            className="w-full rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 py-2.5 text-sm sm:text-base text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-colors"
+            className="flex h-12 w-full items-center rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 text-base text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
 
         {/* 고정지출 체크 */}
         {!isInternalTransfer && !isReimbursement && (
-          <label className="flex items-center gap-3 rounded-xl border border-[#272b36] bg-[#13151a] p-3 cursor-pointer select-none active:bg-[#1a1d24] transition-colors">
+          <label className="flex h-12 items-center gap-3 rounded-xl border border-[#272b36] bg-[#13151a] px-3.5 cursor-pointer select-none active:bg-[#1a1d24] transition-colors">
             <input
               type="checkbox"
               checked={isFixed}
@@ -758,7 +757,6 @@ export default function TransactionFormModal({
             />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-white">매월 고정지출</span>
-              <span className="text-xs text-gray-400">구독료, 통신비, 월세 등 매달 나가는 지출</span>
             </div>
           </label>
         )}

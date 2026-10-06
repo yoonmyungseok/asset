@@ -43,7 +43,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity sm:items-center sm:p-4 ${
+      className={`fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity overscroll-none touch-none select-none sm:items-center sm:p-4 ${
         isDark ? 'text-white' : 'text-gray-900'
       }`}
       onClick={(e) => {
@@ -53,7 +53,7 @@ export default function Modal({
       }}
     >
       <div
-        className={`flex max-h-[92dvh] w-full ${maxWidthClass} flex-col rounded-t-[28px] shadow-2xl transition-all sm:max-h-[90vh] sm:rounded-2xl ${
+        className={`flex max-h-[88dvh] w-full ${maxWidthClass} flex-col rounded-t-[28px] shadow-2xl transition-all sm:max-h-[90vh] sm:rounded-2xl overflow-hidden select-text ${
           isDark
             ? 'border-t border-[#2d313c] bg-[#181a20] sm:border sm:border-[#2d313c]'
             : 'bg-white'
@@ -61,7 +61,7 @@ export default function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모바일 바텀시트 그랩 핸들 */}
-        <div className="flex w-full justify-center pt-2.5 pb-1 sm:hidden">
+        <div className="flex w-full justify-center pt-2.5 pb-1 sm:hidden touch-none">
           <div
             className={`h-1.5 w-12 rounded-full ${
               isDark ? 'bg-white/20' : 'bg-gray-300'
@@ -71,7 +71,7 @@ export default function Modal({
 
         {/* 모달 헤더 */}
         <div
-          className={`flex shrink-0 items-center justify-between px-5 py-3.5 sm:px-6 sm:py-4 ${
+          className={`flex shrink-0 items-center justify-between px-5 py-3.5 sm:px-6 sm:py-4 touch-none ${
             isDark ? 'border-b border-[#252832]' : 'border-b border-gray-200'
           }`}
         >
@@ -92,15 +92,15 @@ export default function Modal({
           </button>
         </div>
 
-        {/* 모달 본문 */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 overscroll-contain">
+        {/* 모달 본문: 좌우 흔들림 원천 차단 및 위아래 부드러운 스크롤 */}
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 sm:px-6 sm:py-5 overscroll-y-contain touch-pan-y">
           {children}
         </div>
 
         {/* 모달 푸터 */}
         {footer && (
           <div
-            className={`flex shrink-0 items-center justify-end gap-2.5 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-4 ${
+            className={`flex shrink-0 items-center justify-end gap-2.5 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-4 touch-none ${
               isDark ? 'border-t border-[#252832] bg-[#181a20]' : 'border-t border-gray-200 bg-white'
             }`}
           >
