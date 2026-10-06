@@ -681,29 +681,60 @@ export default function AccountDetailPage() {
         onClose={() => setShowLimitForm(false)}
         title={hasLimit ? '연간 한도 수정' : '연간 한도 설정'}
         footer={
-          <>
-            <button className="btn btn-secondary" onClick={() => setShowLimitForm(false)}>취소</button>
-            <button className="btn btn-primary" onClick={handleSaveLimit}>저장</button>
-          </>
+          <div className="flex w-full items-center gap-2.5">
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+              onClick={() => setShowLimitForm(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+              onClick={handleSaveLimit}
+            >
+              저장
+            </button>
+          </div>
         }
       >
-        <div className="form-group">
-          <label>연도</label>
-          <input
-            type="number"
-            value={limitForm.year}
-            onChange={(e) => setLimitForm({ ...limitForm, year: e.target.value })}
-          />
-        </div>
-        <div className="form-group">
-          <label>연간 납입 한도 (원)</label>
-          <input
-            type="number"
-            value={limitForm.contribution_limit}
-            onChange={(e) => setLimitForm({ ...limitForm, contribution_limit: e.target.value })}
-            placeholder="20000000"
-            autoFocus
-          />
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">연도</label>
+            <input
+              type="number"
+              value={limitForm.year}
+              onChange={(e) => setLimitForm({ ...limitForm, year: e.target.value })}
+              className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3.5 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-gray-600">연간 납입 한도</label>
+              {Number(limitForm.contribution_limit) > 0 && (
+                <span className="text-xs font-bold text-blue-600">
+                  {formatMoney(limitForm.contribution_limit)}
+                </span>
+              )}
+            </div>
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={limitForm.contribution_limit ? Number(limitForm.contribution_limit).toLocaleString() : ''}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  setLimitForm({ ...limitForm, contribution_limit: raw });
+                }}
+                placeholder="20,000,000"
+                className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3.5 pr-8 text-base font-semibold text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+                autoFocus
+              />
+              <span className="pointer-events-none absolute right-3 text-sm font-semibold text-gray-400">원</span>
+            </div>
+          </div>
         </div>
       </Modal>
 
@@ -712,66 +743,108 @@ export default function AccountDetailPage() {
         onClose={() => setShowEditForm(false)}
         title="계좌 수정"
         footer={
-          <>
-            <button className="btn btn-secondary" onClick={() => setShowEditForm(false)}>취소</button>
-            <button className="btn btn-primary" onClick={handleUpdateAccount}>저장</button>
-          </>
+          <div className="flex w-full items-center gap-2.5">
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+              onClick={() => setShowEditForm(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+              onClick={handleUpdateAccount}
+            >
+              저장
+            </button>
+          </div>
         }
       >
-        <div className="form-group">
-          <label>계좌 유형</label>
-          <select
-            value={editForm.account_type_id}
-            onChange={(e) => setEditForm({ ...editForm, account_type_id: e.target.value })}
-          >
-            {accountTypes.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label>계좌명</label>
-          <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-        </div>
-        <div className="form-group">
-          <label>금융기관</label>
-          <InstitutionSelect
-            value={editForm.institution}
-            onChange={(institution) => setEditForm({ ...editForm, institution })}
-          />
-        </div>
-        <div className="form-group">
-          <label>현재 잔고/예수금</label>
-          <input
-            type="number"
-            step="1"
-            min="0"
-            value={editForm.cash_balance}
-            onChange={(e) => setEditForm({ ...editForm, cash_balance: e.target.value })}
-          />
-        </div>
-        {accountTypes.find((t) => t.id === Number(editForm.account_type_id))?.category === 'deposit' && (
-          <div className="form-row">
-            <div className="form-group">
-              <label>연 이자율 (%)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={editForm.interest_rate}
-                onChange={(e) => setEditForm({ ...editForm, interest_rate: e.target.value })}
-                placeholder="3.5"
-              />
-            </div>
-            <div className="form-group">
-              <label>만기일</label>
-              <input
-                type="date"
-                value={editForm.maturity_date}
-                onChange={(e) => setEditForm({ ...editForm, maturity_date: e.target.value })}
-              />
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">계좌 유형</label>
+            <div className="relative">
+              <select
+                value={editForm.account_type_id}
+                onChange={(e) => setEditForm({ ...editForm, account_type_id: e.target.value })}
+                className="flex h-12 w-full appearance-none items-center rounded-xl border border-gray-200 bg-white px-3.5 pr-9 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors cursor-pointer"
+              >
+                {accountTypes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs text-gray-400">
+                ▼
+              </div>
             </div>
           </div>
-        )}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">계좌명</label>
+            <input
+              type="text"
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3.5 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">금융기관</label>
+            <InstitutionSelect
+              value={editForm.institution}
+              onChange={(institution) => setEditForm({ ...editForm, institution })}
+              placeholder="금융기관 선택"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-gray-600">현재 잔고 / 예수금</label>
+              {Number(editForm.cash_balance) > 0 && (
+                <span className="text-xs font-bold text-blue-600">
+                  {formatMoney(editForm.cash_balance)}
+                </span>
+              )}
+            </div>
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={editForm.cash_balance ? Number(editForm.cash_balance).toLocaleString() : ''}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  setEditForm({ ...editForm, cash_balance: raw });
+                }}
+                className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3.5 pr-8 text-base font-semibold text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+              />
+              <span className="pointer-events-none absolute right-3 text-sm font-semibold text-gray-400">원</span>
+            </div>
+          </div>
+          {accountTypes.find((t) => t.id === Number(editForm.account_type_id))?.category === 'deposit' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-gray-100 bg-gray-50/70 p-3.5">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">연 이자율 (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editForm.interest_rate}
+                  onChange={(e) => setEditForm({ ...editForm, interest_rate: e.target.value })}
+                  placeholder="3.5"
+                  className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3.5 text-base text-gray-900 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">만기일</label>
+                <input
+                  type="date"
+                  value={editForm.maturity_date}
+                  onChange={(e) => setEditForm({ ...editForm, maturity_date: e.target.value })}
+                  className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3.5 text-base text-gray-900 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </Modal>
 
       <HoldingFormModal

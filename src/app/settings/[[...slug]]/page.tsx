@@ -135,10 +135,22 @@ function CategoriesPanel() {
         onClose={() => setShowForm(false)}
         title={editingId ? '카테고리 수정' : '카테고리 추가'}
         footer={
-          <>
-            <button className="btn btn-secondary" onClick={() => setShowForm(false)}>취소</button>
-            <button className="btn btn-primary" onClick={handleSave}>저장</button>
-          </>
+          <div className="flex w-full items-center gap-2.5">
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+              onClick={() => setShowForm(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+              onClick={handleSave}
+            >
+              저장
+            </button>
+          </div>
         }
       >
         <div className="form-group">
@@ -360,10 +372,22 @@ function RecurringPanel() {
         onClose={closeForm}
         title={editingId ? '정기 항목 수정' : '정기 항목 추가'}
         footer={
-          <>
-            <button className="btn btn-secondary" onClick={closeForm}>취소</button>
-            <button className="btn btn-primary" onClick={handleSave}>저장</button>
-          </>
+          <div className="flex w-full items-center gap-2.5">
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+              onClick={closeForm}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+              onClick={handleSave}
+            >
+              저장
+            </button>
+          </div>
         }
       >
         <div className="form-group">
@@ -616,10 +640,22 @@ function CardsPanel() {
         onClose={closeForm}
         title={editingId ? '카드 수정' : '카드 추가'}
         footer={
-          <>
-            <button className="btn btn-secondary" onClick={closeForm}>취소</button>
-            <button className="btn btn-primary" onClick={handleSave}>저장</button>
-          </>
+          <div className="flex w-full items-center gap-2.5">
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+              onClick={closeForm}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+              onClick={handleSave}
+            >
+              저장
+            </button>
+          </div>
         }
       >
         <div className="form-group">
@@ -735,8 +771,29 @@ function LiabilitiesPanel() {
           </table>
         </div>
       )}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="부채 추가"
-        footer={<><button className="btn btn-secondary" onClick={() => setShowForm(false)}>취소</button><button className="btn btn-primary" onClick={handleSave}>저장</button></>}>
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title="부채 추가"
+        footer={
+          <div className="flex w-full items-center gap-2.5">
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+              onClick={() => setShowForm(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+              onClick={handleSave}
+            >
+              저장
+            </button>
+          </div>
+        }
+      >
         <div className="form-group">
           <label>유형</label>
           <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>

@@ -68,10 +68,23 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
       onClose={onClose}
       title={editing ? '보유 수정' : '보유 추가'}
       footer={
-        <>
-          <button className="btn btn-secondary" onClick={onClose}>취소</button>
-          <button className="btn btn-primary" onClick={() => onSave(form)} disabled={!canSave}>저장</button>
-        </>
+        <div className="flex w-full items-center gap-2.5">
+          <button
+            type="button"
+            className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 active:scale-95 touch-manipulation sm:h-10 sm:flex-initial sm:text-sm"
+            onClick={onClose}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className="flex h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 touch-manipulation disabled:opacity-50 sm:h-10 sm:flex-initial sm:min-w-[100px] sm:text-sm"
+            onClick={() => onSave(form)}
+            disabled={!canSave}
+          >
+            저장
+          </button>
+        </div>
       }
     >
       {!editing && (
