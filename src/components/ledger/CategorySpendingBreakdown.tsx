@@ -18,10 +18,10 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="spending-tooltip">
-      <div className="spending-tooltip-name">{item.name}</div>
-      <div className="spending-tooltip-amount">{formatMoney(item.value)}</div>
-      <div className="spending-tooltip-ratio">{item.ratio.toFixed(1)}%</div>
+    <div className="rounded-xl border border-[#2e323e] bg-[#1c1e24]/95 px-3.5 py-2.5 text-white shadow-xl backdrop-blur-md">
+      <div className="text-xs font-semibold text-gray-200">{item.name}</div>
+      <div className="text-sm font-bold text-white mt-0.5">{formatMoney(item.value)}</div>
+      <div className="text-[11px] text-gray-400 mt-0.5">{item.ratio.toFixed(1)}%</div>
     </div>
   );
 }
@@ -48,9 +48,9 @@ export default function CategorySpendingBreakdown({ categories, totalExpense }: 
 
   if (sorted.length === 0) {
     return (
-      <div className="card spending-breakdown spending-breakdown--empty">
-        <h3 className="section-title mt-0">카테고리별 지출</h3>
-        <p className="text-muted">이번 달 지출 내역이 없습니다.</p>
+      <div className="rounded-2xl border border-[#262932] bg-[#1c1e24] p-6 mb-4 shadow-sm text-center">
+        <h3 className="text-base font-bold text-white mb-2">카테고리별 지출</h3>
+        <p className="text-xs text-gray-400">이번 달 지출 내역이 없습니다.</p>
       </div>
     );
   }
@@ -58,23 +58,23 @@ export default function CategorySpendingBreakdown({ categories, totalExpense }: 
   const topCategory = sorted[0];
 
   return (
-    <div className="card spending-breakdown">
-      <div className="spending-breakdown-header">
+    <div className="rounded-2xl border border-[#262932] bg-[#1c1e24] p-5 lg:p-6 mb-4 shadow-sm">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="section-title mt-0">카테고리별 지출</h3>
-          <p className="spending-breakdown-subtitle">
-            가장 많이 쓴 카테고리는 <strong>{topCategory.category_name}</strong>
+          <h2 className="text-base font-bold text-white">카테고리별 지출</h2>
+          <p className="mt-1 text-xs sm:text-[13px] text-gray-400">
+            가장 많이 쓴 카테고리는 <strong className="font-semibold text-white">{topCategory.category_name}</strong>
             {' '}({topCategory.ratio}%)
           </p>
         </div>
-        <div className="spending-breakdown-total">
-          <span className="spending-breakdown-total-label">이번 달 지출</span>
-          <span className="spending-breakdown-total-value">{formatMoney(totalExpense)}</span>
+        <div className="sm:text-right">
+          <span className="text-xs text-gray-400 block mb-0.5">이번 달 지출</span>
+          <span className="text-xl sm:text-2xl font-bold tracking-tight text-white">{formatMoney(totalExpense)}</span>
         </div>
       </div>
 
-      <div className="spending-breakdown-body">
-        <div className="spending-breakdown-chart">
+      <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(240px,300px)_1fr] lg:gap-8">
+        <div className="relative mx-auto h-[200px] w-full max-w-[280px] lg:mx-0 lg:h-[260px] lg:max-w-none">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -83,8 +83,8 @@ export default function CategorySpendingBreakdown({ categories, totalExpense }: 
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius="45%"
-                outerRadius="70%"
+                innerRadius="50%"
+                outerRadius="75%"
                 paddingAngle={2}
                 stroke="none"
                 onMouseEnter={(_, index) => setActiveId(chartData[index].categoryId)}
@@ -95,22 +95,22 @@ export default function CategorySpendingBreakdown({ categories, totalExpense }: 
                     key={entry.categoryId}
                     fill={entry.color}
                     opacity={activeId === null || activeId === entry.categoryId ? 1 : 0.35}
-                    style={{ transition: 'opacity 0.2s' }}
+                    style={{ transition: 'opacity 0.2s', outline: 'none' }}
                   />
                 ))}
               </Pie>
               <Tooltip content={<ChartTooltip />} />
-              <text x="50%" y="46%" textAnchor="middle" className="spending-donut-label">
+              <text x="50%" y="46%" textAnchor="middle" className="text-xs fill-gray-400 font-medium">
                 총 지출
               </text>
-              <text x="50%" y="56%" textAnchor="middle" className="spending-donut-value">
+              <text x="50%" y="56%" textAnchor="middle" className="text-lg font-bold fill-white">
                 {total >= 10000 ? `${(total / 10000).toFixed(0)}만` : formatMoney(totalExpense)}
               </text>
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="spending-breakdown-list">
+        <div className="flex flex-col gap-1.5">
           {sorted.map((c, index) => {
             const color = categoryColors[c.category_id];
             const ratio = Number(c.ratio);
@@ -119,25 +119,27 @@ export default function CategorySpendingBreakdown({ categories, totalExpense }: 
             return (
               <div
                 key={c.category_id}
-                className={`spending-row${isActive ? ' is-active' : ''}`}
+                className={`flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors cursor-pointer ${
+                  isActive ? 'bg-[#252834]' : 'hover:bg-[#20222a]'
+                }`}
                 onMouseEnter={() => setActiveId(c.category_id)}
                 onMouseLeave={() => setActiveId(null)}
-                onClick={() => setActiveId(c.category_id)}
+                onClick={() => setActiveId(activeId === c.category_id ? null : c.category_id)}
               >
-                <div className="spending-row-rank">{index + 1}</div>
-                <div className="spending-row-color" style={{ backgroundColor: color }} />
-                <div className="spending-row-content">
-                  <div className="spending-row-top">
-                    <span className="spending-row-name">{c.category_name}</span>
-                    <span className="spending-row-amount">{formatMoney(c.amount)}</span>
+                <div className="w-4 shrink-0 text-xs font-semibold leading-5 text-gray-500">{index + 1}</div>
+                <div className="mt-1 h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-medium text-gray-200 truncate">{c.category_name}</span>
+                    <span className="text-sm font-bold text-white whitespace-nowrap">{formatMoney(c.amount)}</span>
                   </div>
-                  <div className="spending-row-bar-track">
+                  <div className="mb-1 h-1.5 overflow-hidden rounded-full bg-[#282b36]">
                     <div
-                      className="spending-row-bar-fill"
+                      className="h-full rounded-full transition-all duration-300"
                       style={{ width: `${ratio}%`, backgroundColor: color }}
                     />
                   </div>
-                  <div className="spending-row-meta">
+                  <div className="flex justify-end text-[11px] font-medium text-gray-400">
                     <span>{ratio.toFixed(1)}%</span>
                   </div>
                 </div>
@@ -149,3 +151,4 @@ export default function CategorySpendingBreakdown({ categories, totalExpense }: 
     </div>
   );
 }
+
