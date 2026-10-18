@@ -153,7 +153,8 @@ export default function TransactionFormModal({
         const isBankTransferExpense =
           transaction.type === 'expense' && transaction.payment_method?.name === '계좌이체';
 
-        setDate(transaction.transaction_date);
+        const dateStr = transaction.transaction_date ? transaction.transaction_date.slice(0, 10) : todayISO();
+        setDate(dateStr);
         setAmount(String(Number(transaction.amount)));
         setMerchant(transaction.merchant ?? '');
         setMemo(transaction.memo ?? '');
@@ -196,13 +197,15 @@ export default function TransactionFormModal({
     });
   }, [open, transaction, presetAccountId, presetDate]);
 
-  const filteredCategories = categories.filter((c) => c.type === type);
+  const filteredCategories = categories.filter(
+    (c) => c.type === type && c.children && c.children.length > 0,
+  );
   const selectedPaymentMethod = paymentMethods.find((m) => m.id === paymentMethodId);
   const isCardPayment = type === 'expense' && selectedPaymentMethod?.name === '카드';
   const isBankTransfer = type === 'expense' && selectedPaymentMethod?.name === '계좌이체';
   const isInternalTransfer = isBankTransfer && transferMode === 'internal';
   const needsCategory = !isInternalTransfer && !isReimbursement;
-  const showCategory = needsCategory && (type !== 'expense' || Boolean(paymentMethodId));
+  const showCategory = needsCategory;
   const needsDepositAccount = type === 'income' || type === 'reimbursement_in';
   const needsWithdrawAccount = isBankTransfer || type === 'reimbursement_out';
 
@@ -288,11 +291,6 @@ export default function TransactionFormModal({
     }
   };
 
-  const editingType = transaction?.type;
-  const canSwitchType =
-    !isEditing ||
-    (editingType !== 'transfer' && (editingType ? !isReimbursementType(editingType) : true));
-
   const koreanAmountText = formatKoreanAmount(amount);
 
   return (
@@ -341,24 +339,22 @@ export default function TransactionFormModal({
           <button
             type="button"
             onClick={() => switchType('expense')}
-            disabled={!canSwitchType || (isEditing && editingType !== 'expense')}
             className={`flex h-11 items-center justify-center rounded-xl text-sm font-bold transition-all active:scale-[0.98] touch-manipulation ${
               type === 'expense'
                 ? 'bg-[#2b181e] text-[#ff5370] shadow-sm shadow-rose-950/50 border border-rose-500/30'
                 : 'text-gray-400 hover:text-gray-200'
-            } disabled:opacity-40`}
+            }`}
           >
             지출
           </button>
           <button
             type="button"
             onClick={() => switchType('income')}
-            disabled={!canSwitchType || isBankTransfer || (isEditing && editingType !== 'income')}
             className={`flex h-11 items-center justify-center rounded-xl text-sm font-bold transition-all active:scale-[0.98] touch-manipulation ${
               type === 'income'
                 ? 'bg-[#152a20] text-[#00d282] shadow-sm shadow-emerald-950/50 border border-emerald-500/30'
                 : 'text-gray-400 hover:text-gray-200'
-            } disabled:opacity-40`}
+            }`}
           >
             수입
           </button>
@@ -369,24 +365,22 @@ export default function TransactionFormModal({
           <button
             type="button"
             onClick={() => switchType('reimbursement_out')}
-            disabled={!canSwitchType || (isEditing && editingType !== 'reimbursement_out')}
             className={`flex-1 rounded-xl py-2 px-2 text-center text-xs font-semibold transition-all active:scale-95 touch-manipulation border ${
               type === 'reimbursement_out'
                 ? 'border-amber-500/50 bg-[#292214] text-amber-300'
                 : 'border-[#252832] bg-[#16181f] text-gray-400 hover:text-gray-200'
-            } disabled:opacity-40`}
+            }`}
           >
             반환예정 이체
           </button>
           <button
             type="button"
             onClick={() => switchType('reimbursement_in')}
-            disabled={!canSwitchType || (isEditing && editingType !== 'reimbursement_in')}
             className={`flex-1 rounded-xl py-2 px-2 text-center text-xs font-semibold transition-all active:scale-95 touch-manipulation border ${
               type === 'reimbursement_in'
                 ? 'border-cyan-500/50 bg-[#14262b] text-cyan-300'
                 : 'border-[#252832] bg-[#16181f] text-gray-400 hover:text-gray-200'
-            } disabled:opacity-40`}
+            }`}
           >
             반환 입금
           </button>

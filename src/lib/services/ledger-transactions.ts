@@ -239,106 +239,147 @@ export async function updateLedgerTransaction(transactionId: number, payload: Le
 
     const { tag_names: tagNames, ...data } = payload;
 
-    const newPaymentMethodId =
-      data.payment_method_id !== undefined ? data.payment_method_id : existing.payment_method_id;
-    const method = newPaymentMethodId
-      ? await tx.paymentMethod.findUnique({ where: { id: newPaymentMethodId } })
-      : null;
-    const newCardId = data.card_id !== undefined ? data.card_id : existing.card_id;
-    const card =
-      method?.name === "카드"
-        ? await validateCardPaymentMethod(tx, newPaymentMethodId, newCardId)
+    const targetType = data.type !== undefined ? data.type : existing.type;
+    const targetDate = data.transaction_date !== undefined ? data.transaction_date : existing.transaction_date;
+    const targetAmount = data.amount !== undefined ? data.amount : existing.amount;
+    const targetMerchant = data.merchant !== undefined ? (data.merchant?.trim() || null) : existing.merchant;
+    const targetMemo = data.memo !== undefined ? (data.memo?.trim() || null) : existing.memo;
+    const targetIsFixed = data.is_fixed !== undefined ? data.is_fixed : existing.is_fixed;
+
+    let targetCategoryId: number;
+    let targetPaymentMethodId: number | null = null;
+    let targetAccountId: number | null = null;
+    let targetToAccountId: number | null = null;
+    let targetCardId: number | null = null;
+
+    if (targetType === "transfer") {
+      const category = await getInternalTransferCategory(tx);
+      targetCategoryId = category.id;
+
+      const bankTransferMethod = await tx.paymentMethod.findFirst({ where: { name: "계좌이체" } });
+      targetPaymentMethodId = data.payment_method_id ?? existing.payment_method_id ?? bankTransferMethod?.id ?? null;
+
+      targetAccountId = data.account_id !== undefined ? data.account_id : existing.account_id;
+      targetToAccountId = data.to_account_id !== undefined ? data.to_account_id : existing.to_account_id;
+      targetCardId = null;
+
+      if (!targetAccountId) {
+        throw new ServiceError(400, "출금 계좌를 선택해 주세요.");
+      }
+      if (!targetToAccountId) {
+        throw new ServiceError(400, "입금 계좌를 선택해 주세요.");
+      }
+      if (targetAccountId === targetToAccountId) {
+        throw new ServiceError(400, "출금·입금 계좌가 같을 수 없습니다.");
+      }
+      await validateAccountForTransfer(tx, targetAccountId);
+      await validateAccountForTransfer(tx, targetToAccountId);
+    } else if (targetType === "reimbursement_out") {
+      const category = await getReimbursementOutCategory(tx);
+      targetCategoryId = category.id;
+      targetPaymentMethodId = null;
+      targetCardId = null;
+      targetToAccountId = null;
+
+      targetAccountId = data.account_id !== undefined ? data.account_id : existing.account_id;
+      if (!targetAccountId) {
+        throw new ServiceError(400, "출금 계좌를 선택해 주세요.");
+      }
+      await validateAccountForTransfer(tx, targetAccountId);
+    } else if (targetType === "reimbursement_in") {
+      const category = await getReimbursementInCategory(tx);
+      targetCategoryId = category.id;
+      targetPaymentMethodId = null;
+      targetCardId = null;
+      targetToAccountId = null;
+
+      targetAccountId = data.account_id !== undefined ? data.account_id : existing.account_id;
+      if (!targetAccountId) {
+        throw new ServiceError(400, "입금 계좌를 선택해 주세요.");
+      }
+      await validateAccountForTransfer(tx, targetAccountId);
+    } else if (targetType === "income") {
+      const reqCatId = data.category_id !== undefined ? data.category_id : existing.category_id;
+      if (!reqCatId) {
+        throw new ServiceError(400, "카테고리를 선택해 주세요.");
+      }
+      const category = await tx.category.findUnique({ where: { id: reqCatId } });
+      if (!category) {
+        throw new ServiceError(404, "카테고리를 찾을 수 없습니다.");
+      }
+      targetCategoryId = category.id;
+      targetPaymentMethodId = null;
+      targetCardId = null;
+      targetToAccountId = null;
+
+      targetAccountId = data.account_id !== undefined ? data.account_id : existing.account_id;
+      if (!targetAccountId) {
+        throw new ServiceError(400, "입금 계좌를 선택해 주세요.");
+      }
+      await validateAccountForTransfer(tx, targetAccountId);
+    } else {
+      // expense
+      const reqCatId = data.category_id !== undefined ? data.category_id : existing.category_id;
+      if (!reqCatId) {
+        throw new ServiceError(400, "카테고리를 선택해 주세요.");
+      }
+      const category = await tx.category.findUnique({ where: { id: reqCatId } });
+      if (!category) {
+        throw new ServiceError(404, "카테고리를 찾을 수 없습니다.");
+      }
+      targetCategoryId = category.id;
+
+      targetPaymentMethodId = data.payment_method_id !== undefined ? data.payment_method_id : existing.payment_method_id;
+      const method = targetPaymentMethodId
+        ? await tx.paymentMethod.findUnique({ where: { id: targetPaymentMethodId } })
         : null;
 
-    if (method?.name === "카드" && !card) {
-      throw new ServiceError(400, "카드 결제 시 카드를 선택해 주세요.");
+      targetToAccountId = null;
+
+      if (method?.name === "카드") {
+        const reqCardId = data.card_id !== undefined ? data.card_id : existing.card_id;
+        const card = await validateCardPaymentMethod(tx, targetPaymentMethodId, reqCardId);
+        if (!card) {
+          throw new ServiceError(400, "카드 결제 시 카드를 선택해 주세요.");
+        }
+        targetCardId = card.id;
+        targetAccountId = data.account_id !== undefined ? data.account_id : (existing.account_id ?? resolveAccountIdForCard(card));
+      } else if (isBankTransferMethod(method?.name)) {
+        targetCardId = null;
+        targetAccountId = data.account_id !== undefined ? data.account_id : existing.account_id;
+        if (!targetAccountId) {
+          throw new ServiceError(400, "계좌이체 시 출금 계좌를 선택해 주세요.");
+        }
+        await validateAccountForTransfer(tx, targetAccountId);
+      } else {
+        targetCardId = null;
+        targetAccountId = data.account_id !== undefined ? data.account_id : null;
+      }
     }
 
-    await tx.ledgerTransaction.update({
+    const updated = await tx.ledgerTransaction.update({
       where: { id: transactionId },
-      data: data as Prisma.LedgerTransactionUncheckedUpdateInput,
+      data: {
+        transaction_date: targetDate,
+        type: targetType,
+        amount: targetAmount,
+        category_id: targetCategoryId,
+        payment_method_id: targetPaymentMethodId,
+        account_id: targetAccountId,
+        to_account_id: targetToAccountId,
+        card_id: targetCardId,
+        merchant: targetMerchant,
+        memo: targetMemo,
+        is_fixed: targetType === "transfer" || targetType.startsWith("reimbursement") ? false : targetIsFixed,
+      },
+      include: LEDGER_TX_INCLUDE,
     });
 
     if (tagNames != null) {
       await syncLedgerTags(tx, transactionId, tagNames);
     }
 
-    let ledgerTx = await tx.ledgerTransaction.findUniqueOrThrow({
-      where: { id: transactionId },
-      include: LEDGER_TX_INCLUDE,
-    });
-
-    if (method?.name === "카드" && card) {
-      await tx.ledgerTransaction.update({
-        where: { id: transactionId },
-        data: {
-          card_id: card.id,
-          account_id: data.account_id ?? ledgerTx.account_id ?? resolveAccountIdForCard(card),
-          to_account_id: null,
-        },
-      });
-    } else if (method && method.name !== "카드") {
-      if (!isBankTransferMethod(method.name)) {
-        await tx.ledgerTransaction.update({
-          where: { id: transactionId },
-          data: { card_id: null },
-        });
-      } else if (!ledgerTx.to_account_id) {
-        await tx.ledgerTransaction.update({
-          where: { id: transactionId },
-          data: { card_id: null },
-        });
-      }
-    }
-
-    ledgerTx = await tx.ledgerTransaction.findUniqueOrThrow({
-      where: { id: transactionId },
-      include: LEDGER_TX_INCLUDE,
-    });
-
-    if (ledgerTx.type === "transfer") {
-      const category = await getInternalTransferCategory(tx);
-      await tx.ledgerTransaction.update({
-        where: { id: transactionId },
-        data: { category_id: category.id },
-      });
-    } else if (ledgerTx.type === "income") {
-      if (!ledgerTx.account_id) {
-        throw new ServiceError(400, "입금 계좌를 선택해 주세요.");
-      }
-      await validateAccountForTransfer(tx, ledgerTx.account_id);
-      await tx.ledgerTransaction.update({
-        where: { id: transactionId },
-        data: { payment_method_id: null, card_id: null, to_account_id: null },
-      });
-    } else if (ledgerTx.type === "reimbursement_out") {
-      const category = await getReimbursementOutCategory(tx);
-      if (!ledgerTx.account_id) {
-        throw new ServiceError(400, "출금 계좌를 선택해 주세요.");
-      }
-      await validateAccountForTransfer(tx, ledgerTx.account_id);
-      await tx.ledgerTransaction.update({
-        where: { id: transactionId },
-        data: { payment_method_id: null, card_id: null, to_account_id: null, category_id: category.id },
-      });
-    } else if (ledgerTx.type === "reimbursement_in") {
-      const category = await getReimbursementInCategory(tx);
-      if (!ledgerTx.account_id) {
-        throw new ServiceError(400, "입금 계좌를 선택해 주세요.");
-      }
-      await validateAccountForTransfer(tx, ledgerTx.account_id);
-      await tx.ledgerTransaction.update({
-        where: { id: transactionId },
-        data: { payment_method_id: null, card_id: null, to_account_id: null, category_id: category.id },
-      });
-    }
-
-    ledgerTx = await tx.ledgerTransaction.findUniqueOrThrow({
-      where: { id: transactionId },
-      include: LEDGER_TX_INCLUDE,
-    });
-
-    await applyLedgerBalanceEffects(tx, ledgerTx as LedgerTxWithRelations);
+    await applyLedgerBalanceEffects(tx, updated as LedgerTxWithRelations);
 
     return tx.ledgerTransaction.findUniqueOrThrow({
       where: { id: transactionId },
