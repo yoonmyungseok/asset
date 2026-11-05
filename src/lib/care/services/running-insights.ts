@@ -11,6 +11,23 @@ const directory = path.join(process.cwd(), "data", "running-reports");
 const suffix = { analysis: "분석보고서", plan: "러닝계획" } as const;
 export type InsightKind = keyof typeof suffix;
 
+// 목표는 보고서와 별도로 보관해 화면과 생성 요청에서 같은 값을 사용한다.
+const goalPath = path.join(directory, "goal.json");
+export async function getRunningGoal(): Promise<string> {
+  try {
+    const data: unknown = JSON.parse(await readFile(goalPath, "utf8"));
+    if (typeof data !== "object" || data === null || !("goal" in data) || typeof data.goal !== "string") throw new Error("저장된 목표 형식이 올바르지 않습니다.");
+    return data.goal;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return "";
+    throw error;
+  }
+}
+export async function saveRunningGoal(goal: string): Promise<void> {
+  await mkdir(directory, { recursive: true });
+  await writeFile(goalPath, JSON.stringify({ goal }), "utf8");
+}
+
 export async function latestInsight(kind: InsightKind) {
   let files: string[];
   try { files = await readdir(directory); } catch (error) {
@@ -31,9 +48,10 @@ export async function latestInsight(kind: InsightKind) {
 export async function generateInsight(kind: InsightKind, context: string) {
   const today = todayString();
   const start = formatDate(subDays(new Date(), 27));
-  const [records, excluded] = await Promise.all([
+  const [records, excluded, goal] = await Promise.all([
     prisma.runningRecord.findMany({ where: { date: { gte: start, lte: today } }, include: { splits: { orderBy: { splitNumber: "asc" } } }, orderBy: { date: "asc" } }),
     getRestDayTypeSet(),
+    getRunningGoal(),
   ]);
   const active = records.filter((record) => isActiveRun(record, excluded) && record.distance > 0);
   if (!active.length) throw new Error("최근 28일에 분석할 러닝 기록이 없습니다.");
@@ -41,7 +59,7 @@ export async function generateInsight(kind: InsightKind, context: string) {
   const distance = active.reduce((sum, record) => sum + record.distance, 0);
   const stats = { 기간: `${start} ~ ${today}`, 러닝횟수: active.length, 총거리km: Number(distance.toFixed(2)), 평균페이스: formatPace(calculateAveragePace(active, excluded)), 기록된날짜수: new Set(records.map((record) => record.date)).size };
   // 공통 지시문은 Ollama 모델에 저장하고, 요청마다 달라지는 자료만 전달한다.
-  const prompt = `한국어 마크다운으로 ${kind === "analysis" ? "러닝 분석 보고서" : "앞으로 1주일의 러닝 계획"}를 작성하세요.\n계산된 통계: ${JSON.stringify(stats)}\n러닝 기록(거리 km, 시간 초): ${JSON.stringify(records)}\n사용자 추가 정보: ${context || "없음"}`;
+  const prompt = `한국어 마크다운으로 ${kind === "analysis" ? "러닝 분석 보고서" : "앞으로 1주일의 러닝 계획"}를 작성하세요.\n계산된 통계: ${JSON.stringify(stats)}\n러닝 기록(거리 km, 시간 초): ${JSON.stringify(records)}\n저장된 러닝 목표: ${goal || "없음"}\n사용자 추가 정보: ${context || "없음"}`;
   const model = process.env.OLLAMA_MODEL || "running-coach";
   let response: Response;
   try {
