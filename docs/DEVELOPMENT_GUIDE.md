@@ -97,3 +97,7 @@ npx tsx scripts/doc-audit.ts
 ```
 
 릴리스·큰 PR 전에는 `npm test`와 위 audit 또는 `API_V1` / `API_CARE` 수동 대조를 권장한다.
+
+## 로컬 AI 러닝 보고서
+
+Ollama 서버를 실행하고 `qwen3:14b` 모델을 설치한 뒤 `ollama create running-coach -f ollama/running-coach.Modelfile`로 러닝 전용 모델을 생성한다. 공통 지시문을 수정한 후에도 같은 명령을 다시 실행해 반영한다. 이후 대시보드에서 분석 또는 계획을 생성한다. 다른 설치 모델은 앱 서버의 `OLLAMA_MODEL` 환경 변수로 지정한다. 생성 전 목표, 통증, 피로, 수면, 가능한 요일을 입력할 수 있다. 결과는 `data/running-reports/YYYYMMDD_분석보고서.md` 또는 `YYYYMMDD_러닝계획.md`에 저장하며, 같은 날 추가 생성 시 번호가 붙는다. 이 디렉터리는 개인 건강 정보 보호를 위해 Git 추적에서 제외한다. 모델은 최근 28일의 기록과 입력한 컨디션을 사용하며, 산출 내용은 사실과 다를 수 있으므로 확인이 필요하다.

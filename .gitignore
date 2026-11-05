@@ -19,3 +19,5 @@ node_modules/
 .next/
 out/
 google-service-account.json
+# 로컬 러닝 분석 결과에는 개인 건강 정보가 포함된다.
+data/running-reports/

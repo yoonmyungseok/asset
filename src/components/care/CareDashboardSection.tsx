@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RunningInsights } from "@/components/care/RunningInsights";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/care/ui/Card";
 import { StatCard } from "@/components/care/ui/StatCard";
@@ -227,6 +228,8 @@ export function CareDashboardSection() {
           </div>
         </Card>
       </div>
+
+      <RunningInsights />
 
       <Card title="오늘의 영양소" className="mb-6">
         <div className="space-y-4">

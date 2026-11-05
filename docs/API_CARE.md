@@ -66,3 +66,12 @@
 미설정 시 sync는 **503** + 한국어 메시지.
 
 라우트 목록은 `src/app/api/{dashboard,weight,running,diet,settings,integrations}/**/route.ts` 기준 — **2026-09-24** 검증.
+
+## 로컬 AI 러닝 보고서
+
+| Method | Path | 설명 |
+|--------|------|------|
+| GET | `/api/running/insights` | 저장된 최신 분석과 계획 조회. 없으면 각각 null |
+| POST | `/api/running/insights` | `kind` (`analysis` 또는 `plan`), 선택 `context` (최대 2000자)로 생성 및 저장 |
+
+최근 28일 러닝 기록과 구간 기록을 Ollama에 전달한다. 통계는 서버에서 계산하며 최근 활동 기록이 없거나 Ollama에 연결할 수 없으면 오류를 반환한다. 기본 모델은 `running-coach`, 서버 환경 변수 `OLLAMA_MODEL`로 변경 가능하다. Ollama는 `127.0.0.1:11434`에서 실행되어야 한다.
