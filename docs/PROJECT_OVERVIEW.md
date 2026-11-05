@@ -49,7 +49,7 @@
 | `/ledger` | 가계부 |
 | `/investment` | 자산·투자 목록 |
 | `/weight` | 체중 |
-| `/running` | 러닝 |
+| `/running` | 러닝 기록·로컬 AI 분석 보고서와 계획 |
 | `/diet` | 식단 |
 | `/settings` | 자산·앱 설정 (catch-all) |
 

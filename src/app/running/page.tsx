@@ -17,6 +17,7 @@ import { formatDisplayDate, formatDuration, parseDurationToSeconds, todayString 
 import { getRunningTypeLabel, isRestDay } from "@/lib/care/constants";
 import { formatRunningRecordText } from "@/lib/care/format/running-text";
 import { HealthNav } from "@/components/care/ui/HealthNav";
+import { RunningInsights } from "@/components/care/RunningInsights";
 
 interface RunningType {
   id: number;
@@ -415,6 +416,9 @@ export default function RunningPage() {
       <Card title="러닝 거리 그래프 (최근 30일)" className="mb-6">
         <RunningDistanceChart data={distanceChart} />
       </Card>
+
+      {/* 러닝 기록 화면에서 분석과 계획을 생성하고 확인한다. */}
+      <RunningInsights />
 
       <Card title="기록 목록">
         {records.length === 0 ? (

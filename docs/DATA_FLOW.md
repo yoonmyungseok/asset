@@ -127,4 +127,4 @@ POST /api/integrations/google-sheets/running/sync
 
 ## 로컬 AI 러닝 분석과 계획
 
-통합 대시보드 → `/api/running/insights` → 최근 28일 SQLite 기록과 구간 조회 → 서버에서 거리·횟수·거리 가중 페이스 계산 → 로컬 Ollama 생성 → `data/running-reports/`에 Markdown 저장 → 대시보드에 최신 결과 표시. 같은 날 재생성하면 파일명에 숫자를 붙여 기존 파일을 보존한다. 기록 공백은 휴식으로 간주하지 않으며, 생성 내용은 모델의 해석이다.
+러닝 화면 `/running` → `/api/running/insights` → 최근 28일 SQLite 기록과 구간 조회 → 서버에서 거리·횟수·거리 가중 페이스 계산 → 로컬 Ollama 생성 → `data/running-reports/`에 Markdown 저장 → 러닝 화면에 최신 결과 표시. 같은 날 재생성하면 파일명에 숫자를 붙여 기존 파일을 보존한다. 기록 공백은 휴식으로 간주하지 않으며, 생성 내용은 모델의 해석이다.
