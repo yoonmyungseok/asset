@@ -75,4 +75,4 @@
 | PUT | `/api/running/insights` | `goal` 문자열(최대 500자) 저장. 빈 문자열로 삭제 |
 | POST | `/api/running/insights` | `kind` (`analysis` 또는 `plan`), 선택 `context` (최대 2000자)로 생성 및 저장 |
 
-최근 28일 러닝 기록과 구간 기록을 Ollama에 전달한다. 통계는 서버에서 계산하며 최근 활동 기록이 없거나 Ollama에 연결할 수 없으면 오류를 반환한다. 기본 모델은 `running-coach`, 서버 환경 변수 `OLLAMA_MODEL`로 변경 가능하다. Ollama는 `127.0.0.1:11434`에서 실행되어야 한다.
+분석은 오늘의 러닝과 구간 기록을, 계획은 최근 28일 기록을 Ollama에 전달한다. 페이스와 통계는 서버에서 계산하며 해당 범위에 활동 기록이 없거나 Ollama에 연결할 수 없으면 오류를 반환한다. 기본 모델은 `running-coach`, 서버 환경 변수 `OLLAMA_MODEL`로 변경 가능하다. Ollama는 `127.0.0.1:11434`에서 실행되어야 한다.
