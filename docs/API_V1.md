@@ -40,6 +40,8 @@
 | GET, POST | `/api/v1/holdings` |
 | PATCH, DELETE | `/api/v1/holdings/[holdingId]` |
 | POST | `/api/v1/holdings/refresh-prices` |
+
+보유 종목 추가 시 같은 계좌에 동일한 종목코드의 주식이 있으면 기존 보유 수량에 합산하고 평균 매입단가를 수량 가중 평균으로 계산한다. 장부금액을 입력한 보유분은 해당 금액을 합산하며, 입력하지 않은 보유분은 수량과 평균 매입단가로 추정한다. 예금은 금리와 만기 구분을 위해 별도로 추가한다.
 | GET, POST | `/api/v1/investment-transactions` |
 | GET, PATCH, DELETE | `/api/v1/investment-transactions/[transactionId]` |
 

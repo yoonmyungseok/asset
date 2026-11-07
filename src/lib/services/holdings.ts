@@ -5,10 +5,11 @@ import { roundAvgCostPrice } from "@/lib/decimal";
 import { prisma } from "@/lib/db";
 import { getQuote, RateLimitError } from "@/lib/external/market-data";
 import { ServiceError } from "@/lib/service-error";
-import { removeHolding } from "@/lib/services/core";
+import { applyBuy, removeHolding } from "@/lib/services/core";
 import {
   ASSET_CLASS_DEPOSIT,
   generateDepositSymbol,
+  holdingCostBasis,
   isDepositHolding,
   normalizeDepositHolding,
 } from "@/lib/utils";
@@ -125,9 +126,29 @@ export async function createHolding(payload: HoldingCreate) {
   }
 
   const fields = prepareHoldingFields(payload);
-  const holding = await prisma.holding.create({
-    data: { account_id: payload.account_id, ...fields },
-    include: { account: true },
+  const holding = await prisma.$transaction(async (db) => {
+    // 예금은 금리와 만기가 다를 수 있으므로 같은 이름이어도 별도로 보관한다.
+    const existing = fields.asset_class === ASSET_CLASS_DEPOSIT ? null : await db.holding.findFirst({
+      where: { account_id: payload.account_id, symbol: fields.symbol, asset_class: { not: ASSET_CLASS_DEPOSIT } },
+      orderBy: { id: "asc" },
+    });
+    if (!existing) {
+      return db.holding.create({
+        data: { account_id: payload.account_id, ...fields },
+        include: { account: true },
+      });
+    }
+
+    // 명시된 장부금액이 있으면 각 보유분의 실제 금액을 보존한다.
+    const combinedBookCost = existing.book_cost != null || payload.book_cost != null
+      ? holdingCostBasis(existing).plus(holdingCostBasis({ ...fields, book_cost: payload.book_cost }))
+      : null;
+    applyBuy(existing, fields.quantity, fields.avg_cost_price);
+    return db.holding.update({
+      where: { id: existing.id },
+      data: { quantity: existing.quantity, avg_cost_price: existing.avg_cost_price, book_cost: combinedBookCost },
+      include: { account: true },
+    });
   });
 
   if (isDepositHolding(holding)) {

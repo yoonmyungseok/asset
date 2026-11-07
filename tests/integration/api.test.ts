@@ -375,6 +375,32 @@ describe("API integration", () => {
     expect(Number(account.cash_balance)).toBe(859500);
   });
 
+  it("같은 계좌의 동일 종목을 추가하면 수량과 매입금액을 합산한다", async () => {
+    const typeId = await getAccountTypeId("ISA");
+    const account = await apiClient.post("/api/v1/accounts", {
+      json: { account_type_id: typeId, name: "합산 계좌", cash_balance: 0 },
+    });
+    const { id: accountId } = await account.json<{ id: number }>();
+    const add = (quantity: number, avg_cost_price: number, book_cost?: number) =>
+      apiClient.post("/api/v1/holdings", {
+        json: { account_id: accountId, symbol: "TEST-MERGE", name: "합산 종목", quantity, avg_cost_price, book_cost },
+      });
+
+    // 기존 장부금액이 없어도 기존 매입금액을 계산하여 보존한다.
+    const first = await add(10, 100);
+    const second = await add(5, 160, 810);
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect((await first.json<{ id: number }>()).id).toBe((await second.json<{ id: number }>()).id);
+    const holdings = await (await apiClient.get(`/api/v1/holdings?account_id=${accountId}`)).json<
+      Array<{ quantity: string; avg_cost_price: string; cost_basis: string }>
+    >();
+    expect(holdings).toHaveLength(1);
+    expect(Number(holdings[0].quantity)).toBe(15);
+    expect(Number(holdings[0].avg_cost_price)).toBe(120);
+    expect(Number(holdings[0].cost_basis)).toBe(1810);
+  });
+
   it("test_investment_holding_and_transaction", async () => {
     const isaTypeId = await getAccountTypeId("ISA");
 
