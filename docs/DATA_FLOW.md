@@ -124,9 +124,3 @@ POST /api/integrations/google-sheets/running/sync
 ## 시드
 
 `npm run db:seed` → `prisma/seed.ts` (자산 마스터) → `runCareSeed()` (`src/lib/care/seed.ts`).
-
-## 로컬 AI 러닝 분석과 계획
-
-러닝 화면 `/running` → `/api/running/insights` → 저장된 목표와 SQLite 기록 및 구간 조회 (분석: 오늘, 계획: 최근 28일) → 서버에서 거리·횟수·거리 가중 페이스 계산 → 로컬 Ollama 생성 → `data/running-reports/`에 Markdown 저장 → 러닝 화면에 최신 결과 표시. 같은 날 재생성하면 파일명에 숫자를 붙여 기존 파일을 보존한다. 기록 공백은 휴식으로 간주하지 않으며, 생성 내용은 모델의 해석이다.
-
-러닝 목표는 `/api/running/insights` PUT으로 `data/running-reports/goal.json`에 저장하고 생성 시 서버에서 읽어 전달한다. 빈 목표는 미설정으로 취급한다.
