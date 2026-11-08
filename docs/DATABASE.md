@@ -1,5 +1,7 @@
 # 데이터베이스
 
+암호화폐 매매의 최신 거래를 수정·삭제할 때 직전 원가를 복원하기 위해 `investment_transactions`에 `crypto_cost_before`, `crypto_avg_before`를 저장한다. 기존 거래에는 이 값이 없으며 기존 자산은 자동 변환하지 않는다. 사용 전 Prisma 마이그레이션을 적용해야 한다.
+
 ## 연결
 
 | 항목 | 값 |

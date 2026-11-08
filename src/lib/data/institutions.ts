@@ -46,4 +46,6 @@ export const INSTITUTION_GROUPS: InstitutionGroup[] = [
       "우리카드",
     ],
   },
+  // 거래소 계좌는 해당 거래소의 원화 시세를 사용한다.
+  { category: "crypto", label: "암호화폐 거래소", institutions: ["빗썸", "업비트"] },
 ];

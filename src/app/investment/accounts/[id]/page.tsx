@@ -34,7 +34,7 @@ import {
   type AccountRecentTransaction,
 } from '@/lib/utils/account-recent-transactions';
 import { resolveAccountTransactionUiMode } from '@/lib/utils/account-transaction-ui';
-import { dedupeByChartDate, formatAvgCostPrice, formatChartDate, formatMoney, formatPercent, formatQuantity, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, needsMarketPriceRefresh, toAvgCostPriceString, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
+import { dedupeByChartDate, formatAvgCostPrice, formatChartDate, formatMoney, formatPercent, formatQuantity, formatCryptoQuantity, formatCryptoPrice, ASSET_CLASS_LABELS, formatInterestRate, formatMaturityLabel, needsMarketPriceRefresh, toAvgCostPriceString, toWholeMoney, toWholeMoneyString } from '@/lib/utils/format';
 import Modal from '@/components/common/Modal';
 
 export default function AccountDetailPage() {
@@ -44,6 +44,7 @@ export default function AccountDetailPage() {
   const [account, setAccount] = useState<Account | null>(null);
   const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [priceFailures, setPriceFailures] = useState<string[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<AccountRecentTransaction[]>([]);
   const [limit, setLimit] = useState<AccountLimit | null>(null);
   const [snapshots, setSnapshots] = useState<{ snapshot_date: string; balance_value: string }[]>([]);
@@ -87,7 +88,8 @@ export default function AccountDetailPage() {
         .filter((holding) => holding.asset_class !== 'deposit' && needsMarketPriceRefresh(holding.last_price_updated_at))
         .map((holding) => holding.id);
       if (stalePriceIds.length > 0) {
-        await api.refreshPrices(stalePriceIds);
+        const refresh = await api.refreshPrices(stalePriceIds);
+        setPriceFailures(refresh.failed.map((failure) => failure.symbol));
         holdings = await api.getHoldings(accountId);
       }
     }
@@ -145,15 +147,16 @@ export default function AccountDetailPage() {
 
     const depositFields = values.asset_class === 'deposit' ? depositPayload(values) : {};
 
-    const stockBookCost = values.book_cost ? Number(values.book_cost) : null;
+    const stockBookCost = values.book_cost ? (values.asset_class === 'crypto' ? values.book_cost : Number(values.book_cost)) : null;
 
+    try {
     if (editingHoldingId) {
       await api.updateHolding(editingHoldingId, {
         name: values.name,
-        quantity: Number(values.quantity),
-        avg_cost_price: values.asset_class === 'deposit' ? 1 : Number(values.avg_cost_price),
+        quantity: values.asset_class === 'crypto' ? values.quantity : Number(values.quantity),
+        avg_cost_price: values.asset_class === 'deposit' ? 1 : values.asset_class === 'crypto' ? values.avg_cost_price : Number(values.avg_cost_price),
         book_cost: values.asset_class === 'deposit' ? null : stockBookCost,
-        manual_price: values.asset_class === 'deposit' ? 1 : undefined,
+        manual_price: values.asset_class === 'deposit' ? 1 : values.asset_class === 'crypto' ? (values.manual_price ? Number(values.manual_price) : null) : undefined,
         ...depositFields,
       });
     } else {
@@ -162,33 +165,37 @@ export default function AccountDetailPage() {
         asset_class: values.asset_class,
         symbol: values.asset_class === 'deposit' ? null : values.symbol,
         name: values.name,
-        quantity: Number(values.quantity),
-        avg_cost_price: values.asset_class === 'deposit' ? 1 : Number(values.avg_cost_price),
+        quantity: values.asset_class === 'crypto' ? values.quantity : Number(values.quantity),
+        avg_cost_price: values.asset_class === 'deposit' ? 1 : values.asset_class === 'crypto' ? values.avg_cost_price : Number(values.avg_cost_price),
         book_cost: values.asset_class === 'deposit' ? null : stockBookCost,
         ...depositFields,
       });
     }
     closeHoldingForm();
     load();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '보유 자산 저장에 실패했습니다.');
+    }
   };
 
   const openCreateHoldingForm = () => {
     setEditingHoldingId(null);
-    setHoldingForm(emptyHoldingFormValues());
+    setHoldingForm({ ...emptyHoldingFormValues(), asset_class: account?.account_type?.code === 'CRYPTO_EXCHANGE' ? 'crypto' : 'stock' });
     setShowHoldingForm(true);
   };
 
   const openEditHoldingForm = (holding: Holding) => {
     setEditingHoldingId(holding.id);
     setHoldingForm({
-      asset_class: holding.asset_class === 'deposit' ? 'deposit' : 'stock',
+      asset_class: holding.asset_class === 'deposit' ? 'deposit' : holding.asset_class === 'crypto' ? 'crypto' : 'stock',
       symbol: holding.symbol,
       name: holding.name,
       quantity: holding.asset_class === 'deposit'
         ? String(Math.round(Number(holding.quantity)))
         : String(holding.quantity),
-      avg_cost_price: toAvgCostPriceString(holding.avg_cost_price),
-      book_cost: holding.asset_class === 'deposit' ? '' : toWholeMoneyString(holding.cost_basis),
+      avg_cost_price: holding.asset_class === 'crypto' ? String(holding.avg_cost_price) : toAvgCostPriceString(holding.avg_cost_price),
+      book_cost: holding.asset_class === 'deposit' ? '' : holding.asset_class === 'crypto' ? String(holding.cost_basis) : toWholeMoneyString(holding.cost_basis),
+      manual_price: holding.manual_price != null ? String(holding.manual_price) : '',
       interest_rate: holding.interest_rate ? String(holding.interest_rate) : '',
       start_date: holding.start_date ? holding.start_date.slice(0, 10) : '',
       maturity_date: holding.maturity_date ? holding.maturity_date.slice(0, 10) : '',
@@ -484,7 +491,9 @@ export default function AccountDetailPage() {
               onClick={async () => {
                 const stockIds = holdings.filter((holding) => holding.asset_class !== 'deposit').map((holding) => holding.id);
                 if (stockIds.length === 0) return;
-                await api.refreshPrices(stockIds);
+                const result = await api.refreshPrices(stockIds);
+                setPriceFailures(result.failed.map((item) => item.symbol));
+                if (result.failed.length) alert(`시세 조회 실패: ${result.failed.map((item) => item.symbol).join(', ')}`);
                 load();
               }}
             >
@@ -493,6 +502,7 @@ export default function AccountDetailPage() {
             <button className="btn btn-sm btn-primary" onClick={openCreateHoldingForm}>+ 보유 추가</button>
           </span>
         </div>
+        {priceFailures.length > 0 && <p className="text-danger">시세 조회 실패: {priceFailures.join(', ')}. 수동 가격이나 마지막 시세가 없으면 매입 단가로 표시합니다.</p>}
         {holdings.length === 0 ? (
           <p className="text-muted py-5">보유 종목이 없습니다.</p>
         ) : (
@@ -536,7 +546,8 @@ export default function AccountDetailPage() {
                             <>
                               <br /><span className="text-muted text-xs">{h.symbol}</span>
                               <br /><span className="text-muted text-xs">
-                                {formatQuantity(h.quantity)}좌 · 평단 {formatAvgCostPrice(h.avg_cost_price)} · 현재 {formatAvgCostPrice(h.current_price)}
+                                {h.asset_class === 'crypto' ? formatCryptoQuantity(h.quantity) : `${formatQuantity(h.quantity)}좌`} · 평단 {h.asset_class === 'crypto' ? formatCryptoPrice(h.avg_cost_price) : formatAvgCostPrice(h.avg_cost_price)} · 현재 {h.asset_class === 'crypto' ? formatCryptoPrice(h.current_price) : formatAvgCostPrice(h.current_price)}
+                                {h.asset_class === 'crypto' && <div>시세 갱신: {h.last_price_updated_at ? new Date(h.last_price_updated_at).toLocaleString('ko-KR') : '없음'}</div>}
                               </span>
                             </>
                           )}
@@ -665,6 +676,7 @@ export default function AccountDetailPage() {
         onSaved={load}
         accountId={accountId}
         accountMode={txUiMode}
+        isCrypto={account.account_type?.code === 'CRYPTO_EXCHANGE'}
         transaction={editingTransaction}
       />
 

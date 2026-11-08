@@ -9,6 +9,8 @@ import {
   formatMoney,
   formatPercent,
   formatQuantity,
+  formatCryptoQuantity,
+  formatCryptoPrice,
 } from '@/lib/utils/format';
 
 interface Props {
@@ -60,8 +62,9 @@ export default function HoldingCard({ holding, onEdit, onDelete }: Props) {
           </div>
         ) : (
           <div className="holding-card-stock-detail">
-            {formatQuantity(holding.quantity)}좌 · 평단 {formatAvgCostPrice(holding.avg_cost_price)} · 현재{' '}
-            {formatAvgCostPrice(holding.current_price)}
+            {holding.asset_class === 'crypto' ? formatCryptoQuantity(holding.quantity) : `${formatQuantity(holding.quantity)}좌`} · 평단 {holding.asset_class === 'crypto' ? formatCryptoPrice(holding.avg_cost_price) : formatAvgCostPrice(holding.avg_cost_price)} · 현재{' '}
+            {holding.asset_class === 'crypto' ? formatCryptoPrice(holding.current_price) : formatAvgCostPrice(holding.current_price)}
+            {holding.asset_class === 'crypto' && <div>시세 갱신: {holding.last_price_updated_at ? new Date(holding.last_price_updated_at).toLocaleString('ko-KR') : '없음'}</div>}
           </div>
         )}
       </div>

@@ -5,12 +5,13 @@ import Modal from '@/components/common/Modal';
 import SymbolInput from './SymbolInput';
 
 export interface HoldingFormValues {
-  asset_class: 'stock' | 'deposit';
+  asset_class: 'stock' | 'deposit' | 'crypto';
   symbol: string;
   name: string;
   quantity: string;
   avg_cost_price: string;
   book_cost: string;
+  manual_price: string;
   interest_rate: string;
   start_date: string;
   maturity_date: string;
@@ -31,6 +32,7 @@ const EMPTY_VALUES: HoldingFormValues = {
   quantity: '',
   avg_cost_price: '',
   book_cost: '',
+  manual_price: '',
   interest_rate: '',
   start_date: new Date().toISOString().slice(0, 10),
   maturity_date: '',
@@ -87,7 +89,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
         </div>
       }
     >
-      {!editing && (
+      {!editing && form.asset_class !== 'crypto' && (
         <div className="form-group">
           <label>자산 유형</label>
           <select
@@ -103,7 +105,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
       {editing && (
         <div className="form-group">
           <label>자산 유형</label>
-          <div>{isDeposit ? '예금' : '주식/ETF'}</div>
+          <div>{isDeposit ? '예금' : form.asset_class === 'crypto' ? '암호화폐' : '주식/ETF'}</div>
         </div>
       )}
 
@@ -173,6 +175,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
               <label>수량</label>
               <input
                 type="number"
+                step="any"
                 value={form.quantity}
                 onChange={(e) => setForm((prev) => ({ ...prev, quantity: e.target.value }))}
               />
@@ -181,7 +184,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
               <label>평단가</label>
               <input
                 type="number"
-                step="0.01"
+                step="any"
                 value={form.avg_cost_price}
                 onChange={(e) => setForm((prev) => ({ ...prev, avg_cost_price: e.target.value }))}
               />
@@ -202,17 +205,21 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
         </>
       ) : (
         <>
-          <SymbolInput
+          {form.asset_class === 'crypto' ? <div className="form-row">
+            <div className="form-group"><label>코인 심볼</label><input value={form.symbol} onChange={(e) => setForm((prev) => ({ ...prev, symbol: e.target.value.toUpperCase() }))} placeholder="BTC" /></div>
+            <div className="form-group"><label>코인 이름</label><input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} /></div>
+          </div> : <SymbolInput
             symbol={form.symbol}
             name={form.name}
             onSymbolChange={(symbol) => setForm((prev) => ({ ...prev, symbol }))}
             onNameChange={(name) => setForm((prev) => ({ ...prev, name }))}
-          />
+          />}
           <div className="form-row">
             <div className="form-group">
               <label>수량</label>
               <input
                 type="number"
+                step="any"
                 value={form.quantity}
                 onChange={(e) => setForm((prev) => ({ ...prev, quantity: e.target.value }))}
               />
@@ -221,7 +228,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
               <label>평단가</label>
               <input
                 type="number"
-                step="0.01"
+                step="any"
                 value={form.avg_cost_price}
                 onChange={(e) => setForm((prev) => ({ ...prev, avg_cost_price: e.target.value }))}
               />
@@ -241,6 +248,8 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
           </p>
         </>
       )}
+      {/* 수동 가격은 자동 시세를 가져오지 못할 때 직접 정할 수 있다. */}
+      {form.asset_class === 'crypto' && editing && <div className="form-group"><label>수동 현재가 (원)</label><input type="number" step="any" value={form.manual_price} onChange={(e) => setForm((prev) => ({ ...prev, manual_price: e.target.value }))} placeholder="자동 시세 사용" /><p className="text-muted">입력한 가격이 자동 시세보다 우선합니다. 비우면 자동 시세를 사용합니다.</p></div>}
     </Modal>
   );
 }

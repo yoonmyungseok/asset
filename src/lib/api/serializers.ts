@@ -234,7 +234,8 @@ export function serializeHoldingResponse(holding: HoldingResponse) {
   return {
     ...holding,
     quantity: serializeDecimalField(holding.quantity),
-    avg_cost_price: serializeDecimalField(roundAvgCostPriceDisplay(holding.avg_cost_price)),
+    // 암호화폐의 작은 평단은 직렬화 단계에서도 반올림하지 않는다.
+    avg_cost_price: serializeDecimalField(holding.asset_class === "crypto" ? holding.avg_cost_price : roundAvgCostPriceDisplay(holding.avg_cost_price)),
     manual_price: serializeDecimalField(holding.manual_price),
     last_market_price: serializeDecimalField(holding.last_market_price),
     last_price_updated_at: holding.last_price_updated_at?.toISOString() ?? null,

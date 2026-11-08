@@ -91,7 +91,8 @@ export default function InvestmentPage() {
   };
 
   const handleRefreshPrices = async () => {
-    await api.refreshPrices();
+    const result = await api.refreshPrices();
+    if (result.failed.length) alert(`시세 조회 실패: ${result.failed.map((item) => item.symbol).join(', ')}`);
     load();
   };
 

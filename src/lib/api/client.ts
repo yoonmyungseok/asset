@@ -65,7 +65,7 @@ export const api = {
   deleteHolding: (id: number) =>
     request(`/holdings/${id}`, { method: 'DELETE' }),
   refreshPrices: (holdingIds?: number[]) =>
-    request('/holdings/refresh-prices', {
+    request<{ updated: number; failed: { holding_id: number; symbol: string; reason: string }[] }>('/holdings/refresh-prices', {
       method: 'POST',
       body: JSON.stringify({ holding_ids: holdingIds }),
     }),

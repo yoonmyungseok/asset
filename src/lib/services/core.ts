@@ -29,6 +29,8 @@ const ACCOUNT_TYPE_SEEDS = [
   { code: "PENSION_SAVINGS", name: "연금저축", category: "pension", supports_holdings: true, supports_contribution_limit: true, sort_order: 3 },
   { code: "DC_PENSION", name: "DC퇴직연금", category: "pension", supports_holdings: true, supports_contribution_limit: false, sort_order: 4 },
   { code: "BROKERAGE", name: "일반증권", category: "investment", supports_holdings: true, supports_contribution_limit: false, sort_order: 5 },
+  // 거래소는 투자 계좌로 집계하되 별도 유형으로 구분한다.
+  { code: "CRYPTO_EXCHANGE", name: "암호화폐 거래소", category: "investment", supports_holdings: true, supports_contribution_limit: false, sort_order: 5 },
   { code: "SAVINGS", name: "적금", category: "deposit", supports_holdings: false, supports_contribution_limit: false, sort_order: 6 },
   { code: "DEPOSIT", name: "예금", category: "deposit", supports_holdings: false, supports_contribution_limit: false, sort_order: 7 },
   { code: "CHECKING", name: "입출금", category: "cash", supports_holdings: false, supports_contribution_limit: false, sort_order: 8 },
@@ -493,7 +495,7 @@ export function holdingToResponse(holding: Holding, accountName?: string | null)
     symbol: holding.symbol,
     name: holding.name,
     quantity: toDecimal(holding.quantity),
-    avg_cost_price: toDecimal(holding.avg_cost_price).toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
+    avg_cost_price: holding.asset_class === "crypto" ? toDecimal(holding.avg_cost_price) : toDecimal(holding.avg_cost_price).toDecimalPlaces(2, Decimal.ROUND_HALF_UP),
     manual_price: holding.manual_price != null ? toDecimal(holding.manual_price) : null,
     last_market_price: holding.last_market_price != null ? toDecimal(holding.last_market_price) : null,
     last_price_updated_at: holding.last_price_updated_at,

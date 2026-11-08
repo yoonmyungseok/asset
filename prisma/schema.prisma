@@ -81,6 +81,9 @@ model InvestmentTransaction {
   amount           Decimal
   fee              Decimal  @default(0)
   tax              Decimal  @default(0)
+  // 암호화폐 매도 취소 시 정확히 복원할 매도 직전 장부원가
+  crypto_cost_before Decimal?
+  crypto_avg_before  Decimal?
   memo             String?
   created_at       DateTime @default(now())
 

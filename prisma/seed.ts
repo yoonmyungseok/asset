@@ -10,6 +10,8 @@ const ACCOUNT_TYPE_SEEDS = [
   { code: "PENSION_SAVINGS", name: "연금저축", category: "pension", supports_holdings: true, supports_contribution_limit: true, sort_order: 3 },
   { code: "DC_PENSION", name: "DC퇴직연금", category: "pension", supports_holdings: true, supports_contribution_limit: false, sort_order: 4 },
   { code: "BROKERAGE", name: "일반증권", category: "investment", supports_holdings: true, supports_contribution_limit: false, sort_order: 5 },
+  // 초기화 경로와 동일한 거래소 계좌 유형을 제공한다.
+  { code: "CRYPTO_EXCHANGE", name: "암호화폐 거래소", category: "investment", supports_holdings: true, supports_contribution_limit: false, sort_order: 5 },
   { code: "SAVINGS", name: "적금", category: "deposit", supports_holdings: false, supports_contribution_limit: false, sort_order: 6 },
   { code: "DEPOSIT", name: "예금", category: "deposit", supports_holdings: false, supports_contribution_limit: false, sort_order: 7 },
   { code: "CHECKING", name: "입출금", category: "cash", supports_holdings: false, supports_contribution_limit: false, sort_order: 8 },

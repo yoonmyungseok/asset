@@ -99,6 +99,9 @@ export async function POST(request: NextRequest) {
     assertTransactionAllowedForAccount(account, payload.type);
 
     const tx = await prisma.$transaction(async (db) => {
+      // 동시에 거래가 등록되어도 트랜잭션 안에서 최신 잔액을 읽는다.
+      const account = await db.account.findUniqueOrThrow({ where: { id: payload.account_id }, include: { account_type: true } });
+      assertTransactionAllowedForAccount(account, payload.type);
       let holding = null;
 
       if (payload.type === "buy" || payload.type === "sell") {

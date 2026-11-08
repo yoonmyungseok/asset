@@ -201,6 +201,7 @@ export const CARD_TYPES: Record<string, string> = {
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {
+  crypto: '암호화폐 거래소',
   investment: '투자',
   pension: '연금',
   deposit: '예적금',
@@ -209,8 +210,19 @@ export const CATEGORY_LABELS: Record<string, string> = {
 
 export const ASSET_CLASS_LABELS: Record<string, string> = {
   stock: '주식/ETF',
+  crypto: '암호화폐',
   deposit: '예금',
 };
+
+// 코인 수량의 작은 소수점 자릿수도 화면에서 보존한다.
+export function formatCryptoQuantity(value: string | number | null | undefined): string {
+  return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 12 }).format(Number(value ?? 0));
+}
+
+// 저가 코인의 원화 단가를 정수 원으로 반올림하지 않는다.
+export function formatCryptoPrice(value: string | number | null | undefined): string {
+  return `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 12 }).format(Number(value ?? 0))}원`;
+}
 
 /** 시세 API 캐시 TTL과 동일하게 유지 */
 export const MARKET_PRICE_REFRESH_MAX_AGE_MS = 6 * 60 * 60 * 1000;

@@ -6,10 +6,11 @@ import type { DashboardOverview } from '@/types/api';
 import { CATEGORY_LABELS, formatMoney, formatMoneyCompact } from '@/lib/utils/format';
 import { ChartValueTooltip } from '@/components/charts/chart-ui';
 
-const CATEGORY_ORDER = ['investment', 'pension', 'deposit', 'cash'] as const;
+const CATEGORY_ORDER = ['investment', 'crypto', 'pension', 'deposit', 'cash'] as const;
 
 const CATEGORY_COLORS: Record<string, string> = {
   investment: '#2563eb',
+  crypto: '#f59e0b',
   pension: '#7c3aed',
   deposit: '#d97706',
   cash: '#16a34a',
@@ -28,7 +29,8 @@ export function aggregateAccountsByCategory(
 ): AllocationSlice[] {
   const sums = new Map<string, number>();
   for (const a of accounts) {
-    const cat = a.category || 'other';
+    // 거래소 계좌 전체를 다른 투자 계좌와 구분해 보여준다.
+    const cat = a.type === '암호화폐 거래소' ? 'crypto' : a.category || 'other';
     sums.set(cat, (sums.get(cat) ?? 0) + Number(a.total_value));
   }
 

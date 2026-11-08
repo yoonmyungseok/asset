@@ -45,6 +45,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return apiError(404, "계좌를 찾을 수 없습니다.");
     }
 
+    let selectedType = account.account_type;
     if (payload.account_type_id != null) {
       const accountType = await prisma.accountType.findUnique({
         where: { id: payload.account_type_id },
@@ -52,6 +53,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       if (!accountType) {
         return apiError(404, "계좌 유형을 찾을 수 없습니다.");
       }
+      selectedType = accountType;
+    }
+    // 기존 보유 및 거래의 자산 유형이 바뀌지 않도록 계좌 유형 전환을 제한한다.
+    if (selectedType.code !== account.account_type.code && (selectedType.code === "CRYPTO_EXCHANGE" || account.account_type.code === "CRYPTO_EXCHANGE")) {
+      return apiError(400, "거래소 계좌 유형은 변경할 수 없습니다. 새 계좌를 만들어 주세요.");
+    }
+    if (selectedType.code === "CRYPTO_EXCHANGE" && !["빗썸", "업비트"].includes(payload.institution === undefined ? account.institution ?? "" : payload.institution ?? "")) {
+      return apiError(400, "거래소는 빗썸 또는 업비트를 선택해 주세요.");
+    }
+    if (selectedType.code === "CRYPTO_EXCHANGE" && payload.institution && payload.institution !== account.institution) {
+      const existing = await prisma.holding.findFirst({ where: { account_id: account.id } });
+      if (existing) return apiError(400, "보유 코인이 있는 계좌의 거래소는 변경할 수 없습니다.");
     }
 
     const { metadata, account_type_id, ...rest } = payload;

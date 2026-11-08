@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api/client';
 import type { Holding, InvestmentTransaction } from '@/types/api';
 import { holdingAccruedInterest, holdingMarketValue, type HoldingLike } from '@/lib/utils';
-import { formatMoney, formatQuantity, todayISO, INVESTMENT_TX_TYPES } from '@/lib/utils/format';
+import { formatMoney, formatQuantity, formatCryptoQuantity, todayISO, INVESTMENT_TX_TYPES } from '@/lib/utils/format';
+import Decimal from 'decimal.js';
 import {
   allowedInvestmentTxTypes,
   cashOnlyHelpText,
@@ -30,6 +31,7 @@ interface Props {
   onSaved: () => void;
   accountId: number;
   accountMode: AccountTransactionUiMode;
+  isCrypto?: boolean;
   transaction?: InvestmentTransaction | null;
 }
 
@@ -39,6 +41,7 @@ export default function InvestmentTxFormModal({
   onSaved,
   accountId,
   accountMode,
+  isCrypto = false,
   transaction,
 }: Props) {
   const isEditing = Boolean(transaction);
@@ -96,12 +99,12 @@ export default function InvestmentTxFormModal({
 
   const isInvestmentMode = accountMode === 'investment';
   const txTypeOptions = useMemo(() => {
-    const allowed = [...allowedInvestmentTxTypes(accountMode)];
+    const allowed = isCrypto ? ['buy', 'sell', 'deposit', 'withdraw', 'fee'] : [...allowedInvestmentTxTypes(accountMode)];
     if (isEditing && transaction && !allowed.includes(transaction.type)) {
       return [...allowed, transaction.type];
     }
     return allowed;
-  }, [accountMode, isEditing, transaction]);
+  }, [accountMode, isCrypto, isEditing, transaction]);
 
   const needsStock = isInvestmentMode && ['buy', 'sell'].includes(txType);
   const needsStockBuy = txType === 'buy' && assetClass === 'stock';
@@ -141,7 +144,8 @@ export default function InvestmentTxFormModal({
 
   useEffect(() => {
     if (needsQtyPrice && quantity && price) {
-      setAmount(String(Number(quantity) * Number(price)));
+      // 부동소수점 오차가 거래 금액에 전파되지 않도록 십진수로 계산한다.
+      setAmount(new Decimal(quantity).times(price).toFixed());
     }
   }, [quantity, price, needsQtyPrice]);
 
@@ -186,21 +190,21 @@ export default function InvestmentTxFormModal({
     try {
       const resolvedAmount = needsDepositSell && depositRedemption
         ? depositRedemption.total
-        : Number(amount);
+        : isCrypto ? amount : Number(amount);
       const resolvedQuantity = needsDepositSell && selectedDepositHolding
         ? Number(selectedDepositHolding.quantity)
         : needsQtyPrice
-          ? Number(quantity)
+          ? (isCrypto ? quantity : Number(quantity))
           : needsDepositBuy
             ? Number(amount)
             : null;
       const resolvedPrice = needsQtyPrice
-        ? Number(price)
+        ? (isCrypto ? price : Number(price))
         : (needsDepositBuy || needsDepositSell)
           ? 1
           : null;
-      const resolvedFee = needsDepositSell ? 0 : Number(fee);
-      const resolvedTax = needsTax && !needsDepositSell ? Number(tax) : 0;
+      const resolvedFee = needsDepositSell ? 0 : isCrypto ? fee : Number(fee);
+      const resolvedTax = needsTax && !needsDepositSell ? (isCrypto ? tax : Number(tax)) : 0;
 
       if (isEditing && transaction) {
         await api.updateInvestmentTransaction(transaction.id, {
@@ -217,7 +221,7 @@ export default function InvestmentTxFormModal({
           account_id: accountId,
           type: txType,
           transaction_date: date,
-          asset_class: needsStock ? assetClass : null,
+          asset_class: needsStock ? (isCrypto ? 'crypto' : assetClass) : null,
           holding_id: holdingId ? Number(holdingId) : null,
           symbol: needsStock && assetClass === 'stock' ? symbol : null,
           name: needsStock || (needsInterestHolding && holdingId) ? name : null,
@@ -288,7 +292,7 @@ export default function InvestmentTxFormModal({
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
 
-      {needsStock && !isEditing && (
+      {needsStock && !isEditing && !isCrypto && (
         <div className="form-group">
           <label>자산 유형</label>
           <select
@@ -417,7 +421,7 @@ export default function InvestmentTxFormModal({
               <option value="">종목 선택</option>
               {stockHoldings.map((holding) => (
                 <option key={holding.id} value={holding.id}>
-                  {holding.name} ({holding.symbol}) · 보유 {formatQuantity(holding.quantity)}
+                  {holding.name} ({holding.symbol}) · 보유 {isCrypto ? formatCryptoQuantity(holding.quantity) : formatQuantity(holding.quantity)}
                 </option>
               ))}
             </select>
@@ -429,13 +433,13 @@ export default function InvestmentTxFormModal({
           )}
           {selectedStockHolding && (
             <p className="text-muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
-              보유 수량 {formatQuantity(selectedStockHolding.quantity)} · 현재가 {formatMoney(selectedStockHolding.current_price)}
+              보유 수량 {isCrypto ? formatCryptoQuantity(selectedStockHolding.quantity) : formatQuantity(selectedStockHolding.quantity)} · 현재가 {formatMoney(selectedStockHolding.current_price)}
             </p>
           )}
         </>
       )}
 
-      {needsStockBuy && !isEditing && (
+      {needsStockBuy && !isEditing && !isCrypto && (
         <SymbolInput
           symbol={symbol}
           name={name}
@@ -443,6 +447,15 @@ export default function InvestmentTxFormModal({
           onNameChange={setName}
         />
       )}
+
+      {/* 코인 심볼은 주식 검색 API를 거치지 않고 직접 입력한다. */}
+      {needsStockBuy && !isEditing && isCrypto && (
+        <div className="form-row">
+          <div className="form-group"><label>코인 심볼</label><input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="BTC" /></div>
+          <div className="form-group"><label>코인 이름</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="비트코인" /></div>
+        </div>
+      )}
+      {isCrypto && <p className="text-muted">매매 수수료는 이 거래에 입력하세요. 가계부에 다시 기록하면 중복 차감됩니다.</p>}
 
       {isInvestmentMode && isEditing && (transaction?.holding_name || name) && (
         <div className="form-group">
@@ -455,7 +468,7 @@ export default function InvestmentTxFormModal({
         <div className="form-row">
           <div className="form-group">
             <label>수량</label>
-            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            <input type="number" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
           </div>
           <div className="form-group">
             <label>단가</label>

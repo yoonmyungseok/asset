@@ -113,6 +113,8 @@ export function holdingCurrentPrice(holding: HoldingLike): Decimal {
   if (isDepositHolding(holding)) {
     return new Decimal(1);
   }
+  // 암호화폐의 수동 가격은 명시적으로 해제하기 전까지 우선한다.
+  if (holding.asset_class === "crypto" && holding.manual_price != null) return toDecimal(holding.manual_price);
   if (holding.last_market_price != null) {
     return toDecimal(holding.last_market_price);
   }
@@ -141,6 +143,8 @@ export function computeEstimatedBookCost(
 }
 
 export function holdingCostBasis(holding: HoldingLike): Decimal {
+  // 암호화폐 수수료와 원가는 소수점 원까지 유지한다.
+  if (holding.asset_class === "crypto") return holding.book_cost != null ? toDecimal(holding.book_cost) : toDecimal(holding.quantity).times(toDecimal(holding.avg_cost_price));
   if (holding.book_cost != null) {
     return toDecimal(holding.book_cost).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
   }
@@ -155,7 +159,7 @@ export function adjustBookCostOnBuy(
 }
 
 export function adjustBookCostOnSell(
-  holding: { quantity: Decimal.Value; book_cost?: Decimal.Value | null },
+  holding: { quantity: Decimal.Value; book_cost?: Decimal.Value | null; asset_class?: string },
   sellQuantity: Decimal.Value,
   priorQuantity: Decimal.Value,
 ): void {
@@ -170,7 +174,7 @@ export function adjustBookCostOnSell(
   const oldBookCost = toDecimal(holding.book_cost ?? holdingCostBasis(holding));
   holding.book_cost = oldBookCost
     .times(remainingQty.div(oldQty))
-    .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+    .toDecimalPlaces(holding.asset_class === "crypto" ? 12 : 0, Decimal.ROUND_HALF_UP);
 }
 
 export function restoreBookCostOnSellReversal(

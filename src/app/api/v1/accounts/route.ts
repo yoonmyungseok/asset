@@ -52,6 +52,10 @@ export async function POST(request: NextRequest) {
     if (!accountType) {
       return apiError(404, "계좌 유형을 찾을 수 없습니다.");
     }
+    // 거래소 시세는 계좌의 기관을 기준으로 선택한다.
+    if (accountType.code === "CRYPTO_EXCHANGE" && !["빗썸", "업비트"].includes(payload.institution ?? "")) {
+      return apiError(400, "거래소는 빗썸 또는 업비트를 선택해 주세요.");
+    }
 
     const created = await prisma.account.create({
       data: {

@@ -15,6 +15,7 @@ import {
   ASSET_CLASS_DEPOSIT,
   generateDepositSymbol,
   holdingMarketValue,
+  holdingCostBasis,
   isDepositHolding,
   normalizeDepositHolding,
   restoreBookCostOnSellReversal,
@@ -36,6 +37,11 @@ export function assertTransactionAllowedForAccount(
   type: string,
 ): void {
   const { category, supports_holdings } = account.account_type;
+
+  // 거래소의 첫 버전은 원화 매매와 잔고 조정만 지원한다.
+  if (account.account_type.code === "CRYPTO_EXCHANGE" && !["buy", "sell", "deposit", "withdraw", "fee"].includes(type)) {
+    throw new ServiceError(400, "거래소 계좌에서는 원화 매매와 잔고 조정만 지원합니다.");
+  }
 
   if (type === "buy" || type === "sell") {
     if (!supports_holdings) {
@@ -67,15 +73,19 @@ export async function resolveHolding(
   account: Account,
   payload: InvestmentCreate,
 ): Promise<Holding> {
+  const accountType = await db.accountType.findUniqueOrThrow({ where: { id: account.account_type_id } });
+  const isCrypto = accountType.code === "CRYPTO_EXCHANGE";
   if (payload.holding_id) {
     const holding = await db.holding.findUnique({ where: { id: payload.holding_id } });
     if (!holding || holding.account_id !== account.id) {
       throw new ServiceError(400, "유효하지 않은 보유 종목입니다.");
     }
+    if (isCrypto !== (holding.asset_class === "crypto")) throw new ServiceError(400, "계좌와 자산 유형이 일치하지 않습니다.");
     return holding;
   }
 
-  const assetClass = payload.asset_class ?? "stock";
+  const assetClass = isCrypto ? "crypto" : (payload.asset_class ?? "stock");
+  if (!isCrypto && assetClass === "crypto") throw new ServiceError(400, "암호화폐는 거래소 계좌에 등록해 주세요.");
 
   if (assetClass === ASSET_CLASS_DEPOSIT) {
     if (!payload.name) {
@@ -107,16 +117,18 @@ export async function resolveHolding(
   if (!payload.symbol || !payload.name) {
     throw new ServiceError(400, "symbol과 name이 필요합니다.");
   }
+  const symbol = isCrypto ? payload.symbol.trim().toUpperCase() : payload.symbol;
+  if (isCrypto && !/^[A-Z0-9]{1,20}$/.test(symbol)) throw new ServiceError(400, "코인 심볼을 확인해 주세요.");
 
   let holding = await db.holding.findFirst({
-    where: { account_id: account.id, symbol: payload.symbol },
+    where: { account_id: account.id, symbol },
   });
   if (!holding) {
     holding = await db.holding.create({
       data: {
         account_id: account.id,
-        asset_class: "stock",
-        symbol: payload.symbol,
+        asset_class: assetClass,
+        symbol,
         name: payload.name,
         quantity: 0,
         avg_cost_price: 0,
@@ -138,6 +150,25 @@ export async function applyTransactionEffects(
   let cashBalance = toDecimal(account.cash_balance);
   let depositSellData: { amount: Decimal; quantity: Decimal } | null = null;
 
+  if (holding?.asset_class === "crypto" && (tx.type === "buy" || tx.type === "sell")) {
+    const quantity = toDecimal(tx.quantity);
+    const price = toDecimal(tx.price);
+    if (quantity.lte(0) || price.lte(0) || amount.lte(0) || fee.lt(0) || tax.lt(0)) {
+      throw new ServiceError(400, "매매 수량과 단가는 양수, 수수료와 세금은 0 이상이어야 합니다.");
+    }
+    if (tx.type === "sell" && quantity.gt(toDecimal(holding.quantity))) {
+      throw new ServiceError(400, "보유 수량보다 많이 매도할 수 없습니다.");
+    }
+    if (tx.type === "buy" && amount.plus(fee).gt(cashBalance)) throw new ServiceError(400, "원화 잔액이 부족합니다.");
+    if (tx.type === "sell" && fee.plus(tax).gt(amount)) throw new ServiceError(400, "수수료와 세금이 매도 금액보다 큽니다.");
+    const later = await db.investmentTransaction.findFirst({ where: { holding_id: holding.id, id: { not: tx.id }, type: { in: ["buy", "sell"] }, transaction_date: { gt: tx.transaction_date } } });
+    if (later) throw new ServiceError(400, "코인 거래는 날짜순으로 입력해 주세요.");
+    // 수정·삭제 시 직전 상태를 복원하기 위해 원가와 평균단가를 보관한다.
+    await db.investmentTransaction.update({ where: { id: tx.id }, data: {
+      crypto_cost_before: holdingCostBasis(holding), crypto_avg_before: holding.avg_cost_price,
+    } });
+  }
+
   switch (tx.type) {
     case "buy": {
       if (!holding) {
@@ -148,8 +179,14 @@ export async function applyTransactionEffects(
         normalizeDepositHolding(holding);
         applyBuy(holding, quantity, new Decimal(1));
       } else {
-        applyBuy(holding, toDecimal(tx.quantity), toDecimal(tx.price), amount);
-        adjustBookCostOnBuy(holding, amount);
+        const cost = holding.asset_class === "crypto" ? amount.plus(fee) : amount;
+        if (holding.asset_class === "crypto" && holding.book_cost == null) holding.book_cost = holdingCostBasis(holding);
+        applyBuy(holding, toDecimal(tx.quantity), toDecimal(tx.price), cost);
+        adjustBookCostOnBuy(holding, cost);
+        if (holding.asset_class === "crypto") {
+          // 실제 장부원가를 기준으로 평균 매입단가를 계산한다.
+          holding.avg_cost_price = toDecimal(holding.book_cost).div(toDecimal(holding.quantity)).toDecimalPlaces(12, Decimal.ROUND_HALF_UP);
+        }
       }
       cashBalance = cashBalance.minus(amount).minus(fee);
       break;
@@ -246,6 +283,23 @@ export async function reverseTransactionEffects(
   const fee = toDecimal(tx.fee);
   const tax = toDecimal(tx.tax);
   let cashBalance = toDecimal(account.cash_balance);
+
+  if (tx.holding_id && (tx.type === "buy" || tx.type === "sell")) {
+    const holding = await db.holding.findUnique({ where: { id: tx.holding_id } });
+    if (holding?.asset_class === "crypto") {
+      // 이후 거래가 있으면 역순으로만 수정·삭제해 원가 이력을 보존한다.
+      const later = await db.investmentTransaction.findFirst({ where: { holding_id: holding.id, id: { gt: tx.id }, type: { in: ["buy", "sell"] } } });
+      if (later) throw new ServiceError(400, "이 코인의 이후 매매부터 수정하거나 삭제해 주세요.");
+      if (tx.crypto_cost_before == null || tx.crypto_avg_before == null) throw new ServiceError(400, "복원할 매매 원가가 없습니다.");
+      const qty = toDecimal(tx.quantity);
+      const restored = tx.type === "buy" ? toDecimal(holding.quantity).minus(qty) : toDecimal(holding.quantity).plus(qty);
+      if (restored.lt(0)) throw new ServiceError(400, "현재 보유 수량으로 거래를 되돌릴 수 없습니다.");
+      await db.holding.update({ where: { id: holding.id }, data: { quantity: restored, book_cost: tx.crypto_cost_before, avg_cost_price: tx.crypto_avg_before } });
+      cashBalance = tx.type === "buy" ? cashBalance.plus(amount).plus(fee) : cashBalance.minus(amount).plus(fee).plus(tax);
+      await db.account.update({ where: { id: account.id }, data: { cash_balance: cashBalance } });
+      return;
+    }
+  }
 
   switch (tx.type) {
     case "buy": {
