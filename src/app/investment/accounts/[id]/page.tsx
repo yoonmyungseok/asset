@@ -124,6 +124,7 @@ export default function AccountDetailPage() {
   const supportsHoldings = accountType?.supports_holdings ?? account.account_type?.supports_holdings ?? false;
   const supportsLimit = accountType?.supports_contribution_limit ?? false;
   const isDepositAccount = accountType?.category === 'deposit';
+  const isCryptoAccount = (accountType?.code ?? account.account_type?.code) === 'CRYPTO_EXCHANGE';
   const txUiMode = resolveAccountTransactionUiMode(
     accountType ?? {
       category: account.account_type?.category ?? 'cash',
@@ -525,10 +526,14 @@ export default function AccountDetailPage() {
                       <th>상품</th>
                       <th>유형</th>
                       <th>수량/원금</th>
-                      <th>금리</th>
-                      <th>가입일</th>
-                      <th>만기일</th>
-                      <th>미수이자</th>
+                      {!isCryptoAccount && (
+                        <>
+                          <th>금리</th>
+                          <th>가입일</th>
+                          <th>만기일</th>
+                          <th>미수이자</th>
+                        </>
+                      )}
                       <th>평가금액</th>
                       <th>수익금액</th>
                       <th>수익률</th>
@@ -554,10 +559,14 @@ export default function AccountDetailPage() {
                         </td>
                         <td>{ASSET_CLASS_LABELS[h.asset_class] || h.asset_class}</td>
                         <td>{isDeposit ? formatMoney(h.quantity) : formatMoney(h.cost_basis)}</td>
-                        <td>{isDeposit ? formatInterestRate(h.interest_rate) : '-'}</td>
-                        <td>{isDeposit ? formatMaturityLabel(h.start_date) : '-'}</td>
-                        <td>{isDeposit ? formatMaturityLabel(h.maturity_date) : '-'}</td>
-                        <td>{isDeposit ? formatMoney(h.accrued_interest) : '-'}</td>
+                        {!isCryptoAccount && (
+                          <>
+                            <td>{isDeposit ? formatInterestRate(h.interest_rate) : '-'}</td>
+                            <td>{isDeposit ? formatMaturityLabel(h.start_date) : '-'}</td>
+                            <td>{isDeposit ? formatMaturityLabel(h.maturity_date) : '-'}</td>
+                            <td>{isDeposit ? formatMoney(h.accrued_interest) : '-'}</td>
+                          </>
+                        )}
                         <td>{formatMoney(h.market_value)}</td>
                         <td className={Number(h.profit_loss) >= 0 ? 'text-success' : 'text-danger'}>
                           {formatMoney(h.profit_loss)}
@@ -676,7 +685,7 @@ export default function AccountDetailPage() {
         onSaved={load}
         accountId={accountId}
         accountMode={txUiMode}
-        isCrypto={account.account_type?.code === 'CRYPTO_EXCHANGE'}
+        isCrypto={isCryptoAccount}
         transaction={editingTransaction}
       />
 

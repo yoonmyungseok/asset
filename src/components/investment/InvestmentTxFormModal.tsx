@@ -398,7 +398,7 @@ export default function InvestmentTxFormModal({
           {!holdingId && (
             <div className="form-group">
               <label>예금 상품명</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="퇴직연금 예금" />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 정기예금" />
             </div>
           )}
         </>

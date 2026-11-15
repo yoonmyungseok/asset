@@ -50,6 +50,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
   }, [open, initialValues]);
 
   const isDeposit = form.asset_class === 'deposit';
+  const isCrypto = form.asset_class === 'crypto';
 
   const handleAssetClassChange = (asset_class: 'stock' | 'deposit') => {
     setForm((prev) => ({
@@ -116,7 +117,7 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
             <input
               value={form.name}
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="퇴직연금 예금"
+              placeholder="예: 정기예금"
               readOnly={editing}
             />
           </div>
@@ -161,59 +162,29 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
             평가금액은 원금에 가입일부터 오늘까지의 월복리 이자를 더해 계산합니다. 이자 거래 입력 시 기산일이 갱신됩니다.
           </p>
         </>
-      ) : editing ? (
-        <>
-          <div className="form-group">
-            <label>종목</label>
-            <div>
-              <strong>{form.name}</strong>
-              <div className="text-muted" style={{ fontSize: 13 }}>{form.symbol}</div>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>수량</label>
-              <input
-                type="number"
-                step="any"
-                value={form.quantity}
-                onChange={(e) => setForm((prev) => ({ ...prev, quantity: e.target.value }))}
-              />
-            </div>
-            <div className="form-group">
-              <label>평단가</label>
-              <input
-                type="number"
-                step="any"
-                value={form.avg_cost_price}
-                onChange={(e) => setForm((prev) => ({ ...prev, avg_cost_price: e.target.value }))}
-              />
-            </div>
-            <div className="form-group">
-              <label>상품잔액 (원금)</label>
-              <input
-                type="number"
-                value={form.book_cost}
-                onChange={(e) => setForm((prev) => ({ ...prev, book_cost: e.target.value }))}
-                placeholder="퇴직연금 앱 상품잔액"
-              />
-            </div>
-          </div>
-          <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            상품잔액을 입력하면 퇴직연금 앱과 원금이 정확히 맞습니다. 비워두면 수량×평단가로 계산합니다.
-          </p>
-        </>
       ) : (
         <>
-          {form.asset_class === 'crypto' ? <div className="form-row">
-            <div className="form-group"><label>코인 심볼</label><input value={form.symbol} onChange={(e) => setForm((prev) => ({ ...prev, symbol: e.target.value.toUpperCase() }))} placeholder="BTC" /></div>
-            <div className="form-group"><label>코인 이름</label><input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} /></div>
-          </div> : <SymbolInput
-            symbol={form.symbol}
-            name={form.name}
-            onSymbolChange={(symbol) => setForm((prev) => ({ ...prev, symbol }))}
-            onNameChange={(name) => setForm((prev) => ({ ...prev, name }))}
-          />}
+          {editing ? (
+            <div className="form-group">
+              <label>종목</label>
+              <div>
+                <strong>{form.name}</strong>
+                <div className="text-muted" style={{ fontSize: 13 }}>{form.symbol}</div>
+              </div>
+            </div>
+          ) : isCrypto ? (
+            <div className="form-row">
+              <div className="form-group"><label>코인 심볼</label><input value={form.symbol} onChange={(e) => setForm((prev) => ({ ...prev, symbol: e.target.value.toUpperCase() }))} placeholder="BTC" /></div>
+              <div className="form-group"><label>코인 이름</label><input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} /></div>
+            </div>
+          ) : (
+            <SymbolInput
+              symbol={form.symbol}
+              name={form.name}
+              onSymbolChange={(symbol) => setForm((prev) => ({ ...prev, symbol }))}
+              onNameChange={(name) => setForm((prev) => ({ ...prev, name }))}
+            />
+          )}
           <div className="form-row">
             <div className="form-group">
               <label>수량</label>
@@ -234,17 +205,19 @@ export default function HoldingFormModal({ open, editing, initialValues, onClose
               />
             </div>
             <div className="form-group">
-              <label>상품잔액 (원금)</label>
+              <label>{isCrypto ? '매수금액 (원금)' : '상품잔액 (원금)'}</label>
               <input
                 type="number"
                 value={form.book_cost}
                 onChange={(e) => setForm((prev) => ({ ...prev, book_cost: e.target.value }))}
-                placeholder="퇴직연금 앱 상품잔액"
+                placeholder={isCrypto ? '거래소 총 매수금액 (선택)' : '금융사 앱 상품잔액 (선택)'}
               />
             </div>
           </div>
           <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            상품잔액을 입력하면 퇴직연금 앱과 원금이 정확히 맞습니다. 비워두면 수량×평단가로 계산합니다.
+            {isCrypto
+              ? '실제 총 매수금액을 입력하면 거래소 앱과 원금이 정확히 맞습니다. 비워두면 수량×평단가로 계산합니다.'
+              : '상품잔액을 입력하면 금융사 앱과 원금이 정확히 맞습니다. 비워두면 수량×평단가로 계산합니다.'}
           </p>
         </>
       )}
