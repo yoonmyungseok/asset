@@ -13,7 +13,6 @@ import { NetWorthTrendChart } from '@/components/dashboard/NetWorthTrendChart';
 import { CashflowTrendChart } from '@/components/dashboard/CashflowTrendChart';
 import type { AccountPerformance, CashflowTrendPoint, DashboardOverview } from '@/types/api';
 import { formatMoney } from '@/lib/utils/format';
-import { CareDashboardSection } from '@/components/care/CareDashboardSection';
 
 export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -167,8 +166,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      <CareDashboardSection />
     </>
   );
 }
