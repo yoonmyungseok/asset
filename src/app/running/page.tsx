@@ -341,8 +341,25 @@ export default function RunningPage() {
   };
 
   const copyRecord = async (record: RunningRecord) => {
+    const text = formatRunningRecordText(record, runningTypes);
     try {
-      await navigator.clipboard.writeText(formatRunningRecordText(record, runningTypes));
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, text.length);
+        const ok = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (!ok) {
+          throw new Error("execCommand copy failed");
+        }
+      }
       showToast("복사되었습니다");
     } catch {
       showToast("복사에 실패했습니다", "error");
