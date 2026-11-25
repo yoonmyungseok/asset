@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  attachRecentTransactionBalances,
   mergeAccountRecentTransactions,
+  recentTransactionCashDelta,
   recentTransactionDetailLabel,
   recentTransactionTypeLabel,
 } from '@/lib/utils/account-recent-transactions';
@@ -98,5 +100,46 @@ describe('recentTransactionDetailLabel', () => {
       2,
     );
     expect(label).toBe('← 당근머니 하나 통장');
+  });
+});
+
+describe('recentTransactionCashDelta', () => {
+  it('computes deltas for investment transactions', () => {
+    expect(recentTransactionCashDelta({ source: 'investment', data: investmentTx({ id: 1, transaction_date: '2026-11-25', type: 'deposit', amount: '10000' }) }, 1).toFixed()).toBe('10000');
+    expect(recentTransactionCashDelta({ source: 'investment', data: investmentTx({ id: 2, transaction_date: '2026-11-25', type: 'withdraw', amount: '4000' }) }, 1).toFixed()).toBe('-4000');
+    expect(recentTransactionCashDelta({ source: 'investment', data: investmentTx({ id: 3, transaction_date: '2026-11-25', type: 'buy', amount: '10000', fee: '500' }) }, 1).toFixed()).toBe('-10500');
+    expect(recentTransactionCashDelta({ source: 'investment', data: investmentTx({ id: 4, transaction_date: '2026-11-25', type: 'sell', amount: '10000', fee: '100', tax: '200' }) }, 1).toFixed()).toBe('9700');
+    expect(recentTransactionCashDelta({ source: 'investment', data: investmentTx({ id: 5, transaction_date: '2026-11-25', type: 'interest', amount: '300', holding_id: null }) }, 1).toFixed()).toBe('300');
+    expect(recentTransactionCashDelta({ source: 'investment', data: investmentTx({ id: 6, transaction_date: '2026-11-25', type: 'interest', amount: '300', holding_id: 99 }) }, 1).toFixed()).toBe('0');
+  });
+
+  it('computes deltas for ledger transactions', () => {
+    expect(recentTransactionCashDelta({ source: 'ledger', data: ledgerTx({ id: 1, transaction_date: '2026-11-25', type: 'transfer', account_id: 1, to_account_id: 2, amount: '50000' }) }, 1).toFixed()).toBe('-50000');
+    expect(recentTransactionCashDelta({ source: 'ledger', data: ledgerTx({ id: 1, transaction_date: '2026-11-25', type: 'transfer', account_id: 1, to_account_id: 2, amount: '50000' }) }, 2).toFixed()).toBe('50000');
+    expect(recentTransactionCashDelta({ source: 'ledger', data: ledgerTx({ id: 2, transaction_date: '2026-11-25', type: 'income', account_id: 1, to_account_id: null, amount: '62150' }) }, 1).toFixed()).toBe('62150');
+    expect(recentTransactionCashDelta({ source: 'ledger', data: ledgerTx({ id: 3, transaction_date: '2026-11-25', type: 'expense', account_id: 1, to_account_id: null, amount: '11600', payment_method: { id: 1, name: '계좌이체' }, card: null }) }, 1).toFixed()).toBe('-11600');
+    expect(recentTransactionCashDelta({ source: 'ledger', data: ledgerTx({ id: 4, transaction_date: '2026-11-25', type: 'expense', account_id: 1, to_account_id: null, amount: '5000', payment_method: { id: 2, name: '카드' }, card: { id: 1, name: '체크카드', card_type: 'debit', institution: null, last_four: null } }) }, 1).toFixed()).toBe('-5000');
+    expect(recentTransactionCashDelta({ source: 'ledger', data: ledgerTx({ id: 5, transaction_date: '2026-11-25', type: 'expense', account_id: 1, to_account_id: null, amount: '5000', payment_method: { id: 2, name: '카드' }, card: { id: 2, name: '신용카드', card_type: 'credit', institution: null, last_four: null } }) }, 1).toFixed()).toBe('0');
+  });
+});
+
+describe('attachRecentTransactionBalances', () => {
+  it('calculates running balance backwards from current cash balance', () => {
+    const transactions = mergeAccountRecentTransactions(
+      [investmentTx({ id: 10, transaction_date: '2026-11-20', type: 'deposit', amount: '100000' })],
+      [
+        ledgerTx({ id: 20, transaction_date: '2026-11-25', type: 'expense', account_id: 1, to_account_id: null, amount: '11600', payment_method: { id: 1, name: '계좌이체' }, card: null }),
+        ledgerTx({ id: 19, transaction_date: '2026-11-21', type: 'transfer', account_id: 2, to_account_id: 1, amount: '50000' }),
+      ],
+      20,
+    );
+
+    const withBalances = attachRecentTransactionBalances(transactions, '213188', 1);
+
+    expect(withBalances.map((item) => item.balanceAfter)).toEqual([
+      '213188', // 2026-11-25 지출 -11,600원 직후
+      '224788', // 2026-11-21 입금이체 +50,000원 직후
+      '174788', // 2026-11-20 입금 +100,000원 직후
+    ]);
   });
 });

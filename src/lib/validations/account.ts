@@ -211,8 +211,8 @@ export const investmentTransactionCreateSchema = z.object({
 export const investmentTransactionUpdateSchema = z.object({
   type: z.string().optional(),
   transaction_date: dateSchema.optional(),
-  quantity: decimalSchema.optional(),
-  price: decimalSchema.optional(),
+  quantity: decimalSchema.nullable().optional(),
+  price: decimalSchema.nullable().optional(),
   amount: decimalSchema.optional(),
   fee: decimalSchema.optional(),
   tax: decimalSchema.optional(),

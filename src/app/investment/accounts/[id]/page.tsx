@@ -26,6 +26,7 @@ import TransactionFormModal from '@/components/ledger/TransactionFormModal';
 import InstitutionSelect from '@/components/common/InstitutionSelect';
 import type { Account, AccountLimit, AccountType, Holding, InvestmentTransaction, LedgerTransaction } from '@/types/api';
 import {
+  attachRecentTransactionBalances,
   mergeAccountRecentTransactions,
   recentTransactionDetailLabel,
   recentTransactionKey,
@@ -115,6 +116,11 @@ export default function AccountDetailPage() {
   );
 
   const balanceGradientId = lineGradientId('balance');
+
+  const recentTransactionsWithBalance = useMemo(
+    () => attachRecentTransactionBalances(recentTransactions, account?.cash_balance ?? 0, accountId),
+    [recentTransactions, account?.cash_balance, accountId],
+  );
 
   if (!account) return <div className="loading">로딩 중...</div>;
 
@@ -599,7 +605,7 @@ export default function AccountDetailPage() {
         ) : (
           <>
             <div className="lg:hidden">
-              {recentTransactions.map((item) => (
+              {recentTransactionsWithBalance.map((item) => (
                 <RecentTransactionRow
                   key={recentTransactionKey(item)}
                   item={item}
@@ -613,15 +619,16 @@ export default function AccountDetailPage() {
               <div className="table-scroll">
                 <table className="table">
                   <thead>
-                    <tr><th>날짜</th><th>유형</th><th>내용</th><th>금액</th><th>메모</th><th></th></tr>
+                    <tr><th>날짜</th><th>유형</th><th>내용</th><th>금액</th><th>잔액</th><th>메모</th><th></th></tr>
                   </thead>
                   <tbody>
-                    {recentTransactions.map((item) => (
+                    {recentTransactionsWithBalance.map((item) => (
                       <tr key={recentTransactionKey(item)}>
                         <td>{item.data.transaction_date}</td>
                         <td>{recentTransactionTypeLabel(item)}</td>
                         <td>{recentTransactionDetailLabel(item, accountId)}</td>
                         <td>{formatMoney(item.data.amount)}</td>
+                        <td className="text-muted">{formatMoney(item.balanceAfter)}</td>
                         <td className="text-muted">{recentTransactionMemo(item)}</td>
                         <td>
                           <span className="flex justify-end gap-2">

@@ -1,6 +1,9 @@
 'use client';
 
-import type { AccountRecentTransaction } from '@/lib/utils/account-recent-transactions';
+import type {
+  AccountRecentTransaction,
+  AccountRecentTransactionWithBalance,
+} from '@/lib/utils/account-recent-transactions';
 import {
   recentTransactionDetailLabel,
   recentTransactionMemo,
@@ -9,7 +12,7 @@ import {
 import { formatMoney } from '@/lib/utils/format';
 
 interface Props {
-  item: AccountRecentTransaction;
+  item: AccountRecentTransactionWithBalance;
   accountId: number;
   onEdit: (item: AccountRecentTransaction) => void;
   onDelete: (item: AccountRecentTransaction) => void;
@@ -41,9 +44,14 @@ export default function RecentTransactionRow({ item, accountId, onEdit, onDelete
         {memo && <span className="tx-merchant">{memo}</span>}
       </div>
       <div className="tx-row-actions">
-        <span className="font-semibold">{formatMoney(item.data.amount)}</span>
-        <button className="btn btn-sm btn-secondary" onClick={() => onEdit(item)}>수정</button>
-        <button className="btn btn-sm btn-danger" onClick={() => onDelete(item)}>삭제</button>
+        <div className="flex flex-col">
+          <span className="font-semibold">{formatMoney(item.data.amount)}</span>
+          <span className="text-xs text-muted">잔액 {formatMoney(item.balanceAfter)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-sm btn-secondary" onClick={() => onEdit(item)}>수정</button>
+          <button className="btn btn-sm btn-danger" onClick={() => onDelete(item)}>삭제</button>
+        </div>
       </div>
     </div>
   );
