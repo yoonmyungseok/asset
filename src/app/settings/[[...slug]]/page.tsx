@@ -946,7 +946,7 @@ function AccountSheetsPanel() {
     enabled: true,
     scheduleTime: '08:30',
     spreadsheetInput: '',
-    sheetName: '계좌_일별현황',
+    sheetName: 'Summary',
   });
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -1016,7 +1016,7 @@ function AccountSheetsPanel() {
     <div className="card">
       <h3 className="section-title" style={{ marginTop: 0 }}>계좌 일별 구글 시트 내보내기</h3>
       <p className="text-muted" style={{ marginBottom: 16 }}>
-        중개형 ISA · DC퇴직연금 계좌의 시세를 갱신한 뒤, 매일 지정한 시각에 구글 스프레드시트에 일별 누적 기록합니다.
+        중개형 ISA · DC퇴직연금 계좌의 시세를 갱신한 뒤, 매일 지정한 시각에 <strong>Summary</strong>(종합 요약) · <strong>종목별 탭</strong>(일별 히스토리) · <strong>Daily_Summary</strong>(일별 계좌 추이)로 기록합니다.
       </p>
 
       {status && (
@@ -1084,11 +1084,11 @@ function AccountSheetsPanel() {
       </div>
 
       <div className="form-group">
-        <label>시트 탭 이름</label>
+        <label>요약(Summary) 시트 탭 이름</label>
         <input
           value={form.sheetName}
           onChange={(e) => setForm({ ...form, sheetName: e.target.value })}
-          placeholder="계좌_일별현황"
+          placeholder="Summary"
         />
       </div>
 

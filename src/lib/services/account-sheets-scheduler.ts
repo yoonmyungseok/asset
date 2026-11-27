@@ -22,7 +22,7 @@ export async function runScheduledAccountSheetsCheck(now: Date = new Date()): Pr
   }
 
   const todayKst = getKstDateString(now);
-  if (config.lastSuccessDateKst === todayKst) {
+  if (config.lastScheduledDateKst === todayKst) {
     return false;
   }
 
@@ -46,7 +46,10 @@ export async function runScheduledAccountSheetsCheck(now: Date = new Date()): Pr
   }
 
   try {
-    await exportTargetAccountsToGoogleSheets({ refreshMarketPrices: true });
+    await exportTargetAccountsToGoogleSheets({
+      refreshMarketPrices: true,
+      trigger: "schedule",
+    });
     globalForScheduler.__accountSheetsLastErrorAt = 0;
     return true;
   } catch (error) {

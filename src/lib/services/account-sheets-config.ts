@@ -10,6 +10,7 @@ export type AccountSheetsConfig = {
   sheetName: string;
   lastRunAt: string | null;
   lastSuccessDateKst: string | null;
+  lastScheduledDateKst: string | null;
   lastStatus: "success" | "error" | null;
   lastMessage: string | null;
 };
@@ -18,9 +19,10 @@ const DEFAULT_CONFIG: AccountSheetsConfig = {
   enabled: true,
   scheduleTime: "08:30",
   spreadsheetId: null,
-  sheetName: "계좌_일별현황",
+  sheetName: "Summary",
   lastRunAt: null,
   lastSuccessDateKst: null,
+  lastScheduledDateKst: null,
   lastStatus: null,
   lastMessage: null,
 };
@@ -82,6 +84,8 @@ export function readAccountSheetsConfig(): AccountSheetsConfig {
       lastRunAt: typeof parsed.lastRunAt === "string" ? parsed.lastRunAt : null,
       lastSuccessDateKst:
         typeof parsed.lastSuccessDateKst === "string" ? parsed.lastSuccessDateKst : null,
+      lastScheduledDateKst:
+        typeof parsed.lastScheduledDateKst === "string" ? parsed.lastScheduledDateKst : null,
       lastStatus:
         parsed.lastStatus === "success" || parsed.lastStatus === "error"
           ? parsed.lastStatus
