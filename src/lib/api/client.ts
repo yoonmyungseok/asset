@@ -177,6 +177,71 @@ export const api = {
   getAccountSnapshots: (accountId: number) =>
     request<import('@/types/api').AccountSnapshotPoint[]>(`/snapshots/accounts/${accountId}`),
 
+  getAccountSheetsStatus: () =>
+    request<{
+      config: {
+        enabled: boolean;
+        scheduleTime: string;
+        spreadsheetId: string | null;
+        sheetName: string;
+        lastRunAt: string | null;
+        lastSuccessDateKst: string | null;
+        lastStatus: 'success' | 'error' | null;
+        lastMessage: string | null;
+      };
+      effectiveSpreadsheetId: string | null;
+      spreadsheetSource: 'config' | 'env' | 'health_settings' | null;
+      serviceAccountConfigured: boolean;
+      targetAccounts: Array<{
+        id: number;
+        name: string;
+        institution: string | null;
+        typeCode: string;
+        typeName: string;
+      }>;
+    }>('/accounts/google-sheets'),
+  updateAccountSheetsConfig: (data: {
+    enabled?: boolean;
+    scheduleTime?: string;
+    spreadsheetInput?: string;
+    sheetName?: string;
+  }) =>
+    request('/accounts/google-sheets', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  exportAccountsToSheets: (refreshMarketPrices = true) =>
+    request<{
+      result: {
+        date: string;
+        spreadsheetId: string;
+        sheetName: string;
+        action: 'inserted' | 'updated';
+        priceRefresh: { updated: number; failedCount: number };
+        accounts: Array<{
+          id: number;
+          name: string;
+          institution: string | null;
+          typeCode: string;
+          cashBalance: number;
+          totalValue: number;
+          investedCost: number;
+          profitLoss: number;
+          profitRate: number;
+        }>;
+        totals: {
+          totalValue: number;
+          investedCost: number;
+          profitLoss: number;
+          profitRate: number;
+        };
+        exportedAt: string;
+      };
+    }>('/accounts/google-sheets', {
+      method: 'POST',
+      body: JSON.stringify({ refreshMarketPrices }),
+    }),
+
   downloadBackup: () => window.open(`${BASE}/backup`, '_blank'),
   restoreBackup: async (file: File) => {
     const form = new FormData();

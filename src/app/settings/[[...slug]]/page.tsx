@@ -940,6 +940,191 @@ function BackupPanel() {
   );
 }
 
+function AccountSheetsPanel() {
+  const [status, setStatus] = useState<Awaited<ReturnType<typeof api.getAccountSheetsStatus>> | null>(null);
+  const [form, setForm] = useState({
+    enabled: true,
+    scheduleTime: '08:30',
+    spreadsheetInput: '',
+    sheetName: '계좌_일별현황',
+  });
+  const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const applyLoadedStatus = (data: Awaited<ReturnType<typeof api.getAccountSheetsStatus>>) => {
+    setStatus(data);
+    setForm({
+      enabled: data.config.enabled,
+      scheduleTime: data.config.scheduleTime,
+      spreadsheetInput: data.config.spreadsheetId ?? '',
+      sheetName: data.config.sheetName,
+    });
+  };
+
+  const load = async () => {
+    const data = await api.getAccountSheetsStatus();
+    applyLoadedStatus(data);
+  };
+
+  useEffect(() => {
+    let active = true;
+    api.getAccountSheetsStatus().then((data) => {
+      if (active) {
+        applyLoadedStatus(data);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const updated = (await api.updateAccountSheetsConfig(form)) as Awaited<ReturnType<typeof api.getAccountSheetsStatus>>;
+      setStatus(updated);
+      setMessage({ type: 'ok', text: '설정을 저장했습니다.' });
+    } catch (e) {
+      setMessage({ type: 'err', text: e instanceof Error ? e.message : '설정 저장 실패' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleExportNow = async () => {
+    setExporting(true);
+    setMessage(null);
+    try {
+      const res = await api.exportAccountsToSheets(true);
+      await load();
+      const { result } = res;
+      setMessage({
+        type: 'ok',
+        text: `${result.date} 기준 ${result.action === 'updated' ? '업데이트' : '기록'} 완료 (시세 ${result.priceRefresh.updated}건 갱신, 합계 ${formatMoney(result.totals.totalValue)}원)`,
+      });
+    } catch (e) {
+      await load().catch(() => {});
+      setMessage({ type: 'err', text: e instanceof Error ? e.message : '구글 시트 전송 실패' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h3 className="section-title" style={{ marginTop: 0 }}>계좌 일별 구글 시트 내보내기</h3>
+      <p className="text-muted" style={{ marginBottom: 16 }}>
+        중개형 ISA · DC퇴직연금 계좌의 시세를 갱신한 뒤, 매일 지정한 시각에 구글 스프레드시트에 일별 누적 기록합니다.
+      </p>
+
+      {status && (
+        <div className={`market-status market-status--${status.serviceAccountConfigured && status.effectiveSpreadsheetId ? 'ok' : 'warn'}`}>
+          <strong>
+            {status.serviceAccountConfigured ? '서비스 계정 연결됨' : '서비스 계정 미설정'}
+          </strong>
+          <span>
+            {status.effectiveSpreadsheetId
+              ? `대상 시트 ID: ${status.effectiveSpreadsheetId} (${
+                  status.spreadsheetSource === 'config'
+                    ? '직접 설정'
+                    : status.spreadsheetSource === 'health_settings'
+                      ? '건강 설정 시트 공유'
+                      : '환경변수'
+                })`
+              : '스프레드시트 URL 또는 ID를 입력해 주세요.'}
+          </span>
+        </div>
+      )}
+
+      {status && (
+        <div style={{ marginBottom: 16, fontSize: 13 }}>
+          <strong>대상 계좌 ({status.targetAccounts.length}개): </strong>
+          {status.targetAccounts.length === 0 ? (
+            <span className="text-muted">활성화된 ISA / DC퇴직연금 계좌가 없습니다.</span>
+          ) : (
+            <span>
+              {status.targetAccounts
+                .map((a) => `${a.name}${a.institution ? ` (${a.institution})` : ''}`)
+                .join(' · ')}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="form-group">
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={form.enabled}
+            onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
+            style={{ width: 'auto' }}
+          />
+          <span>앱 실행 중 매일 자동 전송 (KST)</span>
+        </label>
+      </div>
+
+      <div className="form-group">
+        <label>매일 실행 시각 (KST)</label>
+        <input
+          type="time"
+          value={form.scheduleTime}
+          onChange={(e) => setForm({ ...form, scheduleTime: e.target.value })}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>구글 스프레드시트 URL 또는 ID (비워두면 기존 건강 시트 ID 사용)</label>
+        <input
+          value={form.spreadsheetInput}
+          onChange={(e) => setForm({ ...form, spreadsheetInput: e.target.value })}
+          placeholder="https://docs.google.com/spreadsheets/d/..."
+        />
+      </div>
+
+      <div className="form-group">
+        <label>시트 탭 이름</label>
+        <input
+          value={form.sheetName}
+          onChange={(e) => setForm({ ...form, sheetName: e.target.value })}
+          placeholder="계좌_일별현황"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+        <button className="btn btn-secondary w-full sm:w-auto" onClick={handleSave} disabled={saving}>
+          {saving ? '저장 중...' : '설정 저장'}
+        </button>
+        <button className="btn btn-primary w-full sm:w-auto" onClick={handleExportNow} disabled={exporting}>
+          {exporting ? '시세 갱신 및 전송 중...' : '지금 시세 갱신 후 시트로 보내기'}
+        </button>
+      </div>
+
+      {message && (
+        <p
+          style={{
+            marginTop: 12,
+            marginBottom: 0,
+            fontSize: 13,
+            color: message.type === 'ok' ? 'var(--accent-green, #16a34a)' : 'var(--accent-red, #dc2626)',
+          }}
+        >
+          {message.text}
+        </p>
+      )}
+
+      {status?.config.lastRunAt && (
+        <p className="text-muted" style={{ marginTop: 14, marginBottom: 0, fontSize: 12 }}>
+          마지막 실행: {new Date(status.config.lastRunAt).toLocaleString('ko-KR')} ·{' '}
+          {status.config.lastStatus === 'success' ? '성공' : '실패'}
+          {status.config.lastMessage ? ` — ${status.config.lastMessage}` : ''}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const SETTINGS_NAV = [
   { href: '/settings', label: '카테고리', exact: true },
   { href: '/settings/health', label: '건강' },
@@ -947,6 +1132,7 @@ const SETTINGS_NAV = [
   { href: '/settings/cards', label: '내 카드' },
   { href: '/settings/liabilities', label: '부채' },
   { href: '/settings/market', label: '증권 API' },
+  { href: '/settings/sheets', label: '구글 시트' },
   { href: '/settings/backup', label: '백업' },
 ];
 
@@ -957,6 +1143,7 @@ function SettingsContent() {
   if (pathname === '/settings/cards') return <CardsPanel />;
   if (pathname === '/settings/liabilities') return <LiabilitiesPanel />;
   if (pathname === '/settings/market') return <MarketPanel />;
+  if (pathname === '/settings/sheets') return <AccountSheetsPanel />;
   if (pathname === '/settings/backup') return <BackupPanel />;
   return <CategoriesPanel />;
 }
